@@ -1,6 +1,4 @@
-import sys
 
-import pytest
 from types import SimpleNamespace
 
 from PySide6.QtCore import QPoint, Qt
@@ -100,40 +98,31 @@ def test_timeout_routes_only_current_probe_to_compact_input(monkeypatch):
     assert len(manager.input_calls) == 1
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="探测用 Windows keybd_event 发 Ctrl+Insert")
-def test_copy_probe_uses_ctrl_insert_to_avoid_console_interrupt(monkeypatch):
-    class FakeUser32:
-        def __init__(self):
-            self.events = []
+def test_copy_probe_delegates_to_the_platform_layer(monkeypatch):
+    """智能翻译只表达「复制」，用哪组快捷键由平台层决定。
 
-        def keybd_event(self, virtual_key, scan_code, flags, extra_info):
-            self.events.append((virtual_key, scan_code, flags, extra_info))
+    迁移前这里直接 ``ctypes.windll.user32.keybd_event``，非 Windows 上抛
+    AttributeError，功能退化成手动输入原文。
+    """
+    from core.platform import pointer
 
-    user32 = FakeUser32()
-    monkeypatch.setattr(
-        smart_translation_controller_mod.ctypes,
-        "windll",
-        SimpleNamespace(user32=user32),
-    )
+    calls = []
+    monkeypatch.setattr(pointer, "send_copy_shortcut", lambda: calls.append(True))
 
     SmartTranslationController()._send_copy_shortcut()
 
-    assert user32.events == [
-        (smart_translation_controller_mod.VK_CONTROL, 0, 0, 0),
-        (smart_translation_controller_mod.VK_INSERT, 0, 0, 0),
-        (
-            smart_translation_controller_mod.VK_INSERT,
-            0,
-            smart_translation_controller_mod.KEYEVENTF_KEYUP,
-            0,
-        ),
-        (
-            smart_translation_controller_mod.VK_CONTROL,
-            0,
-            smart_translation_controller_mod.KEYEVENTF_KEYUP,
-            0,
-        ),
-    ]
+    assert calls == [True]
+
+
+def test_copy_shortcut_does_not_touch_ctypes_directly():
+    """模块里不该再出现裸 ctypes.windll——那正是非 Windows 上崩掉的原因。
+
+    用 AST 检查而不是在源码文本里搜关键字：注释里提到 ``ctypes.windll`` 是为了
+    解释为什么不能这么写，按文本搜会把解释当成违规。
+    """
+    from platform_guard import platform_violations
+
+    assert platform_violations(smart_translation_controller_mod) == []
 
 
 def test_disabled_clipboard_monitor_reads_current_text_once(monkeypatch, qapp):

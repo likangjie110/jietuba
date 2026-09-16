@@ -14,22 +14,15 @@
 
 import threading
 import time
-import ctypes
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import List, Optional, Tuple
 
-# 有没有 Win32：两条路的差别就在这几个 API 上（抓帧 + 取光标 + 取按键状态），
-# 判断做成模块级常量，非 Windows 上整套降级到 mss + Qt/Quartz。
-_IS_WINDOWS = hasattr(ctypes, "windll")
-
-# Win32 POINT 结构体（复用）
-class _POINT(ctypes.Structure):
-    _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
-
 from PySide6.QtCore import QObject, QTimer, QRect, QThread, Signal
 
 from core.logger import log_error, log_info, log_exception, T
+from core.platform import IS_WINDOWS
+from core.platform import pointer
 
 try:
     import gifrecorder
@@ -257,7 +250,7 @@ class FrameRecorder(QObject):
 
         # 启动抓帧：Windows 走 Rust 的 GDI BitBlt，其它平台用 mss 抓帧喂同一个 FrameStore
         try:
-            if _IS_WINDOWS:
+            if IS_WINDOWS:
                 self._session = gifrecorder.RecordSession(
                     self._store, left, top, w, h, self._fps,
                 )
@@ -285,7 +278,7 @@ class FrameRecorder(QObject):
         self.state_changed.emit(self._state.name)
         log_info(T("录制开始: {w}x{h} @ {fps}fps ({backend})",
                    w=w, h=h, fps=self._fps,
-                   backend="Rust Win32 BitBlt" if _IS_WINDOWS else "mss"), "GIF")
+                   backend="Rust Win32 BitBlt" if IS_WINDOWS else "mss"), "GIF")
 
     def pause(self):
         """暂停录制"""
@@ -463,34 +456,18 @@ class FrameRecorder(QObject):
 
     @staticmethod
     def _get_cursor_pos() -> Tuple[int, int]:
-        """鼠标屏幕坐标（Windows 用 GetCursorPos，其它平台用 Qt）。"""
-        if not _IS_WINDOWS:
-            from PySide6.QtGui import QCursor
-            pos = QCursor.pos()
-            return pos.x(), pos.y()
-        pt = _POINT()
-        ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
-        return pt.x, pt.y
+        """鼠标屏幕坐标（平台层负责选 Win32 的 GetCursorPos 还是 Qt 的 QCursor）。"""
+        return pointer.cursor_position()
 
     @staticmethod
     def _button_pressed(button: int) -> bool:
         """鼠标键是否按下。button: 0=左, 1=右。
 
-        Windows 用 GetAsyncKeyState（VK_LBUTTON/VK_RBUTTON）；macOS 用 Quartz 的
-        CGEventSourceButtonState——读的是全局按键状态，不需要辅助功能权限。
+        平台层里只有 Windows（GetAsyncKeyState）与 macOS（Quartz，不需要辅助功能
+        权限）有实现；Linux 上会在第一次调用时记一条日志说明为什么按键特效不出现
+        ——迁移前这里恒返回 False 且不带任何线索。
         """
-        if not _IS_WINDOWS:
-            try:
-                from Quartz import (
-                    CGEventSourceButtonState,
-                    kCGEventSourceStateCombinedSessionState,
-                )
-                return bool(CGEventSourceButtonState(
-                    kCGEventSourceStateCombinedSessionState, button))
-            except Exception:
-                return False
-        vk = 0x01 if button == 0 else 0x02
-        return bool(ctypes.windll.user32.GetAsyncKeyState(vk) & 0x8000)
+        return pointer.is_button_pressed(button)
 
     @staticmethod
     def _is_left_pressed() -> bool:
@@ -503,31 +480,26 @@ class FrameRecorder(QObject):
         return FrameRecorder._button_pressed(1)
 
     def _start_scroll_listener(self):
-        """启动 pynput 滚轮监听（后台线程）"""
-        try:
-            from pynput import mouse
+        """启动全局滚轮监听（后台线程）。"""
+        if self._mouse_listener is None:
+            self._mouse_listener = pointer.create_scroll_listener(
+                self._on_scroll_event, on_error=self._on_scroll_listener_error
+            )
 
-            def _on_scroll(x, y, dx, dy):
-                # dy>0=向上, dy<0=向下
-                if dy > 0:
-                    self._scroll_value = 1
-                elif dy < 0:
-                    self._scroll_value = -1
+    def _on_scroll_event(self, _x, _y, _dx, dy):
+        """滚轮回调（在 pynput 线程里）：dy>0=向上，dy<0=向下。"""
+        if dy > 0:
+            self._scroll_value = 1
+        elif dy < 0:
+            self._scroll_value = -1
 
-            self._mouse_listener = mouse.Listener(on_scroll=_on_scroll)
-            self._mouse_listener.start()
-        except Exception as e:
-            log_error(T("pynput 滚轮监听启动失败: {e}", e=e), "GIF")
-            self._mouse_listener = None
+    def _on_scroll_listener_error(self, error):
+        log_error(T("pynput 滚轮监听启动失败: {e}", e=error), "GIF")
 
     def _stop_scroll_listener(self):
-        """停止 pynput 滚轮监听"""
-        if self._mouse_listener is not None:
-            try:
-                self._mouse_listener.stop()
-            except Exception as e:
-                log_exception(e, T("停止滚轮监听"))
-            self._mouse_listener = None
+        """停止滚轮监听"""
+        pointer.stop_listener(self._mouse_listener)
+        self._mouse_listener = None
         self._scroll_value = 0
 
     def _sample_cursor(self):

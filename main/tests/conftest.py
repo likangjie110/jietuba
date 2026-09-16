@@ -27,6 +27,13 @@ project_root = os.path.dirname(main_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+# tests/ 自身也加入：测试之间共享的助手（platform_guard 等）需要可导入。
+# pytest 不会自动加这个目录——它只把 rootdir 插入 sys.path，而本仓库的 rootdir 是
+# tests/ 上一层的配置位置，实测拿不到。
+tests_dir = os.path.dirname(os.path.abspath(__file__))
+if tests_dir not in sys.path:
+    sys.path.insert(0, tests_dir)
+
 
 @pytest.fixture(scope="session")
 def qapp():

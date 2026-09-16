@@ -215,7 +215,7 @@ class TestStartPicksTheRightBackend:
         fake_module.FrameStore = lambda **kwargs: _FakeStoreFactory()
         monkeypatch.setattr(frame_recorder, "gifrecorder", fake_module)
         monkeypatch.setattr(frame_recorder, "_gifrecorder_available", True)
-        monkeypatch.setattr(frame_recorder, "_IS_WINDOWS", False)
+        monkeypatch.setattr(frame_recorder, "IS_WINDOWS", False)
         monkeypatch.setattr(frame_recorder, "_MssCaptureThread", _FakeThread)
         monkeypatch.setattr(FrameRecorder, "_start_scroll_listener", lambda self: None)
 

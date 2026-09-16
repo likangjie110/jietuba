@@ -3,19 +3,13 @@
 
 from __future__ import annotations
 
-import ctypes
-
 from PySide6.QtCore import QObject, QPoint, QTimer, Slot
 from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import QApplication
 
 from core.logger import log_debug, log_exception, T
+from core.platform import pointer
 from settings import get_tool_settings_manager
-
-
-VK_CONTROL = 0x11
-VK_INSERT = 0x2D
-KEYEVENTF_KEYUP = 0x0002
 
 
 class SmartTranslationController(QObject):
@@ -112,12 +106,14 @@ class SmartTranslationController(QObject):
         self._open_compact_input(token, "empty-clipboard")
 
     def _send_copy_shortcut(self) -> None:
-        """Send the Windows alternate copy shortcut without raising console SIGINT."""
-        user32 = ctypes.windll.user32
-        user32.keybd_event(VK_CONTROL, 0, 0, 0)
-        user32.keybd_event(VK_INSERT, 0, 0, 0)
-        user32.keybd_event(VK_INSERT, 0, KEYEVENTF_KEYUP, 0)
-        user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+        """注入「复制选中内容」快捷键。
+
+        迁移前这里直接调 ``ctypes.windll.user32.keybd_event``：非 Windows 上没有
+        windll，会抛 AttributeError，于是智能翻译在 macOS/Linux 上只能退化成手动
+        输入原文。平台层按平台选择快捷键（Windows Ctrl+Insert、macOS Cmd+C、
+        Linux Ctrl+C），调用方不需要知道这些差异。
+        """
+        pointer.send_copy_shortcut()
 
     @Slot(object)
     def on_clipboard_item(self, item) -> None:
