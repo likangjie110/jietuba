@@ -1364,6 +1364,42 @@ Replace it?</translation>
 <context>
     <name>SettingsDialog</name>
     <message>
+        <source>Delete</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <source>Offline Models</source>
+        <translation>Offline Models</translation>
+    </message>
+    <message>
+        <source>Offline translation runtime is missing from this build: {reason}</source>
+        <translation>Offline translation runtime is missing from this build: {reason}</translation>
+    </message>
+    <message>
+        <source>No offline model is available for download yet.</source>
+        <translation>No offline model is available for download yet.</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Install</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Installed</translation>
+    </message>
+    <message>
+        <source>Installed (in memory)</source>
+        <translation>Installed (in memory)</translation>
+    </message>
+    <message>
+        <source>Incomplete ({size} downloaded)</source>
+        <translation>Incomplete ({size} downloaded)</translation>
+    </message>
+    <message>
+        <source>Not installed</source>
+        <translation>Not installed</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>Translation</translation>
     </message>

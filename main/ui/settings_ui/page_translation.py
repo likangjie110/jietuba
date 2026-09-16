@@ -240,6 +240,13 @@ def create_translation_page(dialog) -> QWidget:
 
     layout.addWidget(grp_opts)
 
+    # ════ 离线模型 ════
+    # 放在这里而不是最前面：选中"离线引擎"时上面几组 API 表单都是隐藏的，
+    # 于是它自然出现在引擎选择的正下方
+    from .local_models_card import LocalModelsGroup
+    dialog.local_models_group = LocalModelsGroup(dialog, page)
+    layout.addWidget(dialog.local_models_group)
+
     # 提示
     info_label = QLabel(
         "💡 " + dialog.tr("DeepL free tier: 500,000 chars/month. Get API key at")
@@ -311,6 +318,11 @@ def _update_provider_groups(dialog) -> None:
     dialog.azure_translate_settings_group.setVisible(
         provider_id == "azure"
     )
+    if hasattr(dialog, "local_models_group"):
+        dialog.local_models_group.setVisible(provider_id == "local")
+        # 切到本地引擎时顺手刷新一次：装完模型不重启就能看到状态变化
+        if provider_id == "local":
+            dialog.local_models_group.refresh()
     if hasattr(dialog, "deepl_translation_info_label"):
         dialog.deepl_translation_info_label.setVisible(
             provider_id == "deepl"

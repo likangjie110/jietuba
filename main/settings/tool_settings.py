@@ -258,6 +258,7 @@ class ToolSettingsManager(QObject):
         "azure_translate_region": "",
         "azure_translate_endpoint": "",
         "translation_target_lang": "",         # 翻译目标语言（空为跟随系统语言）
+        "local_model_id": "",                  # 离线引擎用的模型（空为第一个已安装的）
         "translation_split_sentences": True,   # 自动分句
         "translation_preserve_formatting": True,  # 保留格式
 
@@ -925,7 +926,23 @@ class ToolSettingsManager(QObject):
                 "region": self.get_azure_translate_region(),
                 "endpoint": self.get_azure_translate_endpoint(),
             }
+        if provider_id == "local":
+            # 本地离线引擎没有密钥，只有"用哪个模型"（空 = 用第一个装好的）
+            return {"model_id": self.get_local_model_id()}
         return {}
+
+    # ==================== 本地离线引擎 ====================
+
+    def get_local_model_id(self) -> str:
+        """离线引擎使用的模型 id；空表示用第一个已安装的模型。"""
+        return self.qsettings.value(
+            "translation/local_model_id",
+            self.APP_DEFAULT_SETTINGS["local_model_id"],
+            type=str,
+        )
+
+    def set_local_model_id(self, value: str):
+        self.qsettings.setValue("translation/local_model_id", value or "")
     
     def get_deepl_api_key(self) -> str:
         """获取 DeepL API 密钥"""

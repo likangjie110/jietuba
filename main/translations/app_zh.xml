@@ -1457,6 +1457,42 @@ Replace it?</source>
 <context>
     <name>SettingsDialog</name>
     <message>
+        <source>Delete</source>
+        <translation>删除</translation>
+    </message>
+    <message>
+        <source>Offline Models</source>
+        <translation>离线模型</translation>
+    </message>
+    <message>
+        <source>Offline translation runtime is missing from this build: {reason}</source>
+        <translation>此版本的离线翻译运行库缺失：{reason}</translation>
+    </message>
+    <message>
+        <source>No offline model is available for download yet.</source>
+        <translation>暂时没有可下载的离线模型。</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>安装</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>已安装</translation>
+    </message>
+    <message>
+        <source>Installed (in memory)</source>
+        <translation>已安装（已载入内存）</translation>
+    </message>
+    <message>
+        <source>Incomplete ({size} downloaded)</source>
+        <translation>未下载完（已下载 {size}）</translation>
+    </message>
+    <message>
+        <source>Not installed</source>
+        <translation>未安装</translation>
+    </message>
+    <message>
         <source>Translation</source>
         <translation>翻译</translation>
     </message>

@@ -44,9 +44,13 @@ class _Edit:
 class _Visibility:
     def __init__(self):
         self.calls = []
+        self.refresh_calls = 0
 
     def setVisible(self, value):
         self.calls.append(value)
+
+    def refresh(self):
+        self.refresh_calls += 1
 
     @property
     def visible(self):
@@ -364,6 +368,7 @@ PROVIDER_GROUPS = {
     "amazon": "amazon_translate_settings_group",
     "google": "google_translate_settings_group",
     "azure": "azure_translate_settings_group",
+    "local": "local_models_group",
 }
 
 
@@ -405,6 +410,16 @@ class TestProviderGroupVisibility:
             assert dialog.deepl_translation_info_label.visible is expected, provider
             assert dialog.split_sentences_toggle.visible is expected, provider
             assert dialog.preserve_formatting_toggle.visible is expected, provider
+
+    def test_switching_to_local_refreshes_the_model_list(self):
+        """装完模型不重启也要能看到状态变化，所以选中时顺手刷一次。"""
+        dialog = _translation_dialog("local")
+        page_translation._update_provider_groups(dialog)
+        assert dialog.local_models_group.refresh_calls == 1
+
+        dialog = _translation_dialog("google")
+        page_translation._update_provider_groups(dialog)
+        assert dialog.local_models_group.refresh_calls == 0
 
     def test_optional_widgets_absent_before_the_page_is_built(self):
         dialog = _translation_dialog("deepl", with_optional=False)
