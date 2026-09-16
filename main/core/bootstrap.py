@@ -337,16 +337,16 @@ class PreloadManager:
                     # 3. 预加载 tools 模块（所有绘图工具）
                     log_debug(T("tools 模块已加载"), "Preload")
 
-                    # 4. 预加载智能选区依赖（win32gui）
-                    try:
-                        # 预加载：这些导入的目的就是把模块提前装进 import 缓存，
-                        # 让首次截图时不必等待，因此"未使用"是预期的。
-                        import win32gui  # noqa: F401
-                        import win32con  # noqa: F401
-                        from capture.window_finder import WindowFinder  # noqa: F401
-                        log_debug(T("win32gui 模块已加载"), "Preload")
-                    except ImportError:
-                        log_debug(T("win32gui 未安装，跳过"), "Preload")
+                    # 4. 预加载智能选区依赖
+                    # 预加载：导入的目的就是把模块提前装进 import 缓存，让首次截图
+                    # 时不必等待，因此"未使用"是预期的。预热谁由平台层决定——以前
+                    # 这里直接 import win32gui，非 Windows 上必然失败。
+                    from core.platform.window import preload
+
+                    if preload():
+                        log_debug(T("窗口枚举后端已预热"), "Preload")
+                    else:
+                        log_debug(T("当前平台没有窗口枚举后端，跳过预热"), "Preload")
 
                     # 4.5 预加载 win32clipboard
                     try:

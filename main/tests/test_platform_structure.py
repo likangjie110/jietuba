@@ -18,7 +18,12 @@ import pathlib
 
 import pytest
 
-from platform_guard import MACOS_ONLY_MODULES, WINDOWS_ONLY_MODULES, source_ast
+from platform_guard import (
+    MACOS_ONLY_MODULES,
+    WINDOWS_ONLY_MODULES,
+    is_importable_module_name,
+    source_ast,
+)
 
 # tests/ 与 main/ 的上一级，即仓库根
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
@@ -30,10 +35,6 @@ EXCLUDED_DIRS = {"platform", "tests", "translations", "scripts"}
 
 # 尚未迁移的模块 -> 所属能力。迁移完成后必须删掉对应行，否则 test_ledger 会失败。
 REMAINING_PLATFORM_DEPENDENCIES = {
-    "main/capture/window_finder.py":
-        "窗口枚举（Capability.WINDOW_ENUMERATION）待迁到 core/platform/window",
-    "main/capture/window_finder_macos.py":
-        "同上：macOS 的 Quartz 后端届时并入 window 的平台后端",
     "main/core/shortcut_manager.py":
         "全局热键（HOTKEY_KEYBOARD / HOTKEY_MOUSE）待迁到 core/platform/hotkey",
     "main/core/clipboard_utils.py":
@@ -52,6 +53,10 @@ REMAINING_PLATFORM_DEPENDENCIES = {
 def _is_excluded(path: pathlib.Path) -> bool:
     if path.name.startswith("_"):
         return False
+    if not is_importable_module_name(path.stem):
+        # 名字带空格之类的文件不能被 import，不属于应用的一部分；
+        # 它们由 TestNoStrayModules 单独报出来
+        return True
     return bool(set(path.parts) & EXCLUDED_DIRS)
 
 
@@ -143,6 +148,26 @@ class TestNoNewPlatformDependencies:
         for path, reason in REMAINING_PLATFORM_DEPENDENCIES.items():
             assert reason.strip(), f"{path} 缺少说明"
             assert (REPO_ROOT / path).exists(), f"{path} 已不存在"
+
+
+class TestNoStrayModules:
+    """仓库里不该出现不能被 import 的 .py 文件。
+
+    这类文件是同步工具/编辑器留下的「X 2.py」冲突副本：既不会被加载，也容易被
+    ``git add -A`` 误提交，还会让结构扫描报出莫名其妙的结果。它们通常与某个 git
+    历史版本逐字节相同，确认后用 git 就能取回，可以直接删掉。
+    """
+
+    def test_python_filenames_are_importable(self):
+        offenders = sorted(
+            path.relative_to(REPO_ROOT).as_posix()
+            for path in SCAN_ROOT.rglob("*.py")
+            if not is_importable_module_name(path.stem)
+        )
+        assert offenders == [], (
+            "这些 .py 文件名不是合法的模块名（多半是重复副本，可对照 git 历史确认后删除）：\n"
+            + "\n".join(f"  {p}" for p in offenders)
+        )
 
 
 class TestPlatformLayerIsTheOnlyHome:

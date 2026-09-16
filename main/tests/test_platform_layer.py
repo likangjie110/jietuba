@@ -167,33 +167,38 @@ class TestTruthTable:
 
 
 class TestSmartSelectionWiring:
-    """智能选区可用性 = 「平台声明有后端」且有「依赖真的导入成功」。
+    """窗口枚举可用性 = 「平台声明有后端」且「依赖真的导入成功」。
 
     两者缺一不可：声明为真但没装 pywin32 时功能是坏的，声明为假时更不该乐观。
+    这里只断言这条组合逻辑，后端本身的过滤规则见 test_platform_window.py。
     """
 
     def test_unavailable_when_platform_declares_no_backend(self, monkeypatch):
-        from capture import window_finder as wf
+        from core.platform import window
 
-        monkeypatch.setattr(wf, "WINDOWS_API_AVAILABLE", False)
-        monkeypatch.setattr(wf, "MACOS_API_AVAILABLE", False)
-        assert wf.is_smart_selection_available() is False
+        monkeypatch.setattr(window, "IS_WINDOWS", False)
+        monkeypatch.setattr(window, "IS_MACOS", False)
+        assert window.is_window_enumeration_available() is False
 
-    def test_unavailable_when_dependency_missing_even_if_declared(self, monkeypatch):
-        from capture import window_finder as wf
+    def test_unavailable_when_backend_missing(self, monkeypatch):
+        from core.platform import window
 
-        monkeypatch.setattr(wf, "WINDOWS_API_AVAILABLE", False)
-        monkeypatch.setattr(wf, "MACOS_API_AVAILABLE", False)
-        monkeypatch.setattr(wf, "available", lambda *a, **k: True)
-        assert wf.is_smart_selection_available() is False
+        monkeypatch.setattr(window, "IS_WINDOWS", True)
+        monkeypatch.setattr(window, "IS_MACOS", False)
+        import core.platform.window_win32 as backend
+
+        monkeypatch.setattr(backend, "WINDOWS_API_AVAILABLE", False)
+        assert window.is_window_enumeration_available() is False
 
     def test_available_when_both_hold(self, monkeypatch):
-        from capture import window_finder as wf
+        from core.platform import window
 
-        monkeypatch.setattr(wf, "available", lambda *a, **k: True)
-        # 两个平台标志里至少一个为真的情况
-        monkeypatch.setattr(wf, "MACOS_API_AVAILABLE", True)
-        assert wf.is_smart_selection_available() is True
+        monkeypatch.setattr(window, "IS_WINDOWS", True)
+        monkeypatch.setattr(window, "IS_MACOS", False)
+        import core.platform.window_win32 as backend
+
+        monkeypatch.setattr(backend, "WINDOWS_API_AVAILABLE", True)
+        assert window.is_window_enumeration_available() is True
 
 
 def _table(capability):

@@ -277,18 +277,23 @@ class TestRetiredModules:
 
 
 class TestWindowOpsConstantsAreShared:
-    """同名 Win32 常量原先在 4 个文件里各抄一份，现在只有平台层一处定义。"""
+    """同名 Win32 常量原先在 4 个文件里各抄一份，现在只有平台层一处定义。
+
+    只扫生产代码：测试里的假 win32con 需要自带常量表（模拟的就是那个模块），
+    脚本也不随发行版走。
+    """
 
     def test_no_duplicate_definitions_left(self):
         import pathlib
         import re
 
         pattern = re.compile(r"^\s*WS_EX_TRANSPARENT\s*=\s*0x", re.M)
-        hits = [
-            path.as_posix()
-            for path in pathlib.Path("main").rglob("*.py")
-            if pattern.search(path.read_text(encoding="utf-8"))
-        ]
+        hits = []
+        for path in pathlib.Path("main").rglob("*.py"):
+            if set(path.parts) & {"tests", "scripts"}:
+                continue
+            if pattern.search(path.read_text(encoding="utf-8")):
+                hits.append(path.as_posix())
         assert hits == ["main/core/platform/window_ops.py"], hits
 
 

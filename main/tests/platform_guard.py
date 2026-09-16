@@ -58,6 +58,18 @@ def _clean_source(text: str) -> str:
     return textwrap.dedent(text.lstrip("\ufeff"))
 
 
+def is_importable_module_name(stem: str) -> bool:
+    """``.py`` 文件名是否是合法的 Python 模块名。
+
+    名字带空格（例如同步工具/编辑器留下的 ``page_misc 2.py`` 冲突副本）的文件根本
+    不能被 import，也就不属于应用的一部分。它们会污染结构扫描并可能被 ``git add -A``
+    误提交，所以要单独报出来，而不是混进「依赖了单一平台」那一类。
+    """
+    if not stem or stem[0].isdigit():
+        return False
+    return all(ch.isalnum() or ch == "_" for ch in stem)
+
+
 def imported_module_names(module) -> set[str]:
     """模块里 import 过的顶层模块名（不含函数内的延迟导入——那些本就是允许的）。"""
     return {

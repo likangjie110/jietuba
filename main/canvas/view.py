@@ -346,15 +346,15 @@ class CanvasView(QGraphicsView):
         
         if enabled:
             # 检查依赖
-            from capture.window_finder import is_smart_selection_available
-            if not is_smart_selection_available():
+            from core.platform.window import is_window_enumeration_available
+            if not is_window_enumeration_available():
                 log_warning(T("当前平台没有可用的窗口枚举接口，智能选区功能不可用"), "SmartSelect")
                 self.smart_selection_enabled = False
                 return
             
             # 创建 WindowFinder 实例
             if not self.window_finder:
-                from capture.window_finder import WindowFinder
+                from core.platform.window import WindowFinder
                 # 新架构 CanvasScene 使用全局坐标系（与屏幕物理坐标一致）
                 # 因此不需要减去偏移量，直接使用全局坐标即可
                 self.window_finder = WindowFinder(0, 0)
