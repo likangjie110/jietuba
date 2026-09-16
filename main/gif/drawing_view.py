@@ -16,6 +16,8 @@ gdigrab 直接抓屏幕像素，因此本窗口画出的内容会被自动录进
 from __future__ import annotations
 
 import ctypes
+
+from . import click_through
 from typing import Optional
 
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsRectItem
@@ -54,7 +56,10 @@ SWP_FRAMECHANGED  = 0x0020
 
 
 def _set_click_through(hwnd: int, enable: bool):
-    """设置/取消 WS_EX_TRANSPARENT"""
+    """设置/取消鼠标穿透（Windows: WS_EX_TRANSPARENT / macOS: NSWindow）"""
+    if not click_through.IS_WINDOWS:
+        click_through.set_click_through_macos(hwnd, enable)
+        return
     try:
         user32 = ctypes.windll.user32
         style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)

@@ -11,9 +11,14 @@
 
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::Arc;
-use std::thread::{self, JoinHandle};
+// thread/Duration/Instant 只有 Windows 的截屏循环用得到，非 Windows 构建下不引入
+#[cfg(target_os = "windows")]
+use std::thread;
+use std::thread::JoinHandle;
+#[cfg(target_os = "windows")]
 use std::time::{Duration, Instant};
 
+#[cfg(target_os = "windows")]
 use crate::capture::ScreenCapture;
 use crate::frame_store::FrameStore;
 
@@ -55,24 +60,40 @@ impl RecordSession {
         height: i32,
         fps: u32,
     ) -> Result<Self, String> {
+        // 非 Windows 没有 GDI：捕获交给 Python（mss）→ FrameStore.push_bgra()。
+        // 这里明确报错，而不是让调用方拿到一个"看起来在录、其实一帧没有"的会话。
+        #[cfg(not(target_os = "windows"))]
+        {
+            let _ = (store, left, top, width, height, fps);
+            return Err(
+                "RecordSession 依赖 Windows GDI 截屏；其它平台请用 FrameStore.push_bgra() \
+                 从 Python 侧（mss）喂帧"
+                    .to_string(),
+            );
+        }
+
+        #[cfg(target_os = "windows")]
         let control = Arc::new(SessionControl {
             state: AtomicU8::new(SESSION_RECORDING),
             stop: AtomicBool::new(false),
             paused: AtomicBool::new(false),
         });
 
-        let ctrl = control.clone();
-        let store_clone = store.clone();
+        #[cfg(target_os = "windows")]
+        {
+            let ctrl = control.clone();
+            let store_clone = store.clone();
 
-        let handle = thread::spawn(move || {
-            capture_loop(store_clone, ctrl, left, top, width, height, fps);
-        });
+            let handle = thread::spawn(move || {
+                capture_loop(store_clone, ctrl, left, top, width, height, fps);
+            });
 
-        Ok(Self {
-            control,
-            handle: Some(handle),
-            store,
-        })
+            Ok(Self {
+                control,
+                handle: Some(handle),
+                store,
+            })
+        }
     }
 
     /// 暂停录制
@@ -130,7 +151,8 @@ impl Drop for RecordSession {
     }
 }
 
-/// 截屏循环（在独立线程运行）
+/// 截屏循环（在独立线程运行，Windows 专用）
+#[cfg(target_os = "windows")]
 fn capture_loop(
     store: Arc<FrameStore>,
     ctrl: Arc<SessionControl>,

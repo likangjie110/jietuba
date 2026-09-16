@@ -3,6 +3,9 @@
 //! 替代 PyAV (67 MB) 的轻量级方案。
 //! 提供帧存储、JPEG 压缩、后台解码、GIF 导出、Win32 屏幕截取。
 
+// GDI 截屏（BitBlt）是 Windows 专用的；其它平台由 Python 侧用 mss 抓帧，
+// 再通过 FrameStore.push_bgra() 喂进来，所以这个模块整块不带进非 Windows 构建。
+#[cfg(target_os = "windows")]
 pub mod capture;
 pub mod decoder;
 pub mod frame_store;

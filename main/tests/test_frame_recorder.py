@@ -39,7 +39,10 @@ def mock_gifrecorder():
     fake_module.RecordSession.return_value = fake_session
 
     with patch.object(frame_recorder_module, "gifrecorder", fake_module), \
-         patch.object(frame_recorder_module, "_gifrecorder_available", True):
+         patch.object(frame_recorder_module, "_gifrecorder_available", True), \
+         patch.object(frame_recorder_module, "_IS_WINDOWS", True):
+        # 这些用例测的是状态机本身，和"用哪条抓帧后端"无关：
+        # 钉在 Windows 分支（Rust RecordSession）上，跑在哪个平台都一样。
         yield fake_module, fake_store, fake_session
 
 
@@ -55,10 +58,8 @@ def mock_win32_cursor():
     """所有测试默认屏蔽真实 GetCursorPos/GetAsyncKeyState 调用"""
     with patch.object(FrameRecorder, "_get_cursor_pos",
                       new=staticmethod(lambda: (0, 0))), \
-         patch.object(FrameRecorder, "_is_left_pressed",
-                      new=staticmethod(lambda: False)), \
-         patch.object(FrameRecorder, "_is_right_pressed",
-                      new=staticmethod(lambda: False)):
+         patch.object(FrameRecorder, "_button_pressed",
+                      new=staticmethod(lambda button: False)):
         yield
 
 

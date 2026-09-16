@@ -2,6 +2,8 @@
 """蓝色/红色选区边框覆盖层 — 动态穿透切换 + RESIZE 模式下 4 边拖拽"""
 
 import ctypes
+
+from . import click_through
 from enum import Enum, auto
 
 from PySide6.QtWidgets import QWidget
@@ -85,6 +87,9 @@ class CaptureOverlay(QWidget):
 
     def _set_passthrough(self, enable: bool):
         hwnd = int(self.winId())
+        if not click_through.IS_WINDOWS:
+            click_through.set_click_through_macos(hwnd, enable)
+            return
         style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
         if enable:
             style |= WS_EX_TRANSPARENT | WS_EX_LAYERED

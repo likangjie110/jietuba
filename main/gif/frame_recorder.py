@@ -12,11 +12,16 @@
 图像由 PlaybackEngine 通过 FrameStore.get_frame_rgb() / start_decoder() 解码。
 """
 
+import threading
 import time
 import ctypes
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import List, Optional, Tuple
+
+# 有没有 Win32：两条路的差别就在这几个 API 上（抓帧 + 取光标 + 取按键状态），
+# 判断做成模块级常量，非 Windows 上整套降级到 mss + Qt/Quartz。
+_IS_WINDOWS = hasattr(ctypes, "windll")
 
 # Win32 POINT 结构体（复用）
 class _POINT(ctypes.Structure):
@@ -61,6 +66,60 @@ class FrameData:
     height: int   = 0            # 录制区域原始高度（偶数对齐后）
     annotations: list = field(default_factory=list)
     cursor: Optional[CursorSnapshot] = None  # 鼠标状态（None = 未采集）
+
+
+class _MssCaptureThread(QThread):
+    """非 Windows 的抓帧线程，接口对齐 gifrecorder.RecordSession。
+
+    Windows 上抓帧在 Rust 里（GDI BitBlt，零 GIL 争用）；其它平台没有对应实现，
+    这里用 mss 抓帧后把 BGRA 原样交给同一个 FrameStore——压缩、存储、导出仍然全在
+    Rust。方法名刻意与 RecordSession 一致（stop/pause/resume），这样上层的
+    "暂停 / 恢复 / 停止" 三处调用不用分平台写两遍。
+    """
+
+    def __init__(self, store, left: int, top: int, width: int, height: int,
+                 fps: int, elapsed_ms, parent=None):
+        super().__init__(parent)
+        self._store = store
+        self._region = {"left": left, "top": top, "width": width, "height": height}
+        self._fps = max(1, fps)
+        self._elapsed_ms = elapsed_ms       # 可调用对象，返回距开始录制的毫秒数
+        self._stopped = threading.Event()
+        self._paused = threading.Event()
+
+    def stop(self):
+        self._stopped.set()
+        self.wait(2000)
+
+    def pause(self):
+        self._paused.set()
+
+    def resume(self):
+        self._paused.clear()
+
+    def run(self):
+        try:
+            import mss
+        except ImportError as e:
+            log_error(T("缺少 mss，非 Windows 平台无法抓帧: {e}", e=e), "GIF")
+            return
+
+        interval = 1.0 / self._fps
+        with mss.mss() as sct:
+            while not self._stopped.is_set():
+                if self._paused.is_set() or self._store.is_paused:   # is_paused 是属性
+                    time.sleep(0.01)
+                    continue
+                started = time.perf_counter()
+                try:
+                    shot = sct.grab(self._region)
+                    # mss 给的 raw 就是 BGRA，直接喂给 Rust，不做像素转换
+                    self._store.push_bgra(memoryview(shot.raw), int(self._elapsed_ms()))
+                except Exception as e:
+                    log_exception(e, T("mss 抓帧失败"))
+                spent = time.perf_counter() - started
+                if spent < interval:
+                    time.sleep(interval - spent)
 
 
 # ── 采集器 ──────────────────────────────────────────
@@ -196,13 +255,22 @@ class FrameRecorder(QObject):
             self._store = None
             return
 
-        # 启动 Rust 截屏会话（Win32 BitBlt，独立 Rust 线程）
+        # 启动抓帧：Windows 走 Rust 的 GDI BitBlt，其它平台用 mss 抓帧喂同一个 FrameStore
         try:
-            self._session = gifrecorder.RecordSession(
-                self._store, left, top, w, h, self._fps,
-            )
+            if _IS_WINDOWS:
+                self._session = gifrecorder.RecordSession(
+                    self._store, left, top, w, h, self._fps,
+                )
+            else:
+                self._session = _MssCaptureThread(
+                    self._store, left, top, w, h, self._fps,
+                    elapsed_ms=lambda: (time.perf_counter() - self._start_time
+                                        - self._pause_offset) * 1000,
+                    parent=self,
+                )
+                self._session.start()
         except Exception as e:
-            log_error(T("RecordSession 启动失败: {e}", e=e), "GIF")
+            log_error(T("抓帧会话启动失败: {e}", e=e), "GIF")
             self._store = None
             self._session = None
             return
@@ -215,7 +283,9 @@ class FrameRecorder(QObject):
         self._timer.start(1000 // self._fps)
         self._start_scroll_listener()
         self.state_changed.emit(self._state.name)
-        log_info(T("录制开始: {w}x{h} @ {fps}fps (Rust Win32 BitBlt)", w=w, h=h, fps=self._fps), "GIF")
+        log_info(T("录制开始: {w}x{h} @ {fps}fps ({backend})",
+                   w=w, h=h, fps=self._fps,
+                   backend="Rust Win32 BitBlt" if _IS_WINDOWS else "mss"), "GIF")
 
     def pause(self):
         """暂停录制"""
@@ -393,22 +463,44 @@ class FrameRecorder(QObject):
 
     @staticmethod
     def _get_cursor_pos() -> Tuple[int, int]:
-        """获取鼠标屏幕坐标（Win32 GetCursorPos）"""
+        """鼠标屏幕坐标（Windows 用 GetCursorPos，其它平台用 Qt）。"""
+        if not _IS_WINDOWS:
+            from PySide6.QtGui import QCursor
+            pos = QCursor.pos()
+            return pos.x(), pos.y()
         pt = _POINT()
         ctypes.windll.user32.GetCursorPos(ctypes.byref(pt))
         return pt.x, pt.y
 
     @staticmethod
+    def _button_pressed(button: int) -> bool:
+        """鼠标键是否按下。button: 0=左, 1=右。
+
+        Windows 用 GetAsyncKeyState（VK_LBUTTON/VK_RBUTTON）；macOS 用 Quartz 的
+        CGEventSourceButtonState——读的是全局按键状态，不需要辅助功能权限。
+        """
+        if not _IS_WINDOWS:
+            try:
+                from Quartz import (
+                    CGEventSourceButtonState,
+                    kCGEventSourceStateCombinedSessionState,
+                )
+                return bool(CGEventSourceButtonState(
+                    kCGEventSourceStateCombinedSessionState, button))
+            except Exception:
+                return False
+        vk = 0x01 if button == 0 else 0x02
+        return bool(ctypes.windll.user32.GetAsyncKeyState(vk) & 0x8000)
+
+    @staticmethod
     def _is_left_pressed() -> bool:
-        """鼠标左键是否按下（Win32 GetAsyncKeyState）"""
-        # VK_LBUTTON = 0x01
-        return bool(ctypes.windll.user32.GetAsyncKeyState(0x01) & 0x8000)
+        """鼠标左键是否按下"""
+        return FrameRecorder._button_pressed(0)
 
     @staticmethod
     def _is_right_pressed() -> bool:
-        """鼠标右键是否按下（Win32 GetAsyncKeyState）"""
-        # VK_RBUTTON = 0x02
-        return bool(ctypes.windll.user32.GetAsyncKeyState(0x02) & 0x8000)
+        """鼠标右键是否按下"""
+        return FrameRecorder._button_pressed(1)
 
     def _start_scroll_listener(self):
         """启动 pynput 滚轮监听（后台线程）"""
