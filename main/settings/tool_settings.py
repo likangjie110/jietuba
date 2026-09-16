@@ -20,6 +20,8 @@ from typing import Dict, Any, Optional
 from PySide6.QtCore import QSettings, Signal, QObject
 from PySide6.QtGui import QColor
 
+from core.platform.paths import default_screenshot_dir, log_dir
+
 
 ANNOTATION_TOOL_SHORTCUTS = (
     ("inapp_tool_cursor", "cursor", "Select / Cursor", "s"),
@@ -191,7 +193,7 @@ class ToolSettingsManager(QObject):
 
         # 截图保存
         "screenshot_save_enabled": True,       # 自动保存截图
-        "screenshot_save_path": os.path.join(os.path.expanduser("~"), "Pictures", "jietuba_photos"),  # 默认保存路径
+        "screenshot_save_path": default_screenshot_dir(),  # 默认保存路径（按平台选目录）
         "screenshot_format": "PNG",            # 保存格式: PNG / JPG / BMP / WEBP / PDF
         "screenshot_quality": 85,              # 有损格式质量 (1-100, PNG/BMP忽略)
 
@@ -264,7 +266,7 @@ class ToolSettingsManager(QObject):
 
         # ==================== 6. 日志 ====================
         "log_enabled": True,                   # 日志启用
-        "log_dir": os.path.join(os.path.expanduser("~"), "AppData", "Local", "Jietuba", "Logs"),
+        "log_dir": str(log_dir()),             # 与平台层的日志落点保持同一处来源
         "log_level": "INFO",                  # 日志等级: DEBUG, INFO, WARNING, ERROR
         "log_retention_days": 7,               # 日志保留天数（0表示永久保留）
 

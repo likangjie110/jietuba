@@ -2,28 +2,24 @@
 """
 全局常量。
 """
-import os
 from pathlib import Path
+
+from core.platform.paths import app_data_dir, log_dir
 
 
 # ── 应用数据目录 ──────────────────────────────────────────
+# 实现已迁到平台层，Windows 取值逐字不变；macOS 走 ~/Library/Application Support，
+# Linux 走 XDG_DATA_HOME，不再落进伪造的 ~/AppData/Local。这里保留原来的函数名，
+# 调用方（logger、crash_handler、离线翻译模型）无需改动。
 
 def get_app_data_dir() -> Path:
-    """返回应用数据根目录（日志、崩溃记录等都放在这里）。
-
-    读 %LOCALAPPDATA% 而不是拼 Path.home()/"AppData"/"Local"：
-    域环境下用户目录可能被重定向到网络位置，硬拼会落到错误的地方，
-    而崩溃日志恰恰是出问题时最需要能被找到的东西。
-    """
-    base = os.environ.get("LOCALAPPDATA")
-    if base:
-        return Path(base) / "Jietuba"
-    return Path.home() / "AppData" / "Local" / "Jietuba"
+    """返回应用数据根目录（日志、崩溃记录等都放在这里）。"""
+    return app_data_dir()
 
 
 def get_log_dir() -> Path:
     """返回日志目录。"""
-    return get_app_data_dir() / "Logs"
+    return log_dir()
 
 
 # ── CSS font-family 值 ────────────────────────────────────
