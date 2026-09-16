@@ -10,6 +10,7 @@
 
 import ast
 import inspect
+import pathlib
 import textwrap
 
 # 只有 Windows 才有的第三方模块：出现它们的 import 就意味着这段代码在别的平台上
@@ -38,8 +39,23 @@ PLATFORM_ATTRIBUTE_CHAINS = (
 
 
 def module_ast(module) -> ast.Module:
-    """取模块源码的 AST（去掉公共缩进后解析）。"""
-    return ast.parse(textwrap.dedent(inspect.getsource(module)))
+    """取模块源码的 AST（去掉公共缩进与 BOM 后解析）。
+
+    必须处理 BOM：本仓库不少文件（shortcut_manager、frame_recorder、resource_manager…）
+    带 UTF-8 BOM，``ast.parse`` 遇到它直接抛 SyntaxError。早先的扫描脚本把
+    SyntaxError 当成「解析不了，跳过」，于是这些文件被静默漏掉——护栏看起来在跑，
+    实际上没覆盖它们。
+    """
+    return ast.parse(_clean_source(inspect.getsource(module)))
+
+
+def source_ast(path) -> ast.Module:
+    """按文件路径取 AST，同样处理 BOM。"""
+    return ast.parse(_clean_source(pathlib.Path(path).read_text(encoding="utf-8-sig")))
+
+
+def _clean_source(text: str) -> str:
+    return textwrap.dedent(text.lstrip("\ufeff"))
 
 
 def imported_module_names(module) -> set[str]:

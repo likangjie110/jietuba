@@ -6,13 +6,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 截图吧（jietuba）：Windows x86_64 / ARM64 的截图 + 剪切板管理桌面应用。PySide6 做界面，Rust 扩展（`rust_libs/`）承担图像拼接、GIF 编码、剪贴板底层和 OCR。
 
-- **发行版只有 Windows**：`pywin32`、`ctypes.windll`、Win32 API 散落在十几个模块里。**但 macOS 上可以开发调试**（`setup_macos.sh` 准备环境）：截图、标注、钉图、OCR、翻译、全局热键、剪贴板历史、窗口智能选区都能跑；GIF 录制也能用（Windows 走 Rust 的 GDI 抓屏，其它平台由 Python 用 mss 抓帧后喂进同一个 Rust FrameStore）。
-  - 窗口智能选区在 macOS 上走 Quartz（`capture/window_finder_macos.py`）：`CGWindowListCopyWindowInfo` 天然按 Z 序返回、天然不含投影，命中逻辑与 Windows 共用。读窗口标题需要屏幕录制权限，没授权时退化为应用名。
-  - 全局热键在非 Windows 上走 pynput 键盘监听（`shortcut_manager._register_keyboard_hotkey`），需要 macOS 的「辅助功能」权限，没授权时监听器活着但收不到事件——启动时会检测并写日志。
-  - 剪贴板历史的 Rust 实现（`pyclipboard`）**在 macOS 上可用**：底层 `clipboard-rs` 跨平台，crate 里的 `cfg(not(windows))` 分支只少了 Windows 专有优化和「来源应用」名称（UI 里那一行会空着）。
-  - 新增平台相关代码时按现有约定走：`if sys.platform == "win32": ... else: ...`，Windows 路径保持逐字不变。
+- **发行版只有 Windows**，但目标结构是天然跨平台（Windows / macOS / Linux）：
+  - **平台差异一律走 `main/core/platform/`**，业务模块不直接 `import win32gui` /
+    `ctypes.windll` / 判断 `sys.platform`。新增平台相关代码时不要再写
+    `if sys.platform == "win32": ...`，而是往平台层补能力或后端；这条由
+    `main/tests/test_platform_structure.py` 强制（带一份尚未迁移的账本）。
+  - **macOS 上可以开发调试**（`setup_macos.sh` 准备环境）：截图、标注、钉图、OCR、
+    翻译、全局热键、剪贴板历史、窗口智能选区、GIF 录制都能跑（Windows 走 Rust 的
+    GDI 抓屏，其它平台由 Python 用 mss 抓帧后喂进同一个 Rust FrameStore）。
+  - 窗口智能选区在 macOS 上走 Quartz（`window_finder_macos.py`）：
+    `CGWindowListCopyWindowInfo` 天然按 Z 序返回、天然不含投影，命中逻辑与 Windows
+    共用。读窗口标题需要屏幕录制权限，没授权时退化为应用名。
+  - 全局热键在非 Windows 上走 pynput 键盘监听，需要 macOS 的「辅助功能」权限，没授权
+    时监听器活着但收不到事件——启动时会检测并写日志。
+  - 剪贴板历史的 Rust 实现（`pyclipboard`）**在 macOS 上可用**：底层 `clipboard-rs`
+    跨平台，crate 里的 `cfg(not(windows))` 分支只少了 Windows 专有优化和「来源应用」
+    名称（UI 里那一行会空着）。
 - Python 版本被 `pyproject.toml` 锁死在 `==3.11.*`。
-- 在 macOS 上跑测试**不要设 `QT_QPA_PLATFORM=offscreen`**：`qframelesswindow` 的 macOS 后端要真实 NSWindow，离屏平台下构造无边框窗口会直接段错误（整进程崩，不是断言失败）。conftest 已按平台处理。
+- 在 macOS 上跑测试**不要设 `QT_QPA_PLATFORM=offscreen`**：`qframelesswindow` 的 macOS
+  后端要真实 NSWindow，离屏平台下构造无边框窗口会直接段错误（整进程崩，不是断言失败）。
+  conftest 已按平台处理。
+- **macOS 上不要一次性跑全套测试**：pytest 会话拆除时会在 GC 里段错误（Qt/ObjC 析构
+  顺序），崩溃点随文件组合漂移，同一份代码每次挂的位置都不一样。用
+  `python main/scripts/run_tests_per_file.py out.json` 逐文件跑（它会对失败文件重复采样，
+  用 `--diff old.json new.json` 比较两次运行判断有没有回归）。已知既有失败：
+  `test_handle_overlay.py`（失败数在 6~14 之间随机浮动）、`test_welcome_hotkey_page.py`
+  （2 个焦点相关用例）、`test_mosaic_tool.py`（拆除期段错误）。
 
 ## 常用命令
 
@@ -70,6 +89,40 @@ python main/compile_translations.py                 # app_*.xml → app_*.qm（�
 - `stitch/` 长截图调 Rust `longstitch`；`ocr/` 用 `ppocr_rust`（单例、异步线程，模型在 `models/`）；`barcode/` 用 zxing-cpp。
 - `translation/` 是可插拔 provider 架构（`provider.py` 契约 + `registry.py` 注册 + `service.py` 编排，DeepL/Google/Azure/Amazon 四个实现）。
 - `ui/fluent_lite/` 是自研的 Fluent 风格组件库，`ui/settings_ui/` 是设置对话框的各页面；通用样式和配色走 `ui/fluent_lite/theme.py` 与 `core/theme.py`。
+
+### 平台层（`main/core/platform/`）
+
+应用与「平台差异」之间的唯一接口。业务模块问能力，不问「是不是 Windows」。
+
+| 模块 | 负责 |
+|---|---|
+| `detection.py` | 全项目唯一的平台探测点（`IS_WINDOWS`/`IS_MACOS`/`IS_LINUX`、Qt 平台插件名） |
+| `capabilities.py` | 能力支持矩阵：`support()` / `available()` / `backend_name()`，三态（完整/降级/无实现） |
+| `paths.py` | 应用数据目录、日志目录、默认截图与桌面目录 |
+| `fonts.py` | QSS 字体栈与 QFont 字体族（按语言） |
+| `shell.py` | 用系统默认程序打开文件/文件夹、在文件管理器定位、桌面快捷方式 |
+| `startup.py` | 开机自启（注册表 HKCU\Run） |
+| `process.py` | 工作集回收、进程身份/终止、DPI 感知、任务栏 AppUserModelID |
+| `pointer.py` | 光标位置、鼠标键状态、全局滚轮监听、横向滚动与复制快捷键注入 |
+| `window_ops.py` | 置顶、鼠标穿透、从截图排除、任务栏图标 |
+
+约定：
+
+- 包放在 `core/` 下而不是顶层 `platform/`：`main/` 会被插到 `sys.path` 最前，顶层建
+  `platform` 包会把标准库同名模块整个遮掉。
+- Windows 取值逐字保留。`fonts.py` 的三份字体栈、`window_ops.set_click_through` 的
+  `layered`/`force_frame_change` 两个参数都是在保留历史差异——合并它们会改变 Windows
+  上的实际渲染/窗口样式，而本机是 macOS、无法验证，要改先上 Windows 实机。
+- 平台层在**函数内**延迟导入 `core.logger`：它被 `core.constants` 导入，而 constants 在
+  logger 的依赖链上，模块级导入会成环（`test_platform_structure.py` 会拦）。
+- 能力缺失要显式表达：返回 False/None 并记日志，不要靠 `except Exception` 吞掉
+  「这个平台没有这个 API」。
+- 允许在平台层内部按平台分派，业务模块里不允许。
+
+尚未迁移（见 `main/tests/test_platform_structure.py` 的账本）：窗口枚举
+（`capture/window_finder*.py`）、全局热键（`core/shortcut_manager.py`）、剪贴板写图与
+粘贴注入（`core/clipboard_utils.py`、`clipboard/controllers/clipboard_controller.py`）、
+启动预热里的 pywin32 导入（`core/bootstrap.py`）。
 
 ### Rust 扩展
 
