@@ -37,18 +37,23 @@
 from __future__ import annotations
 
 import ctypes
+import sys
 from abc import ABC, abstractmethod
 from ctypes import wintypes
 from typing import Callable, Dict, List, Optional, Set, Tuple
 
-from PySide6.QtCore import QAbstractNativeEventFilter, QEvent, QObject, Qt, Signal
+from PySide6.QtCore import QAbstractNativeEventFilter, QEvent, QObject, Qt, Signal, Slot
 from PySide6.QtWidgets import (
     QApplication, QAbstractSpinBox, QComboBox, QGraphicsView,
     QLineEdit, QPlainTextEdit, QTextEdit,
 )
 
-from core import log_debug, log_error, safe_event
+from core import log_debug, log_error, log_warning, safe_event
 from core.logger import log_exception, T
+
+# 键盘全局热键两条路：Windows 用系统级 RegisterHotKey（系统帮着匹配、还能探测冲突），
+# 其它平台用 pynput 的低级键盘监听自己匹配（见 _register_keyboard_hotkey）。
+_IS_WINDOWS = sys.platform == "win32"
 
 # ======================================================================
 # Windows API 常量
@@ -240,6 +245,9 @@ class ShortcutManager(QObject):
     # 这样后续的 handler 链分发、回调执行都和键盘热键一样发生在主线程上。
     _mouse_button_triggered = Signal(str)
 
+    # 同上：pynput 键盘监听也在后台线程，回调统一排队回主线程执行
+    _keyboard_hotkey_triggered = Signal(str)
+
     def __init__(self):
         super().__init__()
         # ── handler 链 ──
@@ -250,6 +258,14 @@ class ShortcutManager(QObject):
         self._id_to_metadata: Dict[int, Tuple[int, int]] = {}  # id → (mods, vk)
         self._next_hotkey_id = 1
         self._global_hotkeys_suppressed = False
+
+        # ── 键盘全局热键（非 Windows：pynput 自己匹配）──
+        self._keyboard_hotkeys: Dict[str, Callable] = {}   # 归一化热键字符串 → 回调
+        self._keyboard_ids: Dict[str, int] = {}            # 合成 id，只为日志和 handler 链
+        self._keyboard_listener = None                     # pynput.keyboard.GlobalHotKeys
+        self._keyboard_hotkey_triggered.connect(
+            self._on_keyboard_hotkey, Qt.ConnectionType.QueuedConnection
+        )
 
         # ── 鼠标侧键 ──
         self._mouse_callbacks: Dict[str, Callable] = {}
@@ -314,7 +330,8 @@ class ShortcutManager(QObject):
 
     def has_registered_hotkeys(self) -> bool:
         """当前是否持有已注册的全局热键（键盘或鼠标侧键）。"""
-        return bool(self._id_to_callback) or bool(self._mouse_callbacks)
+        return (bool(self._id_to_callback) or bool(self._mouse_callbacks)
+                or bool(self._keyboard_hotkeys))
 
     # ==================================================================
     # Qt KeyPress 分发
@@ -483,6 +500,8 @@ class ShortcutManager(QObject):
         """注册一个全局热键（Windows 键盘热键，或鼠标侧键 token）"""
         if is_mouse_button_hotkey(hotkey_str):
             return self._register_mouse_hotkey(hotkey_str.strip().lower(), callback)
+        if not _IS_WINDOWS:
+            return self._register_keyboard_hotkey(hotkey_str, callback)
         try:
             mods, vk = self._parse_hotkey(hotkey_str)
             hid = self._next_hotkey_id
@@ -498,6 +517,144 @@ class ShortcutManager(QObject):
         except Exception as e:
             log_error(f"Error registering hotkey {hotkey_str}: {e}", module="Hotkey")
             return False
+
+    # ── 键盘全局热键（非 Windows）──────────────────────────
+
+    _PYNPUT_MODIFIERS = {
+        "ctrl": "<ctrl>", "control": "<ctrl>",
+        "alt": "<alt>", "option": "<alt>",
+        "shift": "<shift>",
+        "win": "<cmd>", "meta": "<cmd>", "super": "<cmd>",
+        "cmd": "<cmd>", "command": "<cmd>",
+    }
+    _PYNPUT_NAMED_KEYS = {
+        "esc": "<esc>", "escape": "<esc>",
+        "enter": "<enter>", "return": "<enter>",
+        "space": "<space>", "tab": "<tab>",
+        "backspace": "<backspace>", "delete": "<delete>", "del": "<delete>",
+        "insert": "<insert>", "home": "<home>", "end": "<end>",
+        "pageup": "<page_up>", "pagedown": "<page_down>",
+        "printscreen": "<print_screen>", "prtsc": "<print_screen>",
+        "up": "<up>", "down": "<down>", "left": "<left>", "right": "<right>",
+    }
+
+    @classmethod
+    def _to_pynput_hotkey(cls, hotkey: str) -> str:
+        """'ctrl+shift+a' → '<ctrl>+<shift>+a'（pynput 的写法）。
+
+        主键位沿用 _parse_hotkey 那套命名（字母、数字、F1-F24、若干功能键），
+        两边看到的字符串是同一个，用户不用为不同平台记两套写法。
+        """
+        parts = [p.strip().lower() for p in (hotkey or "").split("+") if p.strip()]
+        if len(parts) < 2:
+            # 单独一个键做全局热键会吃掉用户所有的正常打字
+            raise ValueError("全局热键至少要有一个修饰键")
+
+        *modifier_names, main_key = parts
+        tokens = []
+        for name in modifier_names:
+            token = cls._PYNPUT_MODIFIERS.get(name)
+            if token is None:
+                raise ValueError(f"不认识的修饰键: {name}")
+            tokens.append(token)
+
+        if len(main_key) == 1:
+            tokens.append(main_key)
+        elif main_key in cls._PYNPUT_NAMED_KEYS:
+            tokens.append(cls._PYNPUT_NAMED_KEYS[main_key])
+        elif main_key.startswith("f") and main_key[1:].isdigit() and 1 <= int(main_key[1:]) <= 24:
+            tokens.append(f"<{main_key}>")
+        else:
+            raise ValueError(f"不认识的主键位: {main_key}")
+        return "+".join(tokens)
+
+    def _register_keyboard_hotkey(self, hotkey_str: str, callback: Callable) -> bool:
+        """登记键盘全局热键（非 Windows）。
+
+        Windows 有 RegisterHotKey：系统负责匹配、还能探测被别的程序占用。macOS
+        没有等价 API，只能用 pynput 的键盘监听自己匹配——代价是它需要一个
+        「辅助功能」权限，没授权时监听器收不到任何事件（静默失效），所以这里检测到
+        没权限就直接告诉用户怎么办。
+        """
+        normalized = (hotkey_str or "").strip().lower()
+        try:
+            self._to_pynput_hotkey(normalized)
+        except ValueError as e:
+            log_error(f"无法解析热键 {hotkey_str}: {e}", module="Hotkey")
+            return False
+
+        self._keyboard_hotkeys[normalized] = callback
+        self._sync_keyboard_listener()
+        return True
+
+    def _sync_keyboard_listener(self) -> None:
+        """按当前登记的键盘热键重建监听器（幂等）。
+
+        GlobalHotKeys 的组合表在构造时就固定了，改一次就重建一次。热键数量是个位数，
+        重建成本远低于自己维护一套按键状态机。
+        """
+        self._stop_keyboard_listener()
+        if not self._keyboard_hotkeys:
+            return
+        try:
+            from pynput import keyboard
+
+            mapping = {}
+            for hotkey in self._keyboard_hotkeys:
+                mapping[self._to_pynput_hotkey(hotkey)] = (
+                    lambda h=hotkey: self._keyboard_hotkey_triggered.emit(h)
+                )
+            listener = keyboard.GlobalHotKeys(mapping)
+            self._keyboard_listener = listener       # 先赋值再启动，回调随时可能进来
+            listener.start()
+            log_debug(T("键盘热键监听已启动（{count} 个）", count=len(mapping)), "Shortcut")
+            self._warn_if_not_trusted()
+        except Exception as e:
+            self._keyboard_listener = None
+            log_error(f"键盘热键监听启动失败: {e}", module="Hotkey")
+
+    def _stop_keyboard_listener(self) -> None:
+        listener = self._keyboard_listener
+        if listener is None:
+            return
+        self._keyboard_listener = None
+        try:
+            listener.stop()
+        except Exception as e:
+            log_exception(e, T("停止键盘热键监听"))
+
+    @staticmethod
+    def _warn_if_not_trusted() -> None:
+        """macOS 上没授权辅助功能时，监听器是活的但收不到任何事件。"""
+        if sys.platform != "darwin":
+            return
+        try:
+            from ApplicationServices import AXIsProcessTrusted
+            if not AXIsProcessTrusted():
+                log_warning(T(
+                    "全局热键需要「辅助功能」权限：系统设置 → 隐私与安全性 → 辅助功能，"
+                    "把本程序加进去后重启生效"
+                ), "Hotkey")
+        except Exception:
+            pass                                  # 检查不了就算了，不影响启动
+
+    @Slot(str)
+    def _on_keyboard_hotkey(self, hotkey: str) -> None:
+        """键盘热键在主线程的执行入口（由监听线程发信号过来）。"""
+        callback = self._keyboard_hotkeys.get(hotkey)
+        if callback is None:
+            return
+        if self._global_hotkeys_suppressed:
+            log_debug(T("系统热键已临时禁用，忽略回调 ({hotkey})", hotkey=hotkey), "Shortcut")
+            return
+        hotkey_id = self._keyboard_ids.setdefault(
+            hotkey, 10000 + len(self._keyboard_ids))
+        if self._dispatch_hotkey(hotkey_id, callback):
+            return
+        try:
+            callback()
+        except Exception as e:
+            log_exception(e, T("热键回调 {hotkey}", hotkey=hotkey))
 
     def _register_mouse_hotkey(self, token: str, callback: Callable) -> bool:
         """登记一个鼠标侧键 token（同进程内去重，语义对齐 RegisterHotKey 不允许重复注册）。"""
@@ -618,6 +775,10 @@ class ShortcutManager(QObject):
             # 鼠标侧键没有系统级冲突探测手段（RegisterHotKey 不支持鼠标按键），
             # 只能在真正注册时通过登记表防重复，这里始终视为可用。
             return True
+        if not _IS_WINDOWS:
+            # macOS 上 pynput 是旁路监听，别的程序占用了同一个组合也照样能收到，
+            # 没有"被占用"这回事；同程序内的重复登记由设置页自己的冲突检测管。
+            return True
         try:
             mods, vk = self._parse_hotkey(hotkey_str)
 
@@ -635,15 +796,20 @@ class ShortcutManager(QObject):
             return False
 
     def unregister_all_hotkeys(self):
-        """注销所有全局热键（Windows 键盘热键 + 鼠标侧键登记）"""
-        for hid in list(self._id_to_callback.keys()):
-            ctypes.windll.user32.UnregisterHotKey(None, hid)
-            meta = self._id_to_metadata.get(hid)
-            if meta and meta in ShortcutManager._registered_keys_global:
-                ShortcutManager._registered_keys_global.discard(meta)
+        """注销所有全局热键（Windows 键盘热键 + pynput 键盘热键 + 鼠标侧键登记）"""
+        if _IS_WINDOWS:
+            for hid in list(self._id_to_callback.keys()):
+                ctypes.windll.user32.UnregisterHotKey(None, hid)
+                meta = self._id_to_metadata.get(hid)
+                if meta and meta in ShortcutManager._registered_keys_global:
+                    ShortcutManager._registered_keys_global.discard(meta)
 
         self._id_to_callback.clear()
         self._id_to_metadata.clear()
+
+        self._keyboard_hotkeys.clear()
+        self._keyboard_ids.clear()
+        self._sync_keyboard_listener()
 
         for token in self._mouse_callbacks:
             ShortcutManager._registered_mouse_buttons_global.discard(token)
