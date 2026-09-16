@@ -31,7 +31,6 @@ jietuba_scroll.py - 滚动截图窗口模块
 """
 
 import time
-import ctypes
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication
 from PySide6.QtCore import Qt, QRect, QTimer, Signal, QPoint, QSettings
 from PySide6.QtGui import QPainter, QPen, QColor, QPixmap, QGuiApplication, QImage
@@ -48,7 +47,7 @@ from settings import get_tool_settings_manager
 from core.save import SaveService
 from core import log_debug, log_info, safe_event
 from core.logger import log_exception, T, LogMsg
-from core.platform import pointer
+from core.platform import pointer, window_ops
 from .scroll_toolbar import FloatingToolbar  # 浮动工具栏（独立模块）
 
 _MODULE_TAG = "LongStitch"
@@ -107,10 +106,7 @@ long_stitch_configure(
     ignore_top_pixels=_long_stitch_config['ignore_top_pixels'],
 )
 
-# Windows API 常量
-GWL_EXSTYLE = -20
-WS_EX_TRANSPARENT = 0x00000020
-WS_EX_LAYERED = 0x00080000
+# 穿透与截图排除用的 Win32 常量已收进 core/platform/window_ops
 
 
 class PreviewPanel(QWidget):
@@ -131,15 +127,11 @@ class PreviewPanel(QWidget):
         self._setup_mouse_transparent()
     
     def _setup_mouse_transparent(self):
-        """设置窗口鼠标穿透，不拦截滚轮事件"""
-        try:
-            hwnd = int(self.winId())
-            user32 = ctypes.windll.user32
-            ex_style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_TRANSPARENT | WS_EX_LAYERED)
+        """设置窗口鼠标穿透，不拦截滚轮事件（分层窗口，需要 LAYERED）"""
+        if window_ops.set_click_through(self, True, layered=True):
             _log_stitch(T("[OK] PreviewPanel 已设置为鼠标穿透模式"))
-        except Exception as e:
-            _log_stitch(T("[WARN] 设置 PreviewPanel 鼠标穿透失败: {e}", e=e))
+        else:
+            _log_stitch(T("[WARN] 设置 PreviewPanel 鼠标穿透失败（当前平台可能不支持）"))
         self._capture_excluded = False
 
     def _build_ui(self):
@@ -194,8 +186,7 @@ class PreviewPanel(QWidget):
         if exclude == self._capture_excluded:
             return
         try:
-            from core.platform_utils import set_window_exclude_from_capture
-            set_window_exclude_from_capture(int(self.winId()), exclude)
+            window_ops.set_exclude_from_capture(self, exclude)
             self._capture_excluded = exclude
         except Exception:
             pass
@@ -706,14 +697,10 @@ class ScrollCaptureWindow(QWidget):
         只有 Windows 有等价做法（WS_EX_TRANSPARENT）。其它平台暂时没有实现，
         长截图窗口会挡住下方页面——但滚轮监听不受影响，用户仍能滚动。
         """
-        try:
-            hwnd = int(self.transparent_area.winId())
-            user32 = ctypes.windll.user32
-            ex_style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style | WS_EX_TRANSPARENT | WS_EX_LAYERED)
+        if window_ops.set_click_through(self.transparent_area, True, layered=True):
             _log_stitch(T("[OK] 窗口已设置为鼠标穿透模式"))
-        except Exception as e:
-            _log_stitch(T("[WARN] 设置窗口鼠标穿透失败（不影响滚轮监听）: {e}", e=e))
+        else:
+            _log_stitch(T("[WARN] 设置窗口鼠标穿透失败（不影响滚轮监听）"))
 
     def _start_scroll_listener(self):
         """在后台线程启动全局滚轮监听（首次导入 pynput 较慢，别阻塞 UI）。"""
@@ -1142,13 +1129,12 @@ class ScrollCaptureWindow(QWidget):
 
     def _exclude_overlapping_ui(self, exclude: bool):
         """检测 UI 窗口是否与截图区域重叠，按需排除/恢复截图捕获"""
-        from core.platform_utils import set_window_exclude_from_capture
         for widget in (getattr(self, 'toolbar', None), getattr(self, 'preview_panel', None)):
             if widget is None or not widget.isVisible():
                 continue
             widget_rect = QRect(widget.x(), widget.y(), widget.width(), widget.height())
             if widget_rect.intersects(self.capture_rect):
-                set_window_exclude_from_capture(int(widget.winId()), exclude)
+                window_ops.set_exclude_from_capture(widget, exclude)
     
     def _do_capture(self):
         """执行截图并实时拼接"""

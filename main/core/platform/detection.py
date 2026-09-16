@@ -31,7 +31,7 @@ SUPPORTED_PLATFORMS = ("windows", "macos", "linux")
 def qt_platform_name() -> str:
     """Qt 平台插件名（``windows`` / ``cocoa`` / ``xcb`` / ``wayland`` / ``offscreen``）。
 
-    需要真正碰原生窗口句柄的地方要额外看这个，不能只看 OS：``gif/click_through.py``
+    需要真正碰原生窗口句柄的地方要额外看这个，不能只看 OS：``gif/click_through.py``（现已并入 ``window_ops``）
     就踩过一次——拿到非 cocoa 的插件名却仍然去构造 objc 对象，在离屏平台上直接段错误。
     QApplication 尚未创建时返回空串，调用方按"不确定"处理。
     """

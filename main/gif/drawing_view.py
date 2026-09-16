@@ -15,9 +15,6 @@ gdigrab 直接抓屏幕像素，因此本窗口画出的内容会被自动录进
 
 from __future__ import annotations
 
-import ctypes
-
-from . import click_through
 from typing import Optional
 
 from PySide6.QtWidgets import QGraphicsScene, QGraphicsRectItem
@@ -35,45 +32,16 @@ from tools.cursor_manager import CursorManager
 from settings import get_tool_settings_manager
 
 try:
-    from core.logger import log_debug, log_info, log_exception, T
+    from core.logger import log_debug, log_info, T
 except ImportError:
     import logging
     _l = logging.getLogger("GIF")
     log_debug = log_info = _l.info
     T = lambda template, **kwargs: template.format(**kwargs) if kwargs else template
 
+from core.platform import window_ops
 from core.shortcut_manager import ShortcutManager, ShortcutHandler, load_inapp_bindings
 from core import safe_event
-
-
-# ── Win32 穿透常量 ──
-GWL_EXSTYLE       = -20
-WS_EX_TRANSPARENT = 0x00000020
-SWP_NOMOVE        = 0x0002
-SWP_NOSIZE        = 0x0001
-SWP_NOZORDER      = 0x0004
-SWP_FRAMECHANGED  = 0x0020
-
-
-def _set_click_through(hwnd: int, enable: bool):
-    """设置/取消鼠标穿透（Windows: WS_EX_TRANSPARENT / macOS: NSWindow）"""
-    if not click_through.IS_WINDOWS:
-        click_through.set_click_through_macos(hwnd, enable)
-        return
-    try:
-        user32 = ctypes.windll.user32
-        style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-        if enable:
-            style |= WS_EX_TRANSPARENT
-        else:
-            style &= ~WS_EX_TRANSPARENT
-        user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
-        user32.SetWindowPos(
-            hwnd, 0, 0, 0, 0, 0,
-            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED,
-        )
-    except Exception as e:
-        log_exception(e, T("GIF 绘制层设置透明"))
 
 
 # ── 假 SelectionModel：永远 is_confirmed=True ──
@@ -356,8 +324,8 @@ class GifDrawingView(CanvasView):
     def _apply_passthrough(self, enable: bool):
         self._passthrough = enable
         self._gif_scene.set_hit_test_visible(not enable)
-        hwnd = int(self.winId())
-        _set_click_through(hwnd, enable)
+        # 绘制层没有 WS_EX_LAYERED，但改完样式后要强制重算非客户区（原实现如此）
+        window_ops.set_click_through(self, enable, force_frame_change=True)
         if not enable:
             self.activateWindow()
             self.raise_()

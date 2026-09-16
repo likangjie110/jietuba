@@ -1,9 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 """蓝色/红色选区边框覆盖层 — 动态穿透切换 + RESIZE 模式下 4 边拖拽"""
 
-import ctypes
-
-from . import click_through
+from core.platform import window_ops
 from enum import Enum, auto
 
 from PySide6.QtWidgets import QWidget
@@ -11,9 +9,7 @@ from PySide6.QtCore import Qt, QRect, QPoint, Signal
 from PySide6.QtGui import QPainter, QPen, QColor, QCursor
 from core import safe_event
 
-GWL_EXSTYLE = -20
-WS_EX_TRANSPARENT = 0x00000020
-WS_EX_LAYERED     = 0x00080000
+# 穿透用的 Win32 常量已收进 core/platform/window_ops
 
 # 边框外扩量（供鼠标检测，不画在内容上）
 _BORDER_W    = 3    # 实际绘制边框宽度（px）
@@ -86,17 +82,9 @@ class CaptureOverlay(QWidget):
     # ══════════════════════════════════════════════
 
     def _set_passthrough(self, enable: bool):
-        hwnd = int(self.winId())
-        if not click_through.IS_WINDOWS:
-            click_through.set_click_through_macos(hwnd, enable)
-            return
-        style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-        if enable:
-            style |= WS_EX_TRANSPARENT | WS_EX_LAYERED
-        else:
-            style &= ~WS_EX_TRANSPARENT
-            style |= WS_EX_LAYERED
-        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style)
+        # 选区覆盖层是分层窗口（靠逐像素 alpha 显示），因此需要连 WS_EX_LAYERED
+        # 一起置上；这个差异由平台层的 layered 参数表达。
+        window_ops.set_click_through(self, enable, layered=True)
 
     # ══════════════════════════════════════════════
     # 绘制

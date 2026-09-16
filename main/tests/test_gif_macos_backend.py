@@ -13,7 +13,8 @@ import time
 
 import pytest
 
-from gif import click_through, frame_recorder
+from gif import frame_recorder
+from core.platform import window_ops
 from gif.frame_recorder import FrameRecorder, _MssCaptureThread
 
 
@@ -153,8 +154,8 @@ class TestClickThrough:
         return calls
 
     def test_toggles_ignores_mouse_events(self, fake_objc):
-        assert click_through.set_click_through_macos(0x1234, True) is True
-        assert click_through.set_click_through_macos(0x1234, False) is True
+        assert window_ops._set_click_through_macos(0x1234, True) is True
+        assert window_ops._set_click_through_macos(0x1234, False) is True
         assert fake_objc == [True, False]
 
     def test_offscreen_platform_is_skipped_without_touching_objc(self, monkeypatch, qapp):
@@ -166,7 +167,7 @@ class TestClickThrough:
         module.objc_object = staticmethod(lambda **kwargs: touched.append(1))
         monkeypatch.setitem(sys.modules, "objc", module)
 
-        assert click_through.set_click_through_macos(0x1234, True) is False
+        assert window_ops._set_click_through_macos(0x1234, True) is False
         assert touched == [], "不该去碰 objc"
 
     def test_missing_window_is_not_an_error(self, monkeypatch):
@@ -178,12 +179,12 @@ class TestClickThrough:
         module.objc_object = staticmethod(lambda **kwargs: _NoWindow())
         monkeypatch.setitem(sys.modules, "objc", module)
 
-        assert click_through.set_click_through_macos(1, True) is False
+        assert window_ops._set_click_through_macos(1, True) is False
 
     def test_failure_is_reported_not_raised(self, monkeypatch):
         monkeypatch.setitem(sys.modules, "objc", None)   # import 会失败
 
-        assert click_through.set_click_through_macos(1, True) is False
+        assert window_ops._set_click_through_macos(1, True) is False
 
 
 class TestStartPicksTheRightBackend:

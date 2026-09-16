@@ -542,15 +542,14 @@ class ScreenshotWindow(QWidget):
         让 mss / BitBlt / DXGI 等截图 API 在捕获屏幕时跳过本窗口。
         窗口在屏幕上仍然正常显示，用户看得到。
         """
-        from core.platform_utils import set_window_exclude_from_capture, get_last_error
-        hwnd = int(self.winId())
-        result = set_window_exclude_from_capture(hwnd, exclude)
+        from core.platform import window_ops
+        result = window_ops.set_exclude_from_capture(self, exclude)
         if result:
             log_debug(T("SetWindowDisplayAffinity({mode}) 成功",
                          mode='EXCLUDE' if exclude else 'NONE'), "ScreenshotWindow")
         else:
             log_debug(T("SetWindowDisplayAffinity 失败, GetLastError={error_code}",
-                         error_code=get_last_error()), "ScreenshotWindow")
+                         error_code=window_ops.last_error()), "ScreenshotWindow")
 
     def _connect_toolbar_signals(self):
         """连接工具栏信号（一次性，toolbar→self 的稳定连接）。

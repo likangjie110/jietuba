@@ -19,8 +19,8 @@ import math
 
 from PySide6.QtWidgets import QWidget
 
-from . import click_through
-from core.logger import log_exception, T
+from core.logger import log_debug, T
+from core.platform import window_ops
 from core import safe_event
 from PySide6.QtCore import Qt, QRect, QPoint, QPointF, QRectF, QTimer
 from PySide6.QtGui import QPainter, QColor, QBrush, QPen, QPainterPath, QImage
@@ -57,20 +57,9 @@ class CursorOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-        # WS_EX_TRANSPARENT: 鼠标事件完全穿透
-        if not click_through.IS_WINDOWS:
-            click_through.set_click_through_macos(int(self.winId()), True)
-        else:
-            try:
-                import ctypes
-                hwnd = int(self.winId())
-                GWL_EXSTYLE       = -20
-                WS_EX_TRANSPARENT = 0x00000020
-                user32 = ctypes.windll.user32
-                style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
-                user32.SetWindowLongW(hwnd, GWL_EXSTYLE, style | WS_EX_TRANSPARENT)
-            except Exception as e:
-                log_exception(e, T("设置光标覆盖层透明"))
+        # 回放光标层只需要穿透，不需要 WS_EX_LAYERED / 强制重算非客户区
+        if not window_ops.set_click_through(self, True):
+            log_debug(T("光标覆盖层未能设置鼠标穿透"), "GIF")
 
         # 懒加载 SVG（类级别，只加载一次）
         if CursorOverlay._svg_renderer is None:

@@ -28,7 +28,7 @@ from ui.fluent_lite.theme import ACCENT, ACCENT_HOVER, ACCENT_PRESSED
 from core import log_info, safe_event
 from core.logger import log_exception, T
 from core.constants import CSS_FONT_FAMILY, DEFAULT_FONT_FAMILY
-from core.platform import shell
+from core.platform import shell, window_ops
 
 # 页面创建函数
 from .page_hotkey import create_hotkey_page, validate_global_hotkey_edits
@@ -1249,34 +1249,17 @@ class SettingsDialog(FrostedFramelessDialog):
             event.accept()
 
     def _apply_taskbar_icon(self):
-        try:
-            import ctypes, tempfile
-            from PySide6.QtGui import QPixmap, QIcon, QPainter
-            from core.resource_manager import ResourceManager
+        """把任务栏图标设成托盘图标（仅 Windows 需要）。
 
-            _icon_path = ResourceManager.get_resource_path("svg/托盘.svg")
-            if not os.path.exists(_icon_path):
-                return
+        Qt 的 setWindowIcon 在 Windows 上管不到任务栏那一份；迁移前这里直接
+        ctypes.windll.user32，非 Windows 上每次 showEvent 都会记一条异常日志。
+        现在整个实现（含临时 .ico 的生成）在平台层，非 Windows 直接返回。
+        """
+        from core.resource_manager import ResourceManager
 
-            pix = QPixmap(32, 32)
-            pix.fill(Qt.GlobalColor.transparent)
-            p = QPainter(pix)
-            QIcon(_icon_path).paint(p, 0, 0, 32, 32)
-            p.end()
-
-            tmp_ico = os.path.join(tempfile.gettempdir(), "jietuba_win_icon.ico")
-            pix.save(tmp_ico, "ICO")
-
-            IMAGE_ICON = 1
-            LR_LOADFROMFILE = 0x10
-            hicon = ctypes.windll.user32.LoadImageW(None, tmp_ico, IMAGE_ICON, 32, 32, LR_LOADFROMFILE)
-            if hicon:
-                hwnd = int(self.winId())
-                WM_SETICON = 0x0080
-                ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, 1, hicon)
-                ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, 0, hicon)
-        except Exception as e:
-            log_exception(e, T("设置任务栏图标"))
+        window_ops.set_taskbar_icon(
+            self, ResourceManager.get_resource_path("svg/托盘.svg")
+        )
 
     def refresh_settings(self):
         """从配置管理器重新读取所有设置并更新界面"""

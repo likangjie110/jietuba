@@ -10,40 +10,15 @@ from PySide6.QtWidgets import QApplication
 from core import log_debug, log_info, log_error
 from core.logger import T
 
-import ctypes
-import sys
+from core.platform import window_ops
 
-# Windows 用 SetWindowPos 切 TOPMOST 可以做到"不激活窗口、不重绘"；其它平台没有
-# 这个 API，退回 Qt 的窗口标志（代价是窗口会重新显示一次）。判断放在模块级是因为
-# ctypes.windll 在非 Windows 上根本不存在，导入期取它会让整个 pin 包 import 失败。
-_IS_WINDOWS = sys.platform == "win32"
-_user32 = ctypes.windll.user32 if _IS_WINDOWS else None
-_SWP_NOMOVE = 0x0002
-_SWP_NOSIZE = 0x0001
-_SWP_NOACTIVATE = 0x0010
-_SWP_FLAGS = _SWP_NOMOVE | _SWP_NOSIZE | _SWP_NOACTIVATE
-_HWND_TOPMOST = -1
-_HWND_NOTOPMOST = -2
+# 置顶的实现（Win32 的 SetWindowPos 与其它平台的 Qt 标志回退）在平台层，
+# 见 core/platform/window_ops.set_topmost。
 
 
 def _set_topmost(pin, on: bool) -> None:
-    """切换某个钉图窗口的置顶状态。
-
-    判断"有没有 user32"而不是"是不是 Windows"：两条路径的差别就在于有没有这个
-    API，测试注入一个假的 _user32 就能在任意平台上验证 Win32 那条路。
-    """
-    if _user32 is not None:
-        _user32.SetWindowPos(
-            int(pin.winId()),
-            _HWND_TOPMOST if on else _HWND_NOTOPMOST,
-            0, 0, 0, 0, _SWP_FLAGS,
-        )
-        return
-    # 非 Windows：改标志会让窗口隐藏，可见的话要重新显示出来
-    visible = pin.isVisible()
-    pin.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, on)
-    if visible:
-        pin.show()
+    """切换某个钉图窗口的置顶状态。"""
+    window_ops.set_topmost(pin, on)
 
 
 class PinManager(QObject):

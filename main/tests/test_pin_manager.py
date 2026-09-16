@@ -9,8 +9,9 @@ __init__ 的重入保护是分开写的），二是截图时把贴图窗口的�
 一旦状态位算错，用户会看到贴图永久失去置顶，或者截图时贴图挡在取景框上。
 
 隔离方式：不构造真实 PinWindow（那会拉起画布、OCR、快捷键单例并强制 show），
-而是用只实现被调用到的那几个方法的假窗口。Win32 调用通过替换模块级 _user32
-拦下来，因此测试不会真的动任何窗口。
+而是用只实现被调用到的那几个方法的假窗口。Win32 调用通过替换平台层
+core.platform.window_ops 用的 user32 拦下来，因此测试不会真的动任何窗口——
+置顶的实现本身已搬到平台层（其余平台退回 Qt 窗口标志）。
 
 单例状态是跨用例共享的，每个用例前后都把 PinManager._instance 清成 None，
 否则前一个用例注册的假窗口会漏进后一个用例。
@@ -26,10 +27,12 @@ from pin.pin_manager import PinManager, get_pin_manager
 TOPMOST = Qt.WindowType.WindowStaysOnTopHint
 PLAIN = Qt.WindowType.FramelessWindowHint
 
-# 源码里的 Win32 常量，测试断言直接引用避免抄错
-HWND_TOPMOST = -1
-HWND_NOTOPMOST = -2
-SWP_FLAGS = 0x0002 | 0x0001 | 0x0010
+# 平台层里的 Win32 常量，测试断言直接引用避免抄错
+from core.platform.window_ops import (  # noqa: E402
+    HWND_NOTOPMOST,
+    HWND_TOPMOST,
+    SWP_TOPLEVEL_FLAGS as SWP_FLAGS,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -63,7 +66,10 @@ def fake_user32(monkeypatch):
             return True
 
     fake = _FakeUser32()
-    monkeypatch.setattr("pin.pin_manager._user32", fake)
+    # 置顶实现已搬到 core/platform/window_ops；把平台常量也钉成 Windows，
+    # 这样在任何开发机上都能验证 Win32 那条路径
+    monkeypatch.setattr("core.platform.window_ops._user32", lambda: fake)
+    monkeypatch.setattr("core.platform.window_ops.IS_WINDOWS", True)
     return fake
 
 
