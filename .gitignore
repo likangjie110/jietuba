@@ -1,0 +1,36 @@
+# ── Python ────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv*/
+
+# ── 测试与覆盖率（CI 每次重新生成）────────────────────
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+diff-coverage.html
+diff-coverage.md
+htmlcov/
+
+# ── 打包产物 ──────────────────────────────────────────
+build/
+dist/
+wheelhouse/
+*.spec
+rust_libs/target/
+
+# ── 本地运行痕迹 ──────────────────────────────────────
+*.log
+
+# ── 插件目录：约定说明入库，用户放进去的插件不入库 ────
+plugins/*
+!plugins/README.md
+
+# ── 编辑器 / 系统 ─────────────────────────────────────
+.idea/
+.vscode/
+.orca/
+.DS_Store
+Thumbs.db
