@@ -58,12 +58,8 @@ TRANSLATIONS: dict[str, str] = {
     # -- ui/welcome/page5_translation.py --
     "获取当前语言": "Getting current language",
 
-    # -- ui/welcome/page6_finish.py --
-    "已写入开机自启注册表项: {exe_path}": "Autostart registry entry written: {exe_path}",
-    "已删除开机自启注册表项": "Autostart registry entry removed",
-    "设置开机自启": "Setting autostart",
-    "已创建桌面快捷方式: {desktop_lnk}": "Desktop shortcut created: {desktop_lnk}",
-    "创建桌面快捷方式": "Creating desktop shortcut",
+    # page6_finish 的开机自启与桌面快捷方式实现已搬到 core/platform，日志正文随之
+    # 移到 core_pkg.py（按源码目录分文件，不留在调用方原来的目录里）
 
     # -- ui/selection_info/rounded_corners.py --
     "圆角截图: {state}  r={radius}": "Rounded corners: {state}  r={radius}",

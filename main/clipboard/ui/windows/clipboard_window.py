@@ -1054,6 +1054,8 @@ class ClipboardWindow(QWidget, FramelessMixin):
         import os
         from PySide6.QtCore import QTimer
 
+        from core.platform import shell
+
         clipboard_item = self.controller.get_item(item_id)
         if clipboard_item is None or clipboard_item.content_type != "file":
             return
@@ -1064,7 +1066,9 @@ class ClipboardWindow(QWidget, FramelessMixin):
                 return
             file_path = os.path.normpath(files[0])
             if os.path.exists(file_path):
-                QTimer.singleShot(0, lambda p=file_path: os.startfile(p))
+                # 延迟到 Qt 事件循环里执行：在 mouseReleaseEvent 栈内直接调
+                # 系统打开方式，Windows 上会与剪贴板/COM 线程冲突（access violation）
+                QTimer.singleShot(0, lambda p=file_path: shell.open_path(p))
                 QTimer.singleShot(50, self.hide)
         except Exception as e:
             from core.logger import T, log_warning
@@ -1134,8 +1138,9 @@ class ClipboardWindow(QWidget, FramelessMixin):
     def _open_file_location(self, item_id: int):
         import json
         import os
-        import subprocess
         from PySide6.QtCore import QTimer
+
+        from core.platform import shell
 
         clipboard_item = self.controller.get_item(item_id)
         if clipboard_item is None or clipboard_item.content_type != "file":
@@ -1146,12 +1151,8 @@ class ClipboardWindow(QWidget, FramelessMixin):
             if not files:
                 return
             file_path = os.path.normpath(files[0])
-            if os.path.isdir(file_path):
-                QTimer.singleShot(0, lambda p=file_path: subprocess.Popen(["explorer", p]))
-            elif os.path.exists(file_path):
-                QTimer.singleShot(0, lambda p=file_path: subprocess.Popen(["explorer", "/select,", p]))
-            elif os.path.exists(os.path.dirname(file_path)):
-                QTimer.singleShot(0, lambda p=os.path.dirname(file_path): subprocess.Popen(["explorer", p]))
+            if os.path.exists(file_path):
+                QTimer.singleShot(0, lambda p=file_path: shell.reveal_path(p))
         except Exception as e:
             from core.logger import T, log_warning
 

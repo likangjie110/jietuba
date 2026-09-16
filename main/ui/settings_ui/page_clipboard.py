@@ -2,9 +2,9 @@
 """剪贴板设置页 — Fluent Design"""
 import os
 import shutil
-import sys
 
 from core.logger import log_exception, T
+from core.platform import shell
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea,
     QFileDialog, QProgressDialog,
@@ -570,19 +570,13 @@ def _calc_clipboard_storage_size() -> str:
 
 def _open_clipboard_data_folder(dialog, path: str):
     """打开剪贴板数据文件夹"""
-    import subprocess
     from PySide6.QtCore import QTimer
     try:
         folder = os.path.dirname(path) if os.path.isfile(path) else path
         if os.path.exists(folder):
-            if sys.platform == 'win32':
-                # 延迟到 Qt 事件循环里执行，避免在 mouseReleaseEvent 栈内调用
-                # subprocess + explorer 在这里会触发 COM 线程冲突（access violation）
-                QTimer.singleShot(0, lambda f=os.path.normpath(folder): os.startfile(f))
-            elif sys.platform == 'darwin':
-                subprocess.Popen(['open', folder])
-            else:
-                subprocess.Popen(['xdg-open', folder])
+            # 延迟到 Qt 事件循环里执行：在 mouseReleaseEvent 栈内直接调系统打开方式，
+            # Windows 上会触发剪贴板/COM 线程冲突（access violation）
+            QTimer.singleShot(0, lambda f=os.path.normpath(folder): shell.open_path(f))
         else:
             show_warning_dialog(dialog, dialog.tr("Warning"), dialog.tr("Folder does not exist"))
     except Exception as e:

@@ -13,7 +13,7 @@ from PySide6.QtCore import Qt, QTimer, QElapsedTimer, QEasingCurve, QPointF
 from PySide6.QtGui import QPainter, QColor, QPen, QPainterPath
 from core import safe_event
 from core.i18n import make_tr
-from core.logger import log_info, log_exception, T
+from core.platform import Capability, available, shell, startup
 
 if __package__:
     from .base_page import (
@@ -204,15 +204,17 @@ class FinishPage(BasePage):
 
     def _build_controls(self, layout: QVBoxLayout):
         # ── 开机自启 ──────────────────────────────────────
-        self._autostart_switch = ToggleSwitch()
-        self._autostart_switch.setChecked(True)  # 欢迎向导默认开启
-        row_auto, self._autostart_lbl, self._autostart_desc = \
-            self._make_setting_row_with_refs(
-                _tr("开机自启"),
-                self._autostart_switch,
-                _tr("开机后在检测更新后启动。")
-            )
-        layout.addWidget(row_auto)
+        # 只在平台层声明支持时显示：不开机自启在这里是点了没反应的开关
+        if available(Capability.AUTOSTART):
+            self._autostart_switch = ToggleSwitch()
+            self._autostart_switch.setChecked(True)  # 欢迎向导默认开启
+            row_auto, self._autostart_lbl, self._autostart_desc = \
+                self._make_setting_row_with_refs(
+                    _tr("开机自启"),
+                    self._autostart_switch,
+                    _tr("开机后在检测更新后启动。")
+                )
+            layout.addWidget(row_auto)
 
         # ── 启动时显示主界面 ──────────────────────────────
         self._show_main_switch = ToggleSwitch()
@@ -226,160 +228,55 @@ class FinishPage(BasePage):
         layout.addWidget(row_show)
 
         # ── 桌面快捷方式 ──────────────────────────────────
-        self._desktop_switch = ToggleSwitch()
-        self._desktop_switch.setChecked(True)  # 默认开启
-        row_desktop, self._desktop_lbl, self._desktop_desc = \
-            self._make_setting_row_with_refs(
-                _tr("快捷方式"),
-                self._desktop_switch,
-                brand_text(_tr("完成向导时在桌面创建截图吧快捷方式。"))
-            )
-        layout.addWidget(row_desktop)
+        if available(Capability.DESKTOP_SHORTCUT):
+            self._desktop_switch = ToggleSwitch()
+            self._desktop_switch.setChecked(True)  # 默认开启
+            row_desktop, self._desktop_lbl, self._desktop_desc = \
+                self._make_setting_row_with_refs(
+                    _tr("快捷方式"),
+                    self._desktop_switch,
+                    brand_text(_tr("完成向导时在桌面创建截图吧快捷方式。"))
+                )
+            layout.addWidget(row_desktop)
 
-    # ── 开机自启辅助（注册表 HKCU\Run 方案）─────────────────
-
-    _AUTOSTART_REG_KEY = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
-    _AUTOSTART_APP_NAME = "Jietuba"
-
-    @classmethod
-    def _get_exe_path(cls) -> str:
-        """获取当前运行的可执行文件路径。
-        打包后（PyInstaller frozen）返回 .exe 路径；
-        开发模式下返回 python.exe + 主脚本路径。
-        """
-        import sys, os
-        if getattr(sys, 'frozen', False):
-            return sys.executable
-        # 开发模式：python.exe main/main_app.py
-        main_script = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "..", "main_app.py")
-        )
-        return f'"{sys.executable}" "{main_script}"'
+    # ── 开机自启 / 桌面快捷方式 ───────────────────────────
+    # 实现都在 core/platform（startup 与 shell）；这里只保留向导页要用的两件事，
+    # 设置页与重置逻辑原来要跨模块调本页的私有 classmethod，现在都直接调平台层。
 
     @classmethod
     def _get_autostart(cls) -> bool:
-        """检测注册表 HKCU\\Run 中是否存在本程序的启动项（仅 Windows）"""
-        if sys.platform != "win32":
-            return False
-        import winreg
-        try:
-            key = winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
-                cls._AUTOSTART_REG_KEY,
-                0,
-                winreg.KEY_READ,
-            )
-            try:
-                winreg.QueryValueEx(key, cls._AUTOSTART_APP_NAME)
-                return True
-            except FileNotFoundError:
-                return False
-            finally:
-                winreg.CloseKey(key)
-        except Exception:
-            return False
+        """开机自启是否已启用。"""
+        return startup.is_autostart_enabled()
 
     @classmethod
     def _set_autostart(cls, enabled: bool):
-        """启用：写入注册表 HKCU\\Run；禁用：删除对应注册表值（仅 Windows）"""
-        if sys.platform != "win32":
-            log_info(T("开机自启是 Windows 注册表机制，当前平台跳过"), "page6")
-            return
-        import winreg
-        try:
-            key = winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
-                cls._AUTOSTART_REG_KEY,
-                0,
-                winreg.KEY_SET_VALUE,
-            )
-            if enabled:
-                exe_path = cls._get_exe_path()
-                winreg.SetValueEx(key, cls._AUTOSTART_APP_NAME, 0, winreg.REG_SZ, exe_path)
-                log_info(T("已写入开机自启注册表项: {exe_path}", exe_path=exe_path), "page6")
-            else:
-                try:
-                    winreg.DeleteValue(key, cls._AUTOSTART_APP_NAME)
-                    log_info(T("已删除开机自启注册表项"), "page6")
-                except FileNotFoundError:
-                    pass  # 不存在则忽略
-            winreg.CloseKey(key)
-        except Exception as e:
-            log_exception(e, T("设置开机自启"))
-
-    # ── 桌面快捷方式辅助 ─────────────────────────────────
-
-    _DESKTOP_LNK_NAME = f"{PRODUCT_NAME}.lnk"
-
-    @classmethod
-    def _get_desktop_lnk_path(cls) -> str:
-        """返回桌面上快捷方式的完整路径"""
-        import os
-        desktop = os.path.join(os.path.expanduser("~"), "Desktop", cls._DESKTOP_LNK_NAME)
-        return desktop
+        """启用/禁用开机自启。"""
+        startup.set_autostart(enabled)
 
     @classmethod
     def _create_desktop_shortcut(cls):
         """在桌面创建指向当前程序的快捷方式。"""
-        import base64
         import os
-        import subprocess
         import sys
 
-        desktop_lnk = cls._get_desktop_lnk_path()
-        try:
-            if getattr(sys, 'frozen', False):
-                target_path = sys.executable
-                arguments = ""
-                working_directory = os.path.dirname(sys.executable)
-            else:
-                main_script = os.path.abspath(
-                    os.path.join(os.path.dirname(__file__), "..", "..", "main_app.py")
-                )
-                target_path = sys.executable
-                arguments = f'"{main_script}"'
-                working_directory = os.path.dirname(main_script)
-
-            def _ps_quote(value: str) -> str:
-                return "'" + value.replace("'", "''") + "'"
-
-            script = "\n".join([
-                f"$shortcutPath = {_ps_quote(desktop_lnk)}",
-                f"$targetPath = {_ps_quote(target_path)}",
-                f"$workingDirectory = {_ps_quote(working_directory)}",
-                f"$arguments = {_ps_quote(arguments)}",
-                "$shell = New-Object -ComObject WScript.Shell",
-                "$shortcut = $shell.CreateShortcut($shortcutPath)",
-                "$shortcut.TargetPath = $targetPath",
-                "$shortcut.WorkingDirectory = $workingDirectory",
-                "if ($arguments.Length -gt 0) { $shortcut.Arguments = $arguments }",
-                "$shortcut.IconLocation = $targetPath",
-                "$shortcut.Save()",
-            ])
-            encoded_script = base64.b64encode(script.encode("utf-16le")).decode("ascii")
-            result = subprocess.run(
-                [
-                    "powershell.exe",
-                    "-NoProfile",
-                    "-NonInteractive",
-                    "-ExecutionPolicy",
-                    "Bypass",
-                    "-EncodedCommand",
-                    encoded_script,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        if getattr(sys, 'frozen', False):
+            target_path = sys.executable
+            arguments = ""
+            working_directory = os.path.dirname(sys.executable)
+        else:
+            main_script = os.path.abspath(
+                os.path.join(os.path.dirname(__file__), "..", "..", "main_app.py")
             )
-            if result.returncode != 0:
-                error_text = (result.stderr or result.stdout or "").strip()
-                raise RuntimeError(error_text or f"PowerShell exited with code {result.returncode}")
+            target_path = sys.executable
+            arguments = f'"{main_script}"'
+            working_directory = os.path.dirname(main_script)
 
-            log_info(T("已创建桌面快捷方式: {desktop_lnk}", desktop_lnk=desktop_lnk), "page6")
-        except Exception as e:
-            log_exception(e, T("创建桌面快捷方式"))
+        shell.create_desktop_shortcut(
+            PRODUCT_NAME,
+            target=target_path,
+            arguments=arguments,
+            working_dir=working_directory,
+        )
 
     def retranslate(self):
         self.title_label.setText(_tr("🎉 一切就绪！").replace("🎉", "").strip())

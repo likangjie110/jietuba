@@ -1,14 +1,13 @@
 ﻿# -*- coding: utf-8 -*-
 """日志设置页 — Fluent Design"""
 import os
-import subprocess
-import sys
 import glob
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea,
 )
 from PySide6.QtCore import Qt
+from core.platform import shell
 from ui.dialogs import show_info_dialog
 from ui.fluent_lite import (
     SwitchSettingCard, SettingCard as FSettingCard,
@@ -181,10 +180,5 @@ def _open_latest_log_file(dialog):
         return
 
     latest = max(files, key=os.path.getmtime)
-    if sys.platform == "win32":
-        os.startfile(latest)
-    elif sys.platform == "darwin":
-        subprocess.run(["open", latest], check=False)
-    else:
-        subprocess.run(["xdg-open", latest], check=False)
+    shell.open_path(latest)
  

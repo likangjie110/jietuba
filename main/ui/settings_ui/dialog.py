@@ -6,8 +6,6 @@
 各个页面分别位于 page_*.py 模块中。
 """
 import os
-import subprocess
-import sys
 
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QWidget, QDialogButtonBox,
@@ -30,6 +28,7 @@ from ui.fluent_lite.theme import ACCENT, ACCENT_HOVER, ACCENT_PRESSED
 from core import log_info, safe_event
 from core.logger import log_exception, T
 from core.constants import CSS_FONT_FAMILY, DEFAULT_FONT_FAMILY
+from core.platform import shell
 
 # 页面创建函数
 from .page_hotkey import create_hotkey_page, validate_global_hotkey_edits
@@ -425,12 +424,7 @@ class SettingsDialog(FrostedFramelessDialog):
         path = self.config_manager.get_screenshot_save_path()
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
-        if sys.platform == "win32":
-            os.startfile(path)
-        elif sys.platform == "darwin":
-            subprocess.run(["open", path], check=False)
-        else:
-            subprocess.run(["xdg-open", path], check=False)
+        shell.open_path(path)
 
     def _change_log_dir(self):
         new_dir = QFileDialog.getExistingDirectory(self, self.tr("Select Log Save Folder"), self.config_manager.get_log_dir())
@@ -441,12 +435,7 @@ class SettingsDialog(FrostedFramelessDialog):
         path = self.config_manager.get_log_dir()
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
-        if sys.platform == "win32":
-            os.startfile(path)
-        elif sys.platform == "darwin":
-            subprocess.run(["open", path], check=False)
-        else:
-            subprocess.run(["xdg-open", path], check=False)
+        shell.open_path(path)
 
     # ================================================================
     # 底部按钮

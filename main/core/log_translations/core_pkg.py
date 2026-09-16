@@ -25,6 +25,20 @@ TRANSLATIONS: dict[str, str] = {
     # core/constants.py
     "系统默认文字字体: {family}": "System default text font: {family}",
 
+    # core/platform/shell.py
+    "打开失败，系统没有可用的打开方式: {path}": "Open failed, no handler available: {path}",
+    "用默认程序打开 {path}": "Opening {path} with the default application",
+    "在文件管理器中定位 {path}": "Revealing {path} in the file manager",
+    "桌面快捷方式尚未支持当前平台，跳过": "Desktop shortcuts are not supported on this platform yet, skipping",
+    "创建桌面快捷方式": "Creating desktop shortcut",
+    "已创建桌面快捷方式: {shortcut_path}": "Desktop shortcut created: {shortcut_path}",
+
+    # core/platform/startup.py
+    "开机自启尚未支持当前平台，跳过": "Autostart is not supported on this platform yet, skipping",
+    "已写入开机自启注册表项: {command}": "Autostart registry entry written: {command}",
+    "已删除开机自启注册表项": "Autostart registry entry removed",
+    "设置开机自启": "Setting autostart",
+
     # core/clipboard_utils.py
     "剪切板: 图像为空": "Clipboard: image is empty",
     "剪切板: Win32 写入失败 ({e})": "Clipboard: Win32 write failed ({e})",
