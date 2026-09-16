@@ -5,7 +5,7 @@ TRANSLATIONS: dict[str, str] = {
     "清理画笔指示器失败: {exc}": "Failed to clean up brush indicator: {exc}",
     "更新工具光标失败: {exc}": "Failed to update tool cursor: {exc}",
     "自动选择图元失败: {exc}": "Failed to auto-select item: {exc}",
-    "win32gui 未安装，智能选区功能不可用": "win32gui is not installed, smart selection is unavailable",
+    "当前平台没有可用的窗口枚举接口，智能选区功能不可用": "No window enumeration API on this platform, smart selection is unavailable",
     "已启用，找到 {window_count} 个窗口": "Enabled, found {window_count} windows",
     "已禁用": "Disabled",
     "取消智能编辑选择": "Cleared smart edit selection",

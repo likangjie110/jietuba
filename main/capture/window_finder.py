@@ -19,7 +19,15 @@ try:
     WINDOWS_API_AVAILABLE = True
 except ImportError:
     WINDOWS_API_AVAILABLE = False
-    log_warning(T("win32gui 未安装，智能选区功能不可用"), module="SmartSelection")
+    log_warning(T("当前平台没有可用的窗口枚举接口，智能选区功能不可用"), module="SmartSelection")
+
+# macOS 后端：Quartz 的窗口列表，同样是前→后的 Z 序
+try:
+    from capture import window_finder_macos
+    MACOS_API_AVAILABLE = window_finder_macos.MACOS_API_AVAILABLE
+except Exception:
+    window_finder_macos = None
+    MACOS_API_AVAILABLE = False
 
 # DPI 感知已在 main_app.py 中设置，此处不再重复调用
 # 避免 "访问被拒绝" 警告（DPI 设置只能调用一次）
@@ -61,8 +69,8 @@ class WindowFinder:
             screen_offset_x: 屏幕X偏移（多屏幕时使用）
             screen_offset_y: 屏幕Y偏移（多屏幕时使用）
         """
-        if not WINDOWS_API_AVAILABLE:
-            raise RuntimeError("win32gui 库未安装，无法使用智能选区功能")
+        if not (WINDOWS_API_AVAILABLE or MACOS_API_AVAILABLE):
+            raise RuntimeError("当前平台没有可用的窗口枚举接口，无法使用智能选区功能")
         
         self.windows: List[Tuple[int, List[int], str]] = []  # [(hwnd, [x1,y1,x2,y2], title), ...]
         self.screen_offset_x = screen_offset_x
@@ -94,9 +102,9 @@ class WindowFinder:
         - 必须有合理的尺寸
         """
         if not WINDOWS_API_AVAILABLE:
-            self.windows = []
+            self.windows = self._find_windows_macos()
             return
-        
+
         self.windows = []
         
         # 获取桌面区域用于 ApplicationFrameWindow 特判
@@ -207,6 +215,19 @@ class WindowFinder:
             log_error(T("枚举窗口失败: {e}", e=e), module="SmartSelection")
             self.windows = []
     
+    def _find_windows_macos(self) -> List[Tuple[int, List[int], str]]:
+        """macOS：Quartz 已经按 Z 序给出窗口，这里只做坐标偏移。"""
+        if window_finder_macos is None:
+            return []
+        windows = window_finder_macos.enumerate_windows(debug=self.debug)
+        offset_x, offset_y = self.screen_offset_x, self.screen_offset_y
+        if offset_x or offset_y:
+            windows = [
+                (wid, [r[0] - offset_x, r[1] - offset_y, r[2] - offset_x, r[3] - offset_y], title)
+                for wid, r, title in windows
+            ]
+        return windows
+
     def find_window_at_point(self, x: int, y: int, fallback_rect: Optional[List[int]] = None) -> List[int]:
         """
         根据鼠标位置查找最顶层的包含窗口（基于 Z-order）
@@ -254,6 +275,11 @@ class WindowFinder:
     
     def _get_virtual_desktop_rect(self) -> List[int]:
         """获取虚拟桌面尺寸（包含所有显示器）"""
+        if not WINDOWS_API_AVAILABLE and window_finder_macos is not None:
+            rect = window_finder_macos.virtual_desktop_rect()
+            if rect:
+                return rect
+            return [0, 0, 1920, 1080]
         try:
             # SM_XVIRTUALSCREEN = 76, SM_YVIRTUALSCREEN = 77
             # SM_CXVIRTUALSCREEN = 78, SM_CYVIRTUALSCREEN = 79
@@ -288,7 +314,7 @@ def is_smart_selection_available() -> bool:
     Returns:
         bool: True=可用，False=不可用（缺少依赖）
     """
-    return WINDOWS_API_AVAILABLE
+    return WINDOWS_API_AVAILABLE or MACOS_API_AVAILABLE
 
 
 # ============================================================================
@@ -306,9 +332,9 @@ def find_window_at_cursor(screen_offset_x: int = 0, screen_offset_y: int = 0) ->
     Returns:
         窗口矩形 [x1, y1, x2, y2]，如果功能不可用则返回 None
     """
-    if not WINDOWS_API_AVAILABLE:
+    if not (WINDOWS_API_AVAILABLE or MACOS_API_AVAILABLE):
         return None
-    
+
     try:
         from PySide6.QtGui import QCursor
         

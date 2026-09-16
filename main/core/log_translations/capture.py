@@ -1,7 +1,7 @@
 """main/capture/ 目录下 log_* 调用的中→英翻译表。"""
 
 TRANSLATIONS: dict[str, str] = {
-    "win32gui 未安装，智能选区功能不可用": "win32gui is not installed, smart selection is unavailable",
+    "当前平台没有可用的窗口枚举接口，智能选区功能不可用": "No window enumeration API on this platform, smart selection is unavailable",
     "使用偏移: ({offset_x}, {offset_y})": "Using offset: ({offset_x}, {offset_y})",
     "获取窗口类名 hwnd={hwnd}": "Failed to get window class name for hwnd={hwnd}",
     "处理窗口时出错: {e}": "Error processing window: {e}",

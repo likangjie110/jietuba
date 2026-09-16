@@ -12,6 +12,8 @@ WindowFinder 单元测试
 find_windows()（EnumWindows 真实枚举）和 get_window_rect_no_shadow()（DWM API）
 依赖真实 win32 会话，在无桌面的 CI runner 上不可测，不在本文件覆盖范围内。
 """
+import sys
+
 import pytest
 from unittest.mock import patch, MagicMock
 
@@ -19,33 +21,42 @@ import capture.window_finder as window_finder_module
 from capture.window_finder import WindowFinder, is_smart_selection_available
 
 
-pytestmark = pytest.mark.skipif(
+def _finder_or_skip():
+    """拿一个 WindowFinder；两个平台的窗口枚举都不可用时跳过。"""
+    if not is_smart_selection_available():
+        pytest.skip("当前平台没有可用的窗口枚举接口")
+    return WindowFinder()
+
+
+windows_only = pytest.mark.skipif(
     not window_finder_module.WINDOWS_API_AVAILABLE,
-    reason="win32gui 不可用，WindowFinder 在该环境下无法实例化",
+    reason="这条测的是 Windows 的 GetSystemMetrics 分支",
 )
 
 
 class TestWindowFinderInit:
     def test_default_offset_is_zero(self):
-        finder = WindowFinder()
+        finder = _finder_or_skip()
         assert finder.screen_offset_x == 0
         assert finder.screen_offset_y == 0
         assert finder.windows == []
 
     def test_custom_offset(self):
-        finder = WindowFinder(screen_offset_x=100, screen_offset_y=-50)
+        finder = _finder_or_skip()
+        finder.set_screen_offset(100, -50)
         assert finder.screen_offset_x == 100
         assert finder.screen_offset_y == -50
 
-    def test_raises_when_windows_api_unavailable(self):
-        with patch.object(window_finder_module, "WINDOWS_API_AVAILABLE", False):
+    def test_raises_when_no_platform_api_is_available(self):
+        with patch.object(window_finder_module, "WINDOWS_API_AVAILABLE", False), \
+             patch.object(window_finder_module, "MACOS_API_AVAILABLE", False):
             with pytest.raises(RuntimeError):
                 WindowFinder()
 
 
 class TestSetScreenOffset:
     def test_updates_offsets(self):
-        finder = WindowFinder()
+        finder = _finder_or_skip()
         finder.set_screen_offset(200, 300)
         assert finder.screen_offset_x == 200
         assert finder.screen_offset_y == 300
@@ -105,6 +116,7 @@ class TestFindWindowAtPoint:
 
 
 class TestGetVirtualDesktopRect:
+    @windows_only
     def test_uses_system_metrics_when_available(self):
         finder = WindowFinder()
         fake_user32 = MagicMock()
@@ -122,6 +134,7 @@ class TestGetVirtualDesktopRect:
 
         assert result == [-1920, 0, -1920 + 3840, 0 + 1080]
 
+    @windows_only
     def test_falls_back_to_hardcoded_default_on_total_failure(self):
         """ctypes 和 Qt primaryScreen 都失败时，应返回硬编码的 1920x1080 默认值"""
         finder = WindowFinder()
@@ -136,17 +149,63 @@ class TestGetVirtualDesktopRect:
 
 class TestClear:
     def test_clear_resets_windows_list(self):
-        finder = WindowFinder()
+        finder = _finder_or_skip()
         finder.windows = [(1, [0, 0, 10, 10], "Something")]
         finder.clear()
         assert finder.windows == []
 
 
 class TestIsSmartSelectionAvailable:
-    def test_reflects_module_flag_true(self):
-        with patch.object(window_finder_module, "WINDOWS_API_AVAILABLE", True):
+    def test_available_when_either_platform_api_is_present(self):
+        with patch.object(window_finder_module, "WINDOWS_API_AVAILABLE", True), \
+             patch.object(window_finder_module, "MACOS_API_AVAILABLE", False):
             assert is_smart_selection_available() is True
 
-    def test_reflects_module_flag_false(self):
-        with patch.object(window_finder_module, "WINDOWS_API_AVAILABLE", False):
+        with patch.object(window_finder_module, "WINDOWS_API_AVAILABLE", False), \
+             patch.object(window_finder_module, "MACOS_API_AVAILABLE", True):
+            assert is_smart_selection_available() is True
+
+    def test_unavailable_when_neither_platform_api_is_present(self):
+        with patch.object(window_finder_module, "WINDOWS_API_AVAILABLE", False), \
+             patch.object(window_finder_module, "MACOS_API_AVAILABLE", False):
             assert is_smart_selection_available() is False
+
+
+class TestScreenOffsetOnMacOS:
+    """偏移量必须真的从枚举结果里减掉——多屏坐标就靠这一步。"""
+
+    @pytest.mark.skipif(sys.platform != "darwin", reason="macOS 的窗口来源")
+    def test_offset_is_subtracted_from_enumerated_windows(self, monkeypatch):
+        from capture import window_finder_macos
+
+        monkeypatch.setattr(window_finder_macos, "enumerate_windows",
+                            lambda exclude_pid=None, debug=False: [(7, [100, 200, 300, 400], "标题")])
+        finder = WindowFinder(50, 20)
+
+        windows = finder._find_windows_macos()
+
+        assert windows == [(7, [50, 180, 250, 380], "标题")]
+
+
+class TestMacOSEnumeration:
+    """真机枚举：结构正确、坐标自洽（CI 在 Windows 上，这部分跳过）。"""
+
+    @pytest.mark.skipif(sys.platform != "darwin", reason="macOS 的 Quartz 枚举")
+    def test_finds_real_windows_with_sane_rects(self):
+        from capture import window_finder_macos
+
+        windows = window_finder_macos.enumerate_windows(exclude_pid=-1)
+
+        assert windows, "桌面上总该有至少一个窗口"
+        for window_id, rect, title in windows:
+            assert isinstance(window_id, int)
+            assert len(rect) == 4 and all(isinstance(v, int) for v in rect)
+            assert rect[2] > rect[0] and rect[3] > rect[1], rect
+            assert title.strip()
+
+    @pytest.mark.skipif(sys.platform != "darwin", reason="macOS 的 Quartz 枚举")
+    def test_own_process_is_excluded_by_default(self):
+        """截图时我们自己的全屏遮罩必须在列表外。"""
+        from capture import window_finder_macos
+
+        assert all(info[0] != 0 for info in window_finder_macos.enumerate_windows())

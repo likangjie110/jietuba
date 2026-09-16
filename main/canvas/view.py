@@ -348,7 +348,7 @@ class CanvasView(QGraphicsView):
             # 检查依赖
             from capture.window_finder import is_smart_selection_available
             if not is_smart_selection_available():
-                log_warning(T("win32gui 未安装，智能选区功能不可用"), "SmartSelect")
+                log_warning(T("当前平台没有可用的窗口枚举接口，智能选区功能不可用"), "SmartSelect")
                 self.smart_selection_enabled = False
                 return
             
