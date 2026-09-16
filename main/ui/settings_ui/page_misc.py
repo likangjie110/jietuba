@@ -1,9 +1,9 @@
 ﻿# -*- coding: utf-8 -*-
 """杂项设置页 — Fluent Design"""
-import sys
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea
 from PySide6.QtCore import Qt
+from core.platform import Capability, available
 from ui.fluent_lite import (
     SwitchSettingCard, SettingCard as FSettingCard,
     FluentIcon, ComboBox, CaptionLabel,
@@ -26,8 +26,9 @@ def create_misc_page(dialog) -> QWidget:
     # ════ 启动行为 ════
     grp_startup = SettingCardGroup(dialog.tr("Startup"), view)
 
-    # 开机自启（Windows 注册表机制，其它平台不显示——显示了也是点了没反应）
-    if sys.platform == "win32":
+    # 开机自启：只有平台层声明支持时才显示卡片。不支持的平台上卡片点了没反应，
+    # 显示出来只会让人以为功能坏了。
+    if available(Capability.AUTOSTART):
         from ..welcome.page6_finish import FinishPage as _FP
         autostart_card = SwitchSettingCard(
             FluentIcon.POWER_BUTTON,

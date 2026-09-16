@@ -12,6 +12,7 @@ import ctypes
 from typing import List, Tuple, Optional
 from core import log_debug, log_warning, log_error
 from core.logger import log_exception, T
+from core.platform import Capability, available
 
 try:
     import win32gui
@@ -69,7 +70,7 @@ class WindowFinder:
             screen_offset_x: 屏幕X偏移（多屏幕时使用）
             screen_offset_y: 屏幕Y偏移（多屏幕时使用）
         """
-        if not (WINDOWS_API_AVAILABLE or MACOS_API_AVAILABLE):
+        if not is_smart_selection_available():
             raise RuntimeError("当前平台没有可用的窗口枚举接口，无法使用智能选区功能")
         
         self.windows: List[Tuple[int, List[int], str]] = []  # [(hwnd, [x1,y1,x2,y2], title), ...]
@@ -310,11 +311,17 @@ class WindowFinder:
 def is_smart_selection_available() -> bool:
     """
     检查智能选区功能是否可用
-    
+
+    两个条件必须同时成立：平台层声明当前平台有窗口枚举后端，且对应依赖真的导入成功。
+    只看平台声明会在缺 pywin32 的 Windows 上误报可用；只看导入结果，则在 Linux 上
+    把「根本没有实现」记成「依赖缺失」，排查时会往错误的方向找。
+
     Returns:
-        bool: True=可用，False=不可用（缺少依赖）
+        bool: True=可用，False=不可用
     """
-    return WINDOWS_API_AVAILABLE or MACOS_API_AVAILABLE
+    return available(Capability.WINDOW_ENUMERATION) and (
+        WINDOWS_API_AVAILABLE or MACOS_API_AVAILABLE
+    )
 
 
 # ============================================================================
