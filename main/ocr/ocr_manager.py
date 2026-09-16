@@ -1,768 +1,187 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
-ocr_manager.py - OCR 功能模块
+ocr_manager.py - OCR 管理器
 
-为截图工具提供 OCR 文字识别功能。
+职责只有三件事：**持有引擎、选引擎、把调用转发给引擎**。
 
+引擎实现见 engines.py（内建，构建期变体开关 OCR_VARIANT 也在那里）或任何实现了
+engine.OcrEngine 的外部包，接口见 engine.py。本模块不认识任何具体扩展——新增引擎
+不用改这里，注册进来即可：内建的在 builtin_engines() 里，外部插件由 plugins.py 从
+plugins/ 目录发现，也可以直接调 register_engine()。
+
+对外 API（recognize_text / is_ocr_available / initialize_ocr / set_ocr_engine ...）
+保持不变，调用方（钉图文字层、翻译、设置页）不受引擎增减影响。
 
 主要功能:
 - 识别截图区域的文字
-- 支持中英日文识别
-- 单例模式管理 OCR 引擎
-- 支持图像预处理(灰度转换、图像放大)
-
+- 单例模式管理引擎，支持多引擎切换
 """
-
-
-OCR_VARIANT: str = "pp"
-
-from PySide6.QtGui import QPixmap, QImage
-from PySide6.QtCore import QBuffer, QIODevice
-from typing import Optional, Any
-import time
-import os
-import sys
-import ctypes
 import traceback as _tb
-import threading
+from typing import Any, Dict, List, Optional
+
+from PySide6.QtGui import QPixmap
 
 from core.logger import T
 
-def _ocr_log(msg, level: str = "INFO"):
-    """写入日志（打包后使用 core.logger，否则 print）。msg 可以是 str 或 T() 构造的可翻译消息。"""
-    try:
-        from core.logger import log_info, log_warning, log_error, log_debug
-        if level == "ERROR":
-            log_error(msg, "OCR")
-        elif level == "WARN":
-            log_warning(msg, "OCR")
-        elif level == "DEBUG":
-            log_debug(msg, "OCR")
-        else:
-            log_info(msg, "OCR")
-    except Exception:
-        pass
-
-def _preload_crt_for_pyinstaller():
-    """
-    在 PyInstaller 打包环境中预加载 MSVC CRT 运行时库。
-    """
-    if not getattr(sys, 'frozen', False):
-        return  # 非打包环境不需要
-    
-    crt_dlls = [
-        "ucrtbase.dll",
-        "vcruntime140.dll", 
-        "vcruntime140_1.dll",
-        "msvcp140.dll",
-    ]
-    
-    for dll in crt_dlls:
-        try:
-            ctypes.CDLL(dll)
-        except OSError:
-            pass  # DLL 可能已加载或不存在，忽略
-
-
-# 尝试导入 windows_media_ocr（Rust 库，同时包含高精度识别引擎）
-if OCR_VARIANT != "pp":
-    try:
-        import windows_media_ocr
-        WINDOWS_OCR_AVAILABLE = True
-        try:
-            available_langs = windows_media_ocr.get_available_languages()
-        except Exception:
-            available_langs = []
-        # 高精度引擎（通过 Rust FFI 调用系统组件）
-        try:
-            WINDOS_OCR_AVAILABLE = windows_media_ocr.oneocr_available()
-            if WINDOS_OCR_AVAILABLE:
-                _ocr_log(T("高精度引擎可用 (Rust FFI)"), "INFO")
-            else:
-                _ocr_log(T("高精度引擎不可用 (系统组件未找到)"), "DEBUG")
-        except Exception as e:
-            WINDOS_OCR_AVAILABLE = False
-            _ocr_log(T("高精度引擎检测失败: {e}", e=e), "DEBUG")
-    except ImportError as e:
-        WINDOWS_OCR_AVAILABLE = False
-        WINDOS_OCR_AVAILABLE = False
-        windows_media_ocr = None
-        available_langs = []
-        _ocr_log(T("windows_media_ocr 库不可用: {e}", e=e), "DEBUG")
-else:
-    # pp 版本不携带 windows_media_ocr
-    WINDOWS_OCR_AVAILABLE = False
-    WINDOS_OCR_AVAILABLE = False
-    windows_media_ocr = None
-    available_langs = []
-
-# 尝试检测 ppocr_rust（Rust + ort 的 PP-OCR 引擎，原生线程无 GIL，体积小，开源合规）
-# 需要 ppocr_rust 扩展可导入 + det/rec onnx 模型文件存在
-def _ppocr_rust_model_paths():
-    """返回 (det_path, rec_path)；找不到则返回 (None, None)。
-
-    查找顺序：
-      1) 打包后：exe 同级目录的 models/（外置，启动快、可替换）
-      2) 打包后回退：_MEIPASS/models/（若模型被打进包内）
-      3) 开发环境：仓库根 models/
-    """
-    candidates = []
-    try:
-        if getattr(sys, "frozen", False):
-            exe_dir = os.path.dirname(sys.executable)
-            candidates.append(os.path.join(exe_dir, "models"))
-            meipass = getattr(sys, "_MEIPASS", None)
-            if meipass:
-                candidates.append(os.path.join(meipass, "models"))
-        else:
-            from core.resource_manager import ResourceManager
-            candidates.append(ResourceManager.get_resource_path("models"))
-    except Exception as e:
-        _ocr_log(T("解析 ppocr_rust 模型路径失败: {e}", e=e), "DEBUG")
-
-    for base in candidates:
-        det = os.path.join(base, "PP-OCRv6_det_small.onnx")
-        rec = os.path.join(base, "PP-OCRv6_rec_small.onnx")
-        if os.path.exists(det) and os.path.exists(rec):
-            return det, rec
-    return None, None
-
-if OCR_VARIANT != "win":
-    try:
-        import importlib.util as _ilu
-        _pp_spec = _ilu.find_spec("ppocr_rust") is not None
-        _pp_det, _pp_rec = _ppocr_rust_model_paths() if _pp_spec else (None, None)
-        PP_RUST_AVAILABLE = bool(_pp_spec and _pp_det and _pp_rec)
-        if PP_RUST_AVAILABLE:
-            _ocr_log(T("ppocr_rust 引擎可用 (Rust + ort PP-OCR)"), "DEBUG")
-        elif _pp_spec:
-            _ocr_log(T("ppocr_rust 已安装但缺少模型文件"), "DEBUG")
-        else:
-            _ocr_log(T("ppocr_rust 未安装"), "DEBUG")
-    except Exception as e:
-        PP_RUST_AVAILABLE = False
-        _pp_det = _pp_rec = None
-        _ocr_log(T("ppocr_rust 引擎检测失败: {e}", e=e), "DEBUG")
-else:
-    
-    PP_RUST_AVAILABLE = False
-    _pp_det = _pp_rec = None
-
-# 至少有一个引擎可用
-OCR_AVAILABLE = WINDOS_OCR_AVAILABLE or WINDOWS_OCR_AVAILABLE or PP_RUST_AVAILABLE
+from .engine import OcrEngine, error_result, ocr_log
+from .engines import builtin_engines
+from .plugins import discover_plugins
 
 
 class OCRManager:
-    """OCR 管理器 - 单例模式，支持多引擎切换"""
-    
+    """OCR 管理器 - 单例，持有一组引擎并转发调用"""
+
+    # 引擎类型常量。取值就是各引擎的 name，也是 set_ocr_engine() 的入参。
+    ENGINE_WINDOS_OCR = "windos_ocr"          # Windows 高精度引擎 (Rust FFI)
+    ENGINE_WINDOWS_OCR = "windows_media_ocr"  # Windows Media OCR (轻量级)
+    ENGINE_PP_RUST = "ppocr_rust"             # Rust + ort 的 PP-OCR (默认)
+
     _instance = None
     _initialized = False
-    
-    # OCR 引擎类型常量
-    ENGINE_WINDOS_OCR = "windos_ocr"  # Windows  OCR (高性能)
-    ENGINE_WINDOWS_OCR = "windows_media_ocr"  # Windows Media OCR (轻量级)
-    ENGINE_PP_RUST = "ppocr_rust"  # Rust + ort 的 PP-OCR (原生线程无 GIL，体积小，推荐)
-    
-    # 语言映射：应用语言 -> windows_media_ocr 语言代码
-    LANGUAGE_MAP = {
-        "日本語": "ja",
-        "Japanese": "ja",
-        "ja": "ja",
-        "中文": "zh-Hans-CN",
-        "Chinese": "zh-Hans-CN",
-        "zh": "zh-Hans-CN",
-        "English": "en-US",
-        "英语": "en-US",
-        "en": "en-US",
-    }
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     def __init__(self):
-        """初始化 OCR 管理器"""
         if not self._initialized:
             self._initialized = True
             self._last_error = None
-            self._current_engine = None  # 当前使用的引擎类型
-            self._windows_ocr_language = None  # windows_media_ocr 语言设置
-            self._pp_engine = None  # ppocr_rust.Engine 实例，None 即未初始化
-            self._init_lock = threading.Lock()  # 线程锁，防止重复初始化
-    
+            self._current_engine: Optional[str] = None
+            self._engines: Dict[str, OcrEngine] = {}
+            for engine in builtin_engines():
+                self.register_engine(engine)
+            # 插件后注册：同名时插件覆盖内建，用户放进来的东西说了算
+            discover_plugins(self)
+
+    # ── 引擎注册表 ────────────────────────────────────
+
+    def register_engine(self, engine: OcrEngine) -> None:
+        """登记一个引擎，同名覆盖。
+
+        外部引擎包在这里接入——注册之后它和内建引擎没有任何区别。
+        """
+        self._engines[engine.name] = engine
+
+    def get_engine(self, name: str) -> Optional[OcrEngine]:
+        """按 id 取引擎实例（未注册返回 None）。"""
+        return self._engines.get(name)
+
     @property
     def is_available(self) -> bool:
-        """检查 OCR 功能是否可用"""
-        return OCR_AVAILABLE
-    
-    def get_available_engines(self) -> list:
-        """获取可用的 OCR 引擎列表"""
-        engines = []
-        if PP_RUST_AVAILABLE:
-            engines.append(self.ENGINE_PP_RUST)
-        if WINDOS_OCR_AVAILABLE:
-            engines.append(self.ENGINE_WINDOS_OCR)
-        if WINDOWS_OCR_AVAILABLE:
-            engines.append(self.ENGINE_WINDOWS_OCR)
-        return engines
-    
-    def set_engine(self, engine_type: str):
-        """
-        设置当前使用的 OCR 引擎
-        
-        Args:
-            engine_type: 引擎类型 ("ppocr_rust" / "windos_ocr" / "windows_media_ocr")
-        """
-        # 检查引擎是否可用
-        if engine_type == self.ENGINE_PP_RUST and not PP_RUST_AVAILABLE:
-            _ocr_log(T("ppocr_rust 引擎不可用"), "WARN")
-            return False
+        """任一引擎可用即视为 OCR 可用。"""
+        return any(engine.is_available() for engine in self._engines.values())
 
-        if engine_type == self.ENGINE_WINDOS_OCR and not WINDOS_OCR_AVAILABLE:
-            _ocr_log(T("windos_ocr 引擎不可用"), "WARN")
-            return False
+    def get_available_engines(self) -> List[str]:
+        """当前可用的引擎 id，顺序与注册顺序一致。"""
+        return [name for name, engine in self._engines.items() if engine.is_available()]
 
-        if engine_type == self.ENGINE_WINDOWS_OCR and not WINDOWS_OCR_AVAILABLE:
-            _ocr_log(T("windows_media_ocr 引擎不可用"), "WARN")
+    def set_engine(self, engine_type: str) -> bool:
+        """切换当前使用的引擎。引擎未注册或不可用时返回 False，且不改动现状。"""
+        engine = self._engines.get(engine_type)
+        if engine is None:
+            ocr_log(T("不支持的引擎类型: {engine_type}", engine_type=engine_type), "ERROR")
             return False
-
-        # 只支持这三个引擎
-        if engine_type not in [self.ENGINE_PP_RUST, self.ENGINE_WINDOS_OCR, self.ENGINE_WINDOWS_OCR]:
-            _ocr_log(T("不支持的引擎类型: {engine_type}", engine_type=engine_type), "ERROR")
+        if not engine.is_available():
+            ocr_log(T("引擎不可用: {engine_type}", engine_type=engine_type), "WARN")
             return False
 
         if self._current_engine != engine_type:
-            _ocr_log(T("切换引擎: {old} -> {new}", old=self._current_engine, new=engine_type))
+            ocr_log(T("切换引擎: {old} -> {new}", old=self._current_engine, new=engine_type))
             self._current_engine = engine_type
-
-            if engine_type == self.ENGINE_PP_RUST:
-                _ocr_log(T("使用 ppocr_rust 引擎 (Rust + ort PP-OCR)"))
-            elif engine_type == self.ENGINE_WINDOS_OCR:
-                _ocr_log(T("使用 windos_ocr 引擎 (Windows ScreenSketch OCR)"))
-            else:
-                _ocr_log(T("使用 windows_media_ocr 引擎"))
-                _ocr_log(T("Windows OCR 支持的语言: {langs}", langs=available_langs))
-            return True
-        
+            ocr_log(T("使用 {engine} 引擎 ({label})", engine=engine.name, label=engine.label))
         return True
-    
+
     def get_current_engine(self) -> Optional[str]:
         """获取当前使用的引擎类型"""
         return self._current_engine
-    
+
+    # ── 初始化与识别 ──────────────────────────────────
+
     def initialize(self, language: str = "日本語", engine_type: Optional[str] = None) -> bool:
-        """
-        初始化 OCR 引擎
-        
-        Args:
-            language: 识别语言
-            engine_type: 指定引擎类型，如果为 None 则使用当前引擎
-        
-        Returns:
-            bool: 是否初始化成功
-        """
-        if not OCR_AVAILABLE:
+        """初始化当前引擎（未指定则以注册顺序取第一个可用的）。"""
+        if not self.is_available:
             self._last_error = "没有可用的 OCR 引擎"
             return False
-        
-        # 如果指定了引擎，切换到该引擎
+
         if engine_type:
             self.set_engine(engine_type)
-        
-        # 如果没有设置当前引擎，根据 OCR_VARIANT 自动选择
+
         if not self._current_engine:
-            if OCR_VARIANT == "win":
-                # win 版：高精度引擎优先，Windows Media OCR 托底
-                if WINDOS_OCR_AVAILABLE:
-                    self._current_engine = self.ENGINE_WINDOS_OCR
-                    _ocr_log(T("自动选择引擎: {engine} (高精度引擎)", engine=self._current_engine), "INFO")
-                elif WINDOWS_OCR_AVAILABLE:
-                    self._current_engine = self.ENGINE_WINDOWS_OCR
-                    _ocr_log(T("自动选择引擎: {engine} (Windows Media OCR 托底)", engine=self._current_engine), "INFO")
-                else:
-                    self._last_error = "没有可用的 OCR 引擎"
-                    return False
-            else:
-                # pp 版（默认）：只用 ppocr_rust
-                if PP_RUST_AVAILABLE:
-                    self._current_engine = self.ENGINE_PP_RUST
-                    _ocr_log(T("自动选择引擎: {engine} (ppocr_rust 原生引擎)", engine=self._current_engine), "INFO")
-                else:
-                    self._last_error = "没有可用的 OCR 引擎"
-                    return False
-        
-        # 根据引擎类型初始化
-        if self._current_engine == self.ENGINE_PP_RUST:
-            return self._initialize_ppocr_rust()
-        elif self._current_engine == self.ENGINE_WINDOS_OCR:
-            return self._initialize_windos_ocr()
-        elif self._current_engine == self.ENGINE_WINDOWS_OCR:
-            return self._initialize_windows_ocr(language)
-        else:
-            self._last_error = f"不支持的引擎类型: {self._current_engine}"
-            return False
-    
-    def _initialize_ppocr_rust(self) -> bool:
-        """初始化 ppocr_rust 引擎 (Rust + ort，加载 det/rec onnx 模型)"""
-        if not PP_RUST_AVAILABLE:
-            self._last_error = "ppocr_rust 引擎不可用"
-            return False
-        if self._pp_engine is not None:
-            return True
-        with self._init_lock:
-            if self._pp_engine is not None:
-                return True
-            try:
-                _ocr_log(T("正在初始化 ppocr_rust 引擎 (Rust + ort)..."), "DEBUG")
-                import ppocr_rust
-                self._pp_engine = ppocr_rust.Engine(_pp_det, _pp_rec)
-                _ocr_log(T("ppocr_rust 引擎初始化成功"), "DEBUG")
-                return True
-            except Exception as e:
-                self._last_error = f"ppocr_rust 初始化失败: {str(e)}"
-                tb_str = _tb.format_exc()
-                _ocr_log(T("ppocr_rust 初始化失败: {e}\n{tb}", e=str(e), tb=tb_str), "ERROR")
-                self._pp_engine = None
+            available = self.get_available_engines()
+            if not available:
+                self._last_error = "没有可用的 OCR 引擎"
                 return False
-    
-    def _initialize_windos_ocr(self) -> bool:
-        """初始化高精度引擎 (Rust FFI，全局单例自管理)"""
-        if not WINDOS_OCR_AVAILABLE:
-            self._last_error = "高精度引擎不可用"
-            return False
-        
-        try:
-            _ocr_log(T("正在初始化高精度引擎 (Rust FFI)..."), "DEBUG")
-            windows_media_ocr.oneocr_initialize()
-            _ocr_log(T("高精度引擎初始化成功"), "DEBUG")
-            return True
-        except Exception as e:
-            self._last_error = f"高精度引擎初始化失败: {str(e)}"
-            tb_str = _tb.format_exc()
-            _ocr_log(T("高精度引擎初始化失败: {e}\n{tb}", e=str(e), tb=tb_str), "ERROR")
-            return False
-    
-    def _initialize_windows_ocr(self, language: str) -> bool:
-        """初始化 windows_media_ocr 引擎"""
-        if not WINDOWS_OCR_AVAILABLE:
-            self._last_error = "windows_media_ocr 模块不可用"
-            return False
-        
-        try:
-            # 映射语言代码
-            self._windows_ocr_language = self.LANGUAGE_MAP.get(language, "zh-Hans-CN")
-            _ocr_log(T(
-                "初始化 windows_media_ocr 引擎(语言配置: {language} -> {ocr_lang})",
-                language=language, ocr_lang=self._windows_ocr_language,
-            ))
-            _ocr_log(T("windows_media_ocr 引擎初始化成功"))
-            return True
-            
-        except Exception as e:
-            self._last_error = f"windows_media_ocr 初始化失败: {str(e)}"
-            tb_str = _tb.format_exc()
-            _ocr_log(T("windows_media_ocr 初始化失败: {e}\n{tb}", e=str(e), tb=tb_str), "ERROR")
-            return False
-    
-    def recognize_pixmap(
-        self, 
-        pixmap: QPixmap, 
-        return_format: str = "dict"
-    ) -> Any:
-        """
-        识别 QPixmap 图像中的文字
-        
+            # 注册顺序即优先级：内建引擎的先后由 engines.builtin_engines() 决定
+            self._current_engine = available[0]
+            ocr_log(T("自动选择引擎: {engine}", engine=self._current_engine))
+
+        engine = self._engines[self._current_engine]
+        ok = engine.initialize(language)
+        if not ok:
+            self._last_error = engine.last_error or f"{self._current_engine} 初始化失败"
+        return ok
+
+    def recognize_pixmap(self, pixmap: QPixmap, return_format: str = "dict") -> Any:
+        """识别 QPixmap 图像中的文字。
+
         Args:
-            pixmap: QPixmap 图像对象
+            pixmap: QPixmap / QImage
             return_format: 返回格式 ("text", "list", "dict")
-        
+
         Returns:
-            识别结果(格式取决于 return_format)
+            识别结果（格式取决于 return_format，见 engine.py 的结果约定）
         """
-        # 确保引擎已初始化
-        if not self._current_engine:
-            if not self.initialize():
-                return self._format_error(return_format)
-        
-        # 根据引擎类型调用对应的识别方法
-        if self._current_engine == self.ENGINE_PP_RUST:
-            return self._recognize_with_ppocr_rust(pixmap, return_format)
-        elif self._current_engine == self.ENGINE_WINDOS_OCR:
-            return self._recognize_with_windos_ocr(pixmap, return_format)
-        elif self._current_engine == self.ENGINE_WINDOWS_OCR:
-            return self._recognize_with_windows_ocr(pixmap, return_format)
-        else:
-            return self._format_error(return_format, f"不支持的引擎: {self._current_engine}")
-    
-    def _qimage_to_rgb_bytes(self, pixmap: QPixmap):
-        """将 QPixmap/QImage 转为 (rgb_bytes, w, h, stride)，RGB888 格式，供 ppocr_rust 使用。"""
-        if isinstance(pixmap, QImage):
-            image = pixmap
-        else:
-            image = pixmap.toImage()
-        if image.isNull():
-            return None
-        if image.format() != QImage.Format.Format_RGB888:
-            image = image.convertToFormat(QImage.Format.Format_RGB888)
-        w = image.width()
-        h = image.height()
-        stride = image.bytesPerLine()
-        ptr = image.constBits()
-        raw = bytes(ptr[: stride * h])
-        return raw, w, h, stride
+        if not self._current_engine and not self.initialize():
+            return error_result(return_format, self._last_error)
 
-    def _recognize_with_ppocr_rust(
-        self,
-        pixmap: QPixmap,
-        return_format: str
-    ) -> Any:
-        """使用 ppocr_rust (Rust + ort PP-OCR) 引擎识别。
+        engine = self._engines.get(self._current_engine)
+        if engine is None:
+            return error_result(return_format, f"引擎未注册: {self._current_engine}")
 
-        Rust 内部用 allow_threads 释放 GIL，推理跑在原生线程，不会拖慢主线程 UI。
-        """
-        if not PP_RUST_AVAILABLE:
-            return self._format_error(return_format, "ppocr_rust 不可用")
-        if self._pp_engine is None:
-            if not self._initialize_ppocr_rust():
-                return self._format_error(return_format)
         try:
-            start_time = time.time()
-            conv = self._qimage_to_rgb_bytes(pixmap)
-            if conv is None:
-                return self._format_empty_result(return_format)
-            raw, w, h, stride = conv
-
-            # 取到局部变量：release() 可能在别的线程把 self._pp_engine 置空
-            engine = self._pp_engine
-            if engine is None:
-                return self._format_error(return_format, "ppocr_rust 引擎已释放")
-            lines = engine.recognize(raw, w, h, stride)
-            elapse = time.time() - start_time
-
-            if not lines:
-                return self._format_empty_result(return_format)
-
-            # ppocr_rust 返回 list[TextLine]，.points 是四个角点
-            ocr_results = []
-            for line in lines:
-                if not line.text:
-                    continue
-                ocr_results.append([
-                    [[float(x), float(y)] for x, y in line.points],
-                    line.text,
-                    float(line.score),
-                ])
-            if not ocr_results:
-                return self._format_empty_result(return_format)
-            return self._format_result(ocr_results, return_format, elapse)
+            return engine.recognize(pixmap, return_format)
         except Exception as e:
-            error_msg = f"ppocr_rust 识别失败: {str(e)}"
-            tb_str = _tb.format_exc()
-            _ocr_log(T("ppocr_rust 识别失败: {e}\n{tb}", e=str(e), tb=tb_str), "ERROR")
-            return self._format_error(return_format, error_msg)
-    
-    def _recognize_with_windos_ocr(
-        self,
-        pixmap: QPixmap,
-        return_format: str
-    ) -> Any:
-        """
-        高精度引擎识别 (Rust FFI，零拷贝)
+            # 引擎可能是第三方包：异常不该从 OCR 一路冒到 UI 线程
+            self._last_error = str(e)
+            ocr_log(T("OCR 引擎识别异常: {e}\n{tb}", e=str(e), tb=_tb.format_exc()), "ERROR")
+            return error_result(return_format, self._last_error)
 
-        QImage.bits() 指针直传 Rust，跳过 PNG 编解码。
-        QImage Format_ARGB32 在 little-endian 上的内存布局是 BGRA，
-        """
-        try:
-            start_time = time.time()
-            
-            # 获取 QImage（QPixmap 需要 toImage 搬到 CPU）
-            if isinstance(pixmap, QImage):
-                image = pixmap
-            else:
-                image = pixmap.toImage()
-            
-            if image.isNull():
-                return self._format_empty_result(return_format)
-            
-            # 确保格式是 ARGB32（内存布局 = BGRA on little-endian）
-            if image.format() != QImage.Format.Format_ARGB32:
-                image = image.convertToFormat(QImage.Format.Format_ARGB32)
-            
-            w = image.width()
-            h = image.height()
-            stride = image.bytesPerLine()
-            
-            # 获取像素指针，零拷贝传给 Rust
-            # 安全性：image 是局部变量，引用计数 ≥ 1，
-            ptr = image.bits()
-            # PySide6: bits() 返回 memoryview，需要通过 ctypes 获取裸内存地址传给 Rust
-            import ctypes
-            total_bytes = stride * h
-            # 将像素数据拷贝到 ctypes buffer（阻塞调用期间保挂存活）
-            raw_data = (ctypes.c_char * total_bytes).from_buffer_copy(bytes(ptr[:total_bytes]))
-            result = windows_media_ocr.oneocr_recognize_raw(ctypes.addressof(raw_data), w, h, stride)
-            
-            elapse = time.time() - start_time
-            
-            # 检查识别结果
-            if not result or not result.get('lines'):
-                return self._format_empty_result(return_format)
-            
-            # 转换为统一格式: [[box, text, score], ...]
-            ocr_results = []
-            for line in result['lines']:
-                if line['text']:
-                    # 转换 bounding_rect 为 box 格式
-                    bbox = line['bounding_rect']
-                    if bbox:
-                        box = [
-                            [bbox['x1'], bbox['y1']],
-                            [bbox['x2'], bbox['y2']],
-                            [bbox['x3'], bbox['y3']],
-                            [bbox['x4'], bbox['y4']]
-                        ]
-                    else:
-                        box = [[0, 0], [100, 0], [100, 20], [0, 20]]
-                    
-                    # 计算平均置信度(从词级别)
-                    confidences = [word['confidence'] for word in line.get('words', []) 
-                                 if word.get('confidence') is not None]
-                    score = sum(confidences) / len(confidences) if confidences else 1.0
-                    
-                    ocr_results.append([box, line['text'], score])
-            
-            # 格式化输出
-            return self._format_result(ocr_results, return_format, elapse)
-                
-        except Exception as e:
-            error_msg = f"高精度引擎识别失败: {str(e)}"
-            tb_str = _tb.format_exc()
-            _ocr_log(T("高精度引擎识别失败: {e}\n{tb}", e=str(e), tb=tb_str), "ERROR")
-            return self._format_error(return_format, error_msg)
-    
-    def _recognize_with_windows_ocr(
-        self,
-        pixmap: QPixmap,
-        return_format: str
-    ) -> Any:
-        """使用 windows_media_ocr 引擎识别"""
-        if not WINDOWS_OCR_AVAILABLE:
-            return self._format_error(return_format, "windows_media_ocr 不可用")
-        
-        if not self._windows_ocr_language:
-            if not self._initialize_windows_ocr("日本語"):
-                return self._format_error(return_format)
-        
-        try:
-            start_time = time.time()
-            
-            # 直接转换为 bytes
-            image_bytes = self._pixmap_to_bytes(pixmap)
-            
-            # 调用 windows_media_ocr 识别
-            result = windows_media_ocr.recognize_from_bytes(
-                image_bytes, 
-                language=self._windows_ocr_language
-            )
-            
-            elapse = time.time() - start_time
-            
-            # 检查识别结果
-            if result is None or not result.text or not result.lines:
-                return self._format_empty_result(return_format)
-            
-            # 构建结果列表：[[box, text, score], ...]
-            ocr_results = []
-            for line in result.lines:
-                # 从 bounds 构建 box: [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
-                bounds = line.bounds
-                box = [
-                    [bounds.x, bounds.y],
-                    [bounds.x + bounds.width, bounds.y],
-                    [bounds.x + bounds.width, bounds.y + bounds.height],
-                    [bounds.x, bounds.y + bounds.height]
-                ]
-                text = line.text
-                # windows_media_ocr 没有置信度分数，设为 1.0
-                score = 1.0
-                ocr_results.append([box, text, score])
-            
-            # 格式化输出
-            return self._format_result(ocr_results, return_format, elapse)
-                
-        except Exception as e:
-            error_msg = f"windows_media_ocr 识别失败: {str(e)}"
-            tb_str = _tb.format_exc()
-            _ocr_log(T("windows_media_ocr 识别失败: {e}\n{tb}", e=str(e), tb=tb_str), "ERROR")
-            return self._format_error(return_format, error_msg)
-    
-    def _pixmap_to_bytes(self, pixmap: QPixmap) -> bytes:
-        """
-        将 QPixmap 转换为 PNG bytes
-        
-        Args:
-            pixmap: QPixmap 或 QImage 对象
-        
-        Returns:
-            PNG 格式的 bytes 数据
-        """
-        buffer = QBuffer()
-        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-        if isinstance(pixmap, QImage):
-            pixmap.save(buffer, "PNG")
-        else:
-            pixmap.save(buffer, "PNG")
-        # buffer 内部持有 QByteArray，取出引用后立即转 bytes
-        # QByteArray.data() 在 PyQt6 中直接返回 bytes（一次拷贝）
-        png_bytes = buffer.data().data()
-        buffer.close()
-        return png_bytes
+    # ── 状态与释放 ────────────────────────────────────
 
-    def _format_result(self, result: list, return_format: str, elapse: float) -> Any:
-        """
-        格式化 OCR 识别结果
-        
-        Args:
-            result: 原始结果 [[[box], text, confidence], ...]
-            return_format: 返回格式 ("text", "list", "dict")
-            elapse: 识别耗时(秒)
-        
-        Returns:
-            格式化后的结果
-        """
-        if return_format == "text":
-            # 纯文本格式:拼接所有识别的文字
-            texts = [item[1] for item in result if len(item) > 1]
-            return "\n".join(texts) if texts else "[未识别到文字]"
-        
-        elif return_format == "list":
-            # 列表格式:[text1, text2, ...]
-            return [item[1] for item in result if len(item) > 1]
-        
-        elif return_format == "dict":
-            data = []
-            for item in result:
-                if len(item) >= 2:
-                    box = item[0]
-                    text = item[1]
-                    confidence = item[2] if len(item) > 2 else 0.0
-                    
-                    # 确保 box 是普通列表而不是 numpy 数组
-                    if hasattr(box, 'tolist'):
-                        box = box.tolist()
-                    
-                    data.append({
-                        "box": box,
-                        "text": text,
-                        "score": confidence
-                    })
-            
-            return {
-                "code": 100,
-                "msg": "成功",
-                "data": data,
-                "elapse": elapse
-            }
-        
-        else:
-            # 默认返回原始结果
-            return result
-    
-    def _format_empty_result(self, return_format: str) -> Any:
-        """格式化空结果"""
-        if return_format == "text":
-            return "[未识别到文字]"
-        elif return_format == "list":
-            return []
-        elif return_format == "dict":
-            return {
-                "code": 100,
-                "msg": "未识别到文字",
-                "data": [],
-                "elapse": 0.0
-            }
-        else:
-            return None
-    
-    def _format_error(self, return_format: str, error_msg: str = None) -> Any:
-        """格式化错误结果"""
-        msg = error_msg or self._last_error or "OCR 不可用"
-        
-        if return_format == "text":
-            return f"[错误] {msg}"
-        elif return_format == "list":
-            return []
-        elif return_format == "dict":
-            return {
-                "code": -1,
-                "msg": msg,
-                "data": [],
-                "elapse": 0.0
-            }
-        else:
-            return None
-    
+    def is_engine_loaded(self) -> bool:
+        """当前引擎是否已初始化"""
+        engine = self._engines.get(self._current_engine) if self._current_engine else None
+        return bool(engine and engine.is_loaded())
+
+    def get_memory_status(self) -> str:
+        """当前引擎状态（供设置页的开发者信息显示）"""
+        engine = self._engines.get(self._current_engine) if self._current_engine else None
+        return engine.status_text() if engine else "未初始化"
+
     def get_last_error(self) -> str:
         """获取最后一次错误信息"""
         return self._last_error or "无错误"
-    
+
     def close(self):
         """关闭 OCR 引擎"""
         self.release_engine()
-    
-    def release_engine(self):
-        """
-        内存优化：释放 OCR 相关资源
 
-        注意：高精度引擎使用 Rust OnceLock 全局单例，
-        生命周期与进程相同，不支持运行时释放。
-        此方法仅重置 Python 侧状态。
+    def release_engine(self):
+        """释放所有引擎的资源，并清空当前选择。
+
+        释放的是全部引擎而不是只有当前那个：引擎实例可能是在切换前构建的，
+        留着就白白占住模型内存。高精度引擎是 Rust 侧的进程级单例，其 release()
+        只能重置 Python 侧状态。
         """
         try:
-
-            # 此处仅做 Python 侧状态清理
-            self._windows_ocr_language = None
-            # 引擎实例持有 det/rec 两个 ONNX 模型（约 30 MB），close() 后立即
-            # 释放，不必再等进程退出
-            if self._pp_engine is not None:
-                self._pp_engine.close()
-                self._pp_engine = None
+            for engine in self._engines.values():
+                engine.release()
             self._current_engine = None
-            
-            _ocr_log(T("OCR 管理器状态已重置"))
+            ocr_log(T("OCR 管理器状态已重置"))
         except Exception as e:
-            _ocr_log(T("释放 OCR 资源时出错: {e}", e=e), "WARN")
-    
-    def is_engine_loaded(self) -> bool:
-        """检查 OCR 引擎是否已初始化"""
-        if self._current_engine == self.ENGINE_PP_RUST:
-            return self._pp_engine is not None
-        elif self._current_engine == self.ENGINE_WINDOS_OCR:
-            return WINDOS_OCR_AVAILABLE
-        elif self._current_engine == self.ENGINE_WINDOWS_OCR:
-            return self._windows_ocr_language is not None
-        return False
-    
-    def get_memory_status(self) -> str:
-        """获取 OCR 引擎内存状态（用于调试）"""
-        if not self._current_engine:
-            return "未初始化"
-        
-        if self._current_engine == self.ENGINE_PP_RUST:
-            return "已初始化 (ppocr_rust Rust+ort 引擎)" if self._pp_engine is not None else "未初始化"
-        elif self._current_engine == self.ENGINE_WINDOS_OCR:
-            if WINDOS_OCR_AVAILABLE:
-                return "已初始化 (高精度引擎 Rust FFI)"
-            else:
-                return "未初始化"
-        elif self._current_engine == self.ENGINE_WINDOWS_OCR:
-            if self._windows_ocr_language:
-                return f"已初始化 (windows_media_ocr 引擎, 语言: {self._windows_ocr_language})"
-            else:
-                return "未初始化"
-        
-        return "未知状态"
+            ocr_log(T("释放 OCR 资源时出错: {e}", e=e), "WARN")
 
 
 # 全局单例实例
@@ -770,7 +189,7 @@ _ocr_manager = OCRManager()
 
 
 def is_ocr_available() -> bool:
-    """检查 OCR 功能是否可用"""
+    """检查 OCR 功能是否可用（任一引擎可用即为可用）"""
     return _ocr_manager.is_available
 
 
@@ -790,37 +209,23 @@ def get_current_engine() -> Optional[str]:
 
 
 def initialize_ocr(language: str = "日本語", engine_type: Optional[str] = None) -> bool:
-    """
-    初始化 OCR 引擎
-    
-    Args:
-        language: 识别语言
-        engine_type: 指定引擎类型（可选）
-    
-    Returns:
-        bool: 是否初始化成功
-    """
+    """初始化 OCR 引擎（未指定引擎时按注册顺序自动选择）"""
     return _ocr_manager.initialize(language, engine_type)
 
 
 def recognize_text(pixmap: QPixmap, **kwargs) -> Any:
-    """
-    识别图像中的文字
-    
+    """识别图像中的文字
+
     Args:
-        pixmap: QPixmap 图像对象
-        **kwargs: 其他参数(return_format)
-    
-    Returns:
-        识别结果
+        pixmap: QPixmap / QImage
+        **kwargs: 其他参数（return_format）
     """
     return _ocr_manager.recognize_pixmap(pixmap, **kwargs)
 
 
 def release_ocr_engine():
-    """
-    内存优化：释放 OCR 引擎，回收内存
-    
+    """释放 OCR 引擎，回收内存
+
     建议在以下场景调用：
     - 钉图窗口关闭后
     - 长时间不使用 OCR 时
@@ -932,4 +337,3 @@ def format_ocr_result_text(result: dict, separator: str = "\n") -> str:
         lines.append(" ".join(b['text'] for b in current_line))
     
     return separator.join(lines)
- 
