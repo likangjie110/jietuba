@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from core.i18n import make_tr
+from core.platform.fonts import ui_font_family
 from ui.fluent_lite import TextEdit
 from .translation_dialog import DARK, LIGHT, Palette
 from .languages import TRANSLATION_LANGUAGES
@@ -68,7 +69,7 @@ class TranslationPopup(QWidget):
         self.setObjectName("translationPopup")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
-        self.setFont(QFont("Microsoft YaHei UI", 10))
+        self.setFont(QFont(ui_font_family("zh"), 10))
         self.setFixedWidth(self.WIDTH)
         self.setMinimumHeight(self.MIN_HEIGHT)
 

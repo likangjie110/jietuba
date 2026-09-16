@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QMenu, QWidget
 from PySide6.QtGui import QAction, QFont
 from PySide6.QtCore import QPoint
 from core.constants import CSS_FONT_FAMILY_UI
+from core.platform.fonts import ui_font_family
 
 
 def _get_shortcut_display(cfg_key: str) -> str:
@@ -64,10 +65,7 @@ class PinContextMenu:
     
     def _setup_font(self, menu: QMenu):
         """设置菜单字体"""
-        menu_font = QFont("Microsoft YaHei UI", 9)
-        if not menu_font.exactMatch():
-            menu_font = QFont("Segoe UI", 9)
-        menu.setFont(menu_font)
+        menu.setFont(QFont(ui_font_family("zh"), 9))
     
     def _get_menu_style(self) -> str:
         """获取菜单样式（悬停颜色跟随主题色）"""
@@ -79,7 +77,7 @@ class PinContextMenu:
                 border: 1px solid #ccc;
                 border-radius: 4px;
                 padding: 4px;
-                font-family: {CSS_FONT_FAMILY_UI}, "Yu Gothic UI", sans-serif;
+                font-family: {CSS_FONT_FAMILY_UI};
                 font-size: 9pt;
                 color: #000000;
             }}

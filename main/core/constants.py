@@ -4,6 +4,13 @@
 """
 from pathlib import Path
 
+from core.platform.fonts import (
+    common_text_fonts,
+    css_font_family,
+    css_font_family_ui,
+    default_font_family,
+    default_text_font_by_language,
+)
 from core.platform.paths import app_data_dir, log_dir
 
 
@@ -23,35 +30,24 @@ def get_log_dir() -> Path:
 
 
 # ── CSS font-family 值 ────────────────────────────────────
+# 取值来自平台层（core/platform/fonts.py）：Windows 逐字保留原来的三份字体栈，
+# macOS/Linux 换成各自存在的字体。以前这里硬编码 Windows 字体名，在另外两个平台上
+# 会由 Qt 静默替代，字体选择器里列出来的是装了也不存在的名字。
+#
 # 用于 QSS stylesheet 中的 font-family 属性（大部分 UI 控件）
-CSS_FONT_FAMILY = '"Microsoft YaHei", "SimSun", Arial, sans-serif'
+CSS_FONT_FAMILY = css_font_family()
 
 # 用于系统级 UI 元素（托盘菜单、上下文菜单等）
-CSS_FONT_FAMILY_UI = '"Microsoft YaHei UI", "Segoe UI", sans-serif'
+CSS_FONT_FAMILY_UI = css_font_family_ui()
 
 # QFont 构造时使用的默认字体族名
-DEFAULT_FONT_FAMILY = "Microsoft YaHei"
+DEFAULT_FONT_FAMILY = default_font_family()
 
 # Fonts exposed by the text annotation tool. Keep this list small so the app
 # never needs to scan the full system font database during startup.
-COMMON_TEXT_FONTS = [
-    "Microsoft YaHei UI",
-    "SimSun",
-    "Segoe UI",
-    "Arial",
-    "Yu Gothic UI",
-    "Meiryo",
-    "Microsoft JhengHei UI",
-    "PMingLiU",
-]
+COMMON_TEXT_FONTS = common_text_fonts()
 
-DEFAULT_TEXT_FONT_BY_LANGUAGE = {
-    "zh": "Microsoft YaHei UI",
-    "zh_CN": "Microsoft YaHei UI",
-    "zh_TW": "Microsoft JhengHei UI",
-    "en": "Segoe UI",
-    "ja": "Yu Gothic UI",
-}
+DEFAULT_TEXT_FONT_BY_LANGUAGE = default_text_font_by_language()
 
 _SYSTEM_DEFAULT_TEXT_FONT_LOGGED = False
 

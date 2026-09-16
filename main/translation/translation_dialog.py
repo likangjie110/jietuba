@@ -32,6 +32,7 @@ from qframelesswindow import FramelessWindow, TitleBar
 from core import log_debug, log_info
 from core.i18n import make_tr
 from core.resource_manager import ResourceManager
+from core.platform.fonts import ui_font_family
 from settings import get_tool_settings_manager
 from ui.fluent_lite import TextEdit
 from .languages import TRANSLATION_LANGUAGES
@@ -197,7 +198,7 @@ class TranslateButton(QAbstractButton):
         painter.drawRoundedRect(QRectF(self.rect()), 17, 17)
 
         painter.setPen(QColor("white"))
-        painter.setFont(QFont("Microsoft YaHei UI", 10, QFont.Weight.DemiBold))
+        painter.setFont(QFont(ui_font_family("zh"), 10, QFont.Weight.DemiBold))
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self.text())
 
 
@@ -334,7 +335,7 @@ class TranslationDialog(FramelessWindow):
         self.setWindowTitle("jietuba")
         self.setMinimumSize(self.MINIMUM_WIDTH, self.MINIMUM_HEIGHT)
         self.resize(self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
-        self.setFont(QFont("Microsoft YaHei UI", 10))
+        self.setFont(QFont(ui_font_family("zh"), 10))
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAutoFillBackground(False)

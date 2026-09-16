@@ -8,6 +8,7 @@ from settings.tool_settings import ANNOTATION_TOOL_SHORTCUTS
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFont
+from core.platform.fonts import default_font_family
 
 APP_DEFAULT_SETTINGS = {
     "hotkey": "ctrl+shift+a",
@@ -213,7 +214,7 @@ class MockConfig:
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setFont(QFont("Microsoft YaHei", 9))
+    app.setFont(QFont(default_font_family(), 9))
 
     from .dialog import SettingsDialog
     dlg = SettingsDialog(MockConfig())

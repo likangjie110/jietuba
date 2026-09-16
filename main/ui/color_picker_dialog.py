@@ -16,11 +16,8 @@ from PySide6.QtGui import (
     QColor, QPainter, QPen, QBrush, QLinearGradient, QCursor, QPainterPath,
 )
 from core import safe_event
+from core.constants import CSS_FONT_FAMILY
 from ui.fluent_lite import LineEdit
-
-# 如果你没有这个常量，可以暂时用默认字体替换
-# from core.constants import CSS_FONT_FAMILY
-CSS_FONT_FAMILY = '"Microsoft YaHei", "Segoe UI", sans-serif'
 
 
 # ─────────────────────────────────────────────

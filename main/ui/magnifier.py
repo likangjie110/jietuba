@@ -9,6 +9,7 @@ from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QBrush
 from PySide6.QtWidgets import QWidget
 
 from core import log_debug, safe_event, T
+from core.platform.fonts import default_font_family
 
 
 class MagnifierOverlay(QWidget):
@@ -34,11 +35,11 @@ class MagnifierOverlay(QWidget):
 		self.config_manager = config_manager
 		self.cursor_scene_pos: Optional[QPointF] = None
 		# 创建字体时不使用QFont.Weight.Bold，改用setBold避免字体变体问题
-		self._font = QFont("Microsoft YaHei", 10)
+		self._font = QFont(default_font_family(), 10)
 		self._font.setBold(True)
 		
 		# 信息框文字使用的字体
-		self._info_font = QFont("Microsoft YaHei", 11)
+		self._info_font = QFont(default_font_family(), 11)
 		self._info_font.setBold(True)
 		
 		# 放大镜倍数（从配置加载，默认值/范围均来自 APP_DEFAULT_SETTINGS）
@@ -239,7 +240,7 @@ class MagnifierOverlay(QWidget):
 		
 		仅在 _ensure_fixed_fonts() 中调用一次，运行时不再调用。
 		"""
-		font = QFont("Microsoft YaHei", base_size)
+		font = QFont(default_font_family(), base_size)
 		font.setBold(True)
 		
 		painter.setFont(font)
@@ -282,7 +283,7 @@ class MagnifierOverlay(QWidget):
 		worst_rgb = "RGB: 255, 255, 255"
 		worst_hex = "HEX: #FFFFFF"
 		
-		test_font = QFont("Microsoft YaHei", 11)
+		test_font = QFont(default_font_family(), 11)
 		test_font.setBold(True)
 		painter.setFont(test_font)
 		tm = painter.fontMetrics()

@@ -9,6 +9,7 @@ from ui.fluent_lite import ComboBox
 from core.i18n import make_tr
 from core.logger import log_exception, T
 from core import safe_event
+from core.platform.fonts import ui_font_family
 
 if __package__:
     from .base_page import (
@@ -80,14 +81,14 @@ class _ProductCanvas(QWidget):
         p.setBrush(QColor(theme.accent_soft))
         p.drawRoundedRect(summary, 9, 9)
         p.setPen(QColor(theme.accent))
-        p.setFont(QFont("Segoe UI", 8, QFont.Weight.DemiBold))
+        p.setFont(QFont(ui_font_family("en"), 8, QFont.Weight.DemiBold))
         p.drawText(
             summary.adjusted(12, 8, -10, -34),
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
             "ONE WORKSPACE",
         )
         p.setPen(QColor(theme.text))
-        p.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
+        p.setFont(QFont(ui_font_family("en"), 10, QFont.Weight.DemiBold))
         p.drawText(
             summary.adjusted(12, 25, -8, -7),
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
@@ -128,14 +129,14 @@ class _ProductCanvas(QWidget):
             self._draw_module_icon(p, idx, icon, QColor(color))
 
             p.setPen(QColor(theme.text))
-            p.setFont(QFont("Segoe UI", 8, QFont.Weight.DemiBold))
+            p.setFont(QFont(ui_font_family("en"), 8, QFont.Weight.DemiBold))
             p.drawText(
                 tile.adjusted(10, 41, -6, -18),
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
                 title,
             )
             p.setPen(QColor(theme.text_soft))
-            p.setFont(QFont("Segoe UI", 6, QFont.Weight.Medium))
+            p.setFont(QFont(ui_font_family("en"), 6, QFont.Weight.Medium))
             p.drawText(
                 tile.adjusted(10, 57, -6, -5),
                 Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter,
@@ -163,7 +164,7 @@ class _ProductCanvas(QWidget):
             p.drawRoundedRect(body, 2, 2)
             p.drawLine(int(cx - 4), int(rect.y() + 7), int(cx + 4), int(rect.y() + 7))
         else:
-            p.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+            p.setFont(QFont(ui_font_family("en"), 9, QFont.Weight.Bold))
             p.drawText(rect, Qt.AlignmentFlag.AlignCenter, "A")
 
 

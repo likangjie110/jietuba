@@ -8,12 +8,17 @@ class TestConstants:
     """constants.py 常量测试"""
 
     def test_font_families_defined(self):
-        """字体族常量应已定义且非空"""
+        """字体族常量应已定义且非空
+
+        具体取值按平台而变（Windows 用微软雅黑系列，macOS/Linux 用各自存在的字体），
+        所以这里只断言结构与通用兜底；三平台的取值由 test_platform_fonts.py 钉住。
+        """
         from core.constants import CSS_FONT_FAMILY, CSS_FONT_FAMILY_UI, DEFAULT_FONT_FAMILY
         assert CSS_FONT_FAMILY
         assert CSS_FONT_FAMILY_UI
         assert DEFAULT_FONT_FAMILY
-        assert "Microsoft YaHei" in CSS_FONT_FAMILY
+        assert CSS_FONT_FAMILY.endswith("sans-serif")
+        assert CSS_FONT_FAMILY_UI.endswith("sans-serif")
 
     def test_default_font_family_is_string(self):
         """DEFAULT_FONT_FAMILY 应为普通字符串"""

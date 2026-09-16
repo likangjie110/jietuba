@@ -14,6 +14,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPainter, QColor, QFont, QPen
 from ui.fluent_lite import ComboBox, LineEdit
 from core import safe_event
+from core.platform.fonts import default_font_family
 from core.i18n import make_tr
 from core.logger import log_error, log_exception, T
 
@@ -135,7 +136,7 @@ class _TransAnim(QWidget):
         p.drawRoundedRect(cx, cy_dst, card_w, card_h, 8, 8)
 
         # ── 语言标签 ──
-        tag_font = QFont("Microsoft YaHei", 8)
+        tag_font = QFont(default_font_family(), 8)
         p.setFont(tag_font)
         p.setPen(QColor(theme.accent))
         p.drawText(cx + 10, cy_src + 4, card_w - 20, 16,
@@ -161,7 +162,7 @@ class _TransAnim(QWidget):
         else:   # phase 3
             src_a, dst_a = 0, 255
 
-        text_font = QFont("Microsoft YaHei", 13, QFont.Weight.Medium)
+        text_font = QFont(default_font_family(), 13, QFont.Weight.Medium)
         p.setFont(text_font)
 
         if src_a > 0:

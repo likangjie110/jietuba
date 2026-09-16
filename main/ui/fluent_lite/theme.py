@@ -8,10 +8,11 @@ from functools import lru_cache
 from PySide6.QtGui import QColor, QIcon, QLinearGradient, QPainter, QPixmap
 
 from core.resource_manager import ResourceManager
+from core.platform.fonts import css_font_family_fluent
 from core.ui_theme import get_ui_theme
 
 
-FONT_FAMILY = '"Segoe UI Variable", "Microsoft YaHei UI", "Segoe UI", sans-serif'
+FONT_FAMILY = css_font_family_fluent()
 # A restrained blue-grey accent.  Keeping this in one module prevents dialogs
 # from quietly drifting back to unrelated Material/Windows blues.
 ACCENT = "#6F8FAB"
