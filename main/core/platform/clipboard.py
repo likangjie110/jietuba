@@ -31,6 +31,21 @@ def backend_name() -> str:
     return "win32" if IS_WINDOWS else "qt"
 
 
+def preload() -> bool:
+    """预热 Win32 剪贴板模块，返回是否存在可预热的后端。
+
+    启动时调用一次，让首次「复制到剪贴板」不必等 import win32clipboard。非 Windows
+    上没有这个模块，返回 False 让调用方把日志写准。
+    """
+    if not IS_WINDOWS:
+        return False
+    try:
+        import win32clipboard  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
 def copy_image(image) -> bool:
     """把 QImage 写进系统剪贴板，返回是否成功。
 

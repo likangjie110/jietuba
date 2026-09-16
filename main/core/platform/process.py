@@ -13,6 +13,7 @@
 
 import ctypes
 import ntpath
+import sys
 
 from core.platform.detection import IS_WINDOWS
 
@@ -64,6 +65,40 @@ def request_trim_working_set(delay_ms: int = 1500):
         _trim_timer.setSingleShot(True)
         _trim_timer.timeout.connect(trim_working_set)
     _trim_timer.start(delay_ms)
+
+
+# ──────────────────────────────────────────────
+# 启动期补丁
+# ──────────────────────────────────────────────
+
+def patch_platform_version_lookup() -> bool:
+    """让 ``platform.version()`` 不再启动 cmd.exe，返回是否打了补丁。
+
+    标准库的 ``platform.version()`` → ``uname()`` → ``_syscmd_ver()`` 会执行
+    ``subprocess("ver", shell=True)``。PyInstaller onefile 打包后，「从 %TEMP% 解压
+    再启动 cmd.exe」这个组合会被杀毒软件误报，而 ``sys.getwindowsversion()`` 是纯
+    Win32 API，结果完全一致且不创建子进程。
+
+    必须在任何代码调用 ``platform.version()`` 之前执行，因此 bootstrap 在导入期就调它。
+    """
+    if not IS_WINDOWS:
+        return False
+
+    import platform as platform_module
+
+    original = getattr(platform_module, "_syscmd_ver", None)
+    if original is None:
+        # 标准库改了内部实现，补丁失效但不该让启动失败
+        return False
+
+    def _safe_syscmd_ver(system='', release='', version='',
+                         supported_platforms=('win32', 'win16', 'dos')):
+        wv = sys.getwindowsversion()
+        return ('Microsoft Windows', str(wv.major),
+                f'{wv.major}.{wv.minor}.{wv.build}')
+
+    platform_module._syscmd_ver = _safe_syscmd_ver
+    return True
 
 
 # ──────────────────────────────────────────────

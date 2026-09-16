@@ -10,20 +10,12 @@ import sys
 import os
 
 # ===================== 安全补丁：避免 platform 模块启动 cmd.exe =====================
-# platform.version() → uname() → _syscmd_ver() 会调用 subprocess("ver", shell=True)
-# PyInstaller 打包后，从 %TEMP% 解压 + 启动 cmd.exe 的组合会被杀毒软件误报
-# 用 sys.getwindowsversion()（纯 Win32 API）替代，结果完全一致且不创建子进程
-if sys.platform == "win32":
-    import platform as _platform
-    _orig_syscmd_ver = _platform._syscmd_ver
-    def _safe_syscmd_ver(system='', release='', version='',
-                         supported_platforms=('win32', 'win16', 'dos')):
-        if sys.platform == 'win32':
-            wv = sys.getwindowsversion()
-            return ('Microsoft Windows', str(wv.major),
-                    f'{wv.major}.{wv.minor}.{wv.build}')
-        return _orig_syscmd_ver(system, release, version, supported_platforms)
-    _platform._syscmd_ver = _safe_syscmd_ver
+# 实现移到平台层（Windows 专有，且与「启动期不该创建子进程」这件事有关）：
+# 标准库的 platform.version() 会 subprocess("ver", shell=True)，打包后会被杀毒软件
+# 误报。必须在任何代码调用 platform.version() 之前执行，所以放在导入期。
+from core.platform.process import patch_platform_version_lookup
+
+patch_platform_version_lookup()
 
 
 # ===================== 阶段 1：Pre-Qt 环境准备 =====================
@@ -348,12 +340,13 @@ class PreloadManager:
                     else:
                         log_debug(T("当前平台没有窗口枚举后端，跳过预热"), "Preload")
 
-                    # 4.5 预加载 win32clipboard
-                    try:
-                        import win32clipboard  # noqa: F401  预加载，见上
-                        log_debug(T("win32clipboard 模块已加载"), "Preload")
-                    except ImportError:
-                        log_debug(T("win32clipboard 未安装，跳过"), "Preload")
+                    # 4.5 预加载剪贴板写入依赖
+                    from core.platform.clipboard import preload as preload_clipboard
+
+                    if preload_clipboard():
+                        log_debug(T("剪贴板写入模块已预热"), "Preload")
+                    else:
+                        log_debug(T("当前平台没有 Win32 剪贴板后端，跳过预热"), "Preload")
 
                     # 4.6 预热 PNG 编码器
                     try:

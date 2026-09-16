@@ -254,3 +254,40 @@ class TestCtypesAvailability:
         from ctypes import wintypes
 
         assert wintypes.HANDLE is ctypes.c_void_p
+
+
+class TestPlatformVersionPatch:
+    """启动期补丁：让 platform.version() 不再启动 cmd.exe。
+
+    PyInstaller onefile 打包后，「从 %TEMP% 解压再启动 cmd.exe」会被杀毒软件误报，
+    所以用 sys.getwindowsversion()（纯 Win32 API）替代，结果一致且不创建子进程。
+    """
+
+    def test_noop_off_windows(self, monkeypatch):
+        monkeypatch.setattr(process, "IS_WINDOWS", False)
+        assert process.patch_platform_version_lookup() is False
+
+    def test_replaces_syscmd_ver_on_windows(self, monkeypatch):
+        import platform as platform_module
+
+        called = []
+        monkeypatch.setattr(process, "IS_WINDOWS", True)
+        monkeypatch.setattr(platform_module, "_syscmd_ver", lambda *a, **k: called.append(a),
+                            raising=False)
+        monkeypatch.setattr(
+            process.sys, "getwindowsversion",
+            lambda: SimpleNamespace(major=10, minor=0, build=22631), raising=False,
+        )
+
+        assert process.patch_platform_version_lookup() is True
+        result = platform_module._syscmd_ver()
+        assert result == ("Microsoft Windows", "10", "10.0.22631")
+        assert called == [], "替换后不该再走标准库那条会创建子进程的实现"
+
+    def test_missing_internal_hook_does_not_break_startup(self, monkeypatch):
+        """标准库改了内部实现时补丁失效，但不能让启动失败。"""
+        import platform as platform_module
+
+        monkeypatch.setattr(process, "IS_WINDOWS", True)
+        monkeypatch.delattr(platform_module, "_syscmd_ver", raising=False)
+        assert process.patch_platform_version_lookup() is False
