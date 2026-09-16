@@ -10,7 +10,12 @@ import os
 
 # Qt tests create and show real widgets. Keep them off the desktop when the
 # suite is launched locally, while preserving an explicitly selected platform.
-os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+#
+# macOS 例外：qframelesswindow 的 macOS 后端要真实 NSWindow，offscreen 下构造无边框
+# 窗口会直接把进程打崩（段错误，不是断言失败）。开发机上跑测试时窗口闪一下可以接受，
+# CI 在 Windows 上跑，不受影响。
+if sys.platform != "darwin":
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 # 确保 main/ 在 sys.path（从 tests/ 向上两级）
 main_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

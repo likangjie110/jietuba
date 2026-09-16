@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """鼠标侧键快捷键：登记表、低级钩子的启停与独占、派发链、录入框捕获"""
+import sys
+
 import pytest
+
+# WM_XBUTTONDOWN 这些常量只存在于 pynput 的 Windows 后端，而鼠标侧键的实现
+# （低级鼠标钩子 + WM_XBUTTON 消息）本身就是 Windows 专用的
+if sys.platform != "win32":
+    pytest.skip("鼠标侧键是 Windows 专用实现", allow_module_level=True)
 
 from pynput import mouse as _pynput_mouse
 

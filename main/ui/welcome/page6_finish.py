@@ -6,6 +6,7 @@
 """
 
 import math
+import sys
 
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 from PySide6.QtCore import Qt, QTimer, QElapsedTimer, QEasingCurve, QPointF
@@ -257,7 +258,9 @@ class FinishPage(BasePage):
 
     @classmethod
     def _get_autostart(cls) -> bool:
-        """检测注册表 HKCU\\Run 中是否存在本程序的启动项"""
+        """检测注册表 HKCU\\Run 中是否存在本程序的启动项（仅 Windows）"""
+        if sys.platform != "win32":
+            return False
         import winreg
         try:
             key = winreg.OpenKey(
@@ -278,7 +281,10 @@ class FinishPage(BasePage):
 
     @classmethod
     def _set_autostart(cls, enabled: bool):
-        """启用：写入注册表 HKCU\\Run；禁用：删除对应注册表值"""
+        """启用：写入注册表 HKCU\\Run；禁用：删除对应注册表值（仅 Windows）"""
+        if sys.platform != "win32":
+            log_info(T("开机自启是 Windows 注册表机制，当前平台跳过"), "page6")
+            return
         import winreg
         try:
             key = winreg.OpenKey(

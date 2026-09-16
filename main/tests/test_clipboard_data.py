@@ -4,6 +4,9 @@ ClipboardItem / Group 数据模型单元测试
 
 测试 display_text / icon 等纯逻辑属性（不依赖 Rust 后端）。
 """
+import sys
+
+import pytest
 import json
 from clipboard.core import ClipboardItem, Group
 
@@ -55,6 +58,7 @@ class TestClipboardItem:
         item = ClipboardItem(id=1, content="[图片 800x600]", content_type="image")
         assert item.display_text == "图片 800x600"
 
+    @pytest.mark.skipif(sys.platform != "win32", reason="Windows 路径语义")
     def test_display_text_single_file(self):
         """单文件显示文件名"""
         files_data = json.dumps({"files": [r"C:\Users\test\doc.txt"]})

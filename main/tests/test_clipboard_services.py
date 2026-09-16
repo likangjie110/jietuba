@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import sys
+
+import pytest
 import json
 
 from clipboard.core import Group
@@ -105,12 +108,14 @@ class DummySaveManager:
         return True
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows 路径语义")
 def test_build_file_payload_normalizes_path():
     payload = build_file_payload(r"C:\Temp\\demo.txt")
 
     assert json.loads(payload) == {"files": [r"C:\Temp\demo.txt"]}
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows 路径语义")
 def test_extract_first_file_path_from_content_reads_json_payload():
     path = extract_first_file_path_from_content('{"files": ["C:/Temp/demo.txt"]}')
 

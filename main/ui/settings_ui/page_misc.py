@@ -1,5 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 """杂项设置页 — Fluent Design"""
+import sys
+
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea
 from PySide6.QtCore import Qt
 from ui.fluent_lite import (
@@ -24,17 +26,18 @@ def create_misc_page(dialog) -> QWidget:
     # ════ 启动行为 ════
     grp_startup = SettingCardGroup(dialog.tr("Startup"), view)
 
-    # 开机自启
-    from ..welcome.page6_finish import FinishPage as _FP
-    autostart_card = SwitchSettingCard(
-        FluentIcon.POWER_BUTTON,
-        dialog.tr("Launch on Startup"),
-        dialog.tr("Register in Windows startup via registry."),
-        parent=grp_startup,
-    )
-    autostart_card.setChecked(_FP._get_autostart())
-    dialog.autostart_toggle = autostart_card
-    grp_startup.addSettingCard(autostart_card)
+    # 开机自启（Windows 注册表机制，其它平台不显示——显示了也是点了没反应）
+    if sys.platform == "win32":
+        from ..welcome.page6_finish import FinishPage as _FP
+        autostart_card = SwitchSettingCard(
+            FluentIcon.POWER_BUTTON,
+            dialog.tr("Launch on Startup"),
+            dialog.tr("Register in Windows startup via registry."),
+            parent=grp_startup,
+        )
+        autostart_card.setChecked(_FP._get_autostart())
+        dialog.autostart_toggle = autostart_card
+        grp_startup.addSettingCard(autostart_card)
 
     # 主界面显示
     show_card = SwitchSettingCard(

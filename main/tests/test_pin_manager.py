@@ -15,6 +15,7 @@ __init__ 的重入保护是分开写的），二是截图时把贴图窗口的�
 单例状态是跨用例共享的，每个用例前后都把 PinManager._instance 清成 None，
 否则前一个用例注册的假窗口会漏进后一个用例。
 """
+import os
 from types import SimpleNamespace
 
 import pytest
@@ -375,7 +376,8 @@ class TestSaveAllToDirectory:
         manager.pin_windows.extend(pins)
         saved, failed = manager.save_all_to_directory(str(tmp_path), prefix="shot")
         assert (saved, failed) == (3, 0)
-        names = [p.saved_paths[0].rsplit("\\", 1)[-1] for p in pins]
+        # 用 basename 而不是按 "\\" 切：路径分隔符是平台相关的
+        names = [os.path.basename(p.saved_paths[0]) for p in pins]
         assert names == ["shot_001.png", "shot_002.png", "shot_003.png"]
 
     def test_default_prefix_is_pins(self, manager, tmp_path):

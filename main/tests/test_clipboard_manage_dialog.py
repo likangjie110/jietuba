@@ -9,6 +9,7 @@
 - 控制器打开编辑窗口时的 UniqueConnection 去重
 """
 
+import sys
 import json
 import os
 
@@ -416,6 +417,7 @@ class TestManageDialog:
 
         assert dlg.file_path_input.isReadOnly() is True
 
+    @pytest.mark.skipif(sys.platform != "win32", reason="Windows 路径语义")
     def test_file_drop_zone_uses_first_dropped_path(self, dialog):
         dlg, manager = dialog
         file_group = Group(id=3, name="快速启动", icon="⚡", group_type=GroupType.FILE)

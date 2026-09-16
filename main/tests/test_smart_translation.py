@@ -1,3 +1,6 @@
+import sys
+
+import pytest
 from types import SimpleNamespace
 
 from PySide6.QtCore import QPoint, Qt
@@ -97,6 +100,7 @@ def test_timeout_routes_only_current_probe_to_compact_input(monkeypatch):
     assert len(manager.input_calls) == 1
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="探测用 Windows keybd_event 发 Ctrl+Insert")
 def test_copy_probe_uses_ctrl_insert_to_avoid_console_interrupt(monkeypatch):
     class FakeUser32:
         def __init__(self):

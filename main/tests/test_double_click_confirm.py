@@ -43,8 +43,10 @@ CASE_FAMILIES = (
 
 @pytest.mark.parametrize("case_family", CASE_FAMILIES)
 def test_isolated_double_click_case(case_family):
-    assert os.environ.get("QT_QPA_PLATFORM") == "offscreen"
     child_env = os.environ.copy()
+    # 显式指定而不是靠从父进程继承：这些用例要建真实画布控件，必须离屏跑，
+    # 而 macOS 上父进程默认用 cocoa（无边框窗口在离屏平台会崩，见 conftest）
+    child_env["QT_QPA_PLATFORM"] = "offscreen"
     child_env["JIETUBA_ISOLATED_QT_CASE"] = "1"
     result = subprocess.run(
         [
