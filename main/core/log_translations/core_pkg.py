@@ -121,10 +121,12 @@ TRANSLATIONS: dict[str, str] = {
     "剪贴板窗口预创建完成（未显示）": "Clipboard window precreated (not shown)",
     "剪贴板窗口预创建失败: {e}": "Clipboard window precreation failed: {e}",
 
-    # core/platform_utils.py
+    # core/platform/process.py
+    "当前平台无法查询进程身份，跳过旧实例检查": "Process identity is unavailable on this platform, skipping the stale-instance check",
     "释放工作集": "Releasing working set",
     "加载 kernel32": "Loading kernel32",
     "查询进程标识": "Querying process identity",
+    "关闭进程句柄": "Closing process handle",
     "终止进程": "Terminating process",
 
     # core/resource_manager.py

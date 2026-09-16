@@ -32,7 +32,7 @@ def test_manager_normalizes_legacy_image_lists_to_bytes(monkeypatch):
 
 def test_clipboard_pin_schedules_the_same_working_set_trim(monkeypatch):
     import clipboard
-    import core.platform_utils
+    import core.platform.process
     import pin
     import settings
     from clipboard.ui.windows import pin_window as module
@@ -70,7 +70,7 @@ def test_clipboard_pin_schedules_the_same_working_set_trim(monkeypatch):
         lambda: SimpleNamespace(create_pin=lambda **kwargs: created.append(kwargs)),
     )
     monkeypatch.setattr(
-        core.platform_utils,
+        core.platform.process,
         "request_trim_working_set",
         lambda delay: trim_delays.append(delay),
     )

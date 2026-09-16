@@ -29,7 +29,7 @@ except ImportError:
     log_error = _l.error
     T = lambda template, **kwargs: template.format(**kwargs) if kwargs else template
 
-from core.platform_utils import request_trim_working_set as _request_trim
+from core.platform.process import request_trim_working_set as _request_trim
 
 
 class AppState(Enum):

@@ -42,7 +42,7 @@ def setup_environment():
     os.environ["QT_LOGGING_RULES"] = "qt.qpa.window=false"
 
     # 设置 DPI 感知（在 Qt 初始化之前）
-    from core.platform_utils import set_dpi_awareness
+    from core.platform.process import set_dpi_awareness
     set_dpi_awareness()
 
 
@@ -79,7 +79,7 @@ def _is_our_old_instance(record, my_pid: int, my_image_name: str, frozen: bool) 
     atexit 都不会执行。Windows 又会激进地回收 PID，若只凭 PID 就终止，
     很可能误杀一个恰好复用了该 PID 的无关进程。
     """
-    from core.platform_utils import get_process_identity
+    from core.platform.process import get_process_identity
 
     pid, create_time = record
     if pid == my_pid:
@@ -111,8 +111,14 @@ def ensure_single_instance():
     当初写入记录的那个进程。校验之后，陈旧的记录文件就只是无害的垃圾。
     """
     import tempfile
-    from core.platform_utils import terminate_process_by_pid, get_process_identity
+    from core.platform import Capability, available
+    from core.platform.process import terminate_process_by_pid, get_process_identity
     from core.logger import log_debug, log_exception, log_info, log_warning, T
+
+    # 没有进程查询能力时，身份校验必然失败，结果是旧实例永远不会被终止。
+    # 与其让用户困惑「为什么能开出两个」，不如把原因写进日志。
+    if not available(Capability.PROCESS_CONTROL):
+        log_info(T("当前平台无法查询进程身份，跳过旧实例检查"), "SingleInstance")
 
     frozen = getattr(sys, 'frozen', False)
     exe_name = os.path.basename(sys.executable if frozen else sys.argv[0])
@@ -239,7 +245,7 @@ class PreloadManager:
     def build_and_start(self):
         """根据配置构建预加载步骤链，然后启动"""
         from PySide6.QtCore import QTimer
-        from core.platform_utils import request_trim_working_set
+        from core.platform.process import request_trim_working_set
         
         cfg = self.config
         if cfg.get_app_setting("preload_screenshot", True):
@@ -501,7 +507,7 @@ class PreloadManager:
 
 def run():
     """应用入口点：执行所有启动准备，然后运行主应用"""
-    from core.platform_utils import set_app_user_model_id
+    from core.platform.process import set_app_user_model_id
 
     # 1. 环境准备（必须在 Qt 之前）
     setup_environment()

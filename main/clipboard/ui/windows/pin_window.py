@@ -75,7 +75,7 @@ def create_pin_from_clipboard_item(item_id: int, controller, clipboard_window: O
         # 普通截图钉图会在 ScreenshotWindow.cleanup_and_close() 中做同样的
         # 延迟裁剪。剪贴板路径没有截图窗口负责收尾，因此需要在这里补齐；
         # 延迟执行也确保本函数的 PNG bytes 临时对象已经离开作用域。
-        from core.platform_utils import request_trim_working_set
+        from core.platform.process import request_trim_working_set
         request_trim_working_set(1500)
         
         log_debug(T("从剪贴板创建钉图窗口成功 (item_id={item_id})", item_id=item_id), "Clipboard")

@@ -784,7 +784,7 @@ class ScreenshotWindow(QWidget):
         """结束当前截图会话 - 释放重数据，保留 UI 壳供下次复用。"""
         self._teardown_session()
         # 释放工作集（去抖：多次快速截图只触发最后一次，避免 page fault 风暴）
-        from core.platform_utils import request_trim_working_set
+        from core.platform.process import request_trim_working_set
         request_trim_working_set(1500)
 
     def full_destroy(self):
@@ -1084,7 +1084,7 @@ class ScreenshotWindow(QWidget):
             # 窗口关闭后自动清除全局引用，释放内存
             def _on_scroll_window_destroyed():
                 app._scroll_window = None
-                from core.platform_utils import request_trim_working_set
+                from core.platform.process import request_trim_working_set
                 request_trim_working_set(1000)
             scroll_window.destroyed.connect(_on_scroll_window_destroyed)
             
