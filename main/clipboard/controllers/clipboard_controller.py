@@ -7,6 +7,7 @@
 
 import ctypes
 import json
+import sys
 import os
 import re
 from datetime import datetime, time, timedelta
@@ -56,21 +57,54 @@ VK_CONTROL = 0x11
 VK_V = 0x56
 KEYEVENTF_KEYUP = 0x0002
 
+# 判断"有没有 user32"而不是"是不是 Windows"：两条路的差别就在这个 API 上，
+# 测试注入一个假的 user32 就能在任意平台上验证 Windows 那条分支。
+_windll = getattr(ctypes, "windll", None)
+_user32 = getattr(_windll, "user32", None) if _windll is not None else None
+
+# macOS 上的等价物：焦点记的是"前台那个应用"（NSRunningApplication），
+# 粘贴发的是 Cmd+V。两者都需要「辅助功能」权限，没授权时按键发不出去。
+_IS_MACOS = sys.platform == "darwin"
+
 
 def get_foreground_window():
-    """获取当前前台窗口句柄"""
+    """记住当前前台窗口（Windows）或前台应用（macOS），粘贴时再切回去。"""
+    if _user32 is None:
+        return _get_frontmost_app()
     try:
-        return ctypes.windll.user32.GetForegroundWindow()
+        return _user32.GetForegroundWindow()
     except Exception as e:
         log_exception(e, T("获取前台窗口"))
         return None
 
 
-def set_foreground_window(hwnd):
-    """设置前台窗口"""
+def _get_frontmost_app():
+    """macOS：返回当前前台应用对象；拿不到返回 None。"""
+    if not _IS_MACOS:
+        return None
     try:
-        if hwnd:
-            ctypes.windll.user32.SetForegroundWindow(hwnd)
+        from AppKit import NSWorkspace
+        return NSWorkspace.sharedWorkspace().frontmostApplication()
+    except Exception as e:
+        log_exception(e, T("获取前台应用"))
+        return None
+
+
+def set_foreground_window(target):
+    """把焦点切回之前记下的窗口/应用。"""
+    if _user32 is None:
+        if target is None:
+            return False
+        try:
+            # 带上 IgnoringOtherApps：否则我们自己的窗口可能又把焦点抢回去
+            from AppKit import NSApplicationActivateIgnoringOtherApps
+            return bool(target.activateWithOptions_(NSApplicationActivateIgnoringOtherApps))
+        except Exception as e:
+            log_exception(e, T("设置前台窗口"))
+            return False
+    try:
+        if target:
+            _user32.SetForegroundWindow(target)
             return True
     except Exception as e:
         log_exception(e, T("设置前台窗口"))
@@ -79,22 +113,40 @@ def set_foreground_window(hwnd):
 
 def send_ctrl_v():
     """
-    发送 Ctrl+V 按键事件
-    
-    使用 Windows API 模拟按键，实现自动粘贴。
+    发送粘贴快捷键，实现自动粘贴。
+
+    Windows 用 keybd_event 发 Ctrl+V；macOS 用 pynput 发 Cmd+V（pynput 走的是
+    CGEventPost，同样需要辅助功能权限）。
     """
+    if _user32 is None:
+        return _send_paste_shortcut_macos()
     try:
         # 按下 Ctrl
-        ctypes.windll.user32.keybd_event(VK_CONTROL, 0, 0, 0)
+        _user32.keybd_event(VK_CONTROL, 0, 0, 0)
         # 按下 V
-        ctypes.windll.user32.keybd_event(VK_V, 0, 0, 0)
+        _user32.keybd_event(VK_V, 0, 0, 0)
         # 释放 V
-        ctypes.windll.user32.keybd_event(VK_V, 0, KEYEVENTF_KEYUP, 0)
+        _user32.keybd_event(VK_V, 0, KEYEVENTF_KEYUP, 0)
         # 释放 Ctrl
-        ctypes.windll.user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+        _user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
         return True
     except Exception as e:
         log_error(T("发送 Ctrl+V 失败: {e}", e=e), "Clipboard")
+        return False
+
+
+def _send_paste_shortcut_macos() -> bool:
+    if not _IS_MACOS:
+        return False
+    try:
+        from pynput.keyboard import Controller, Key
+        keyboard = Controller()
+        with keyboard.pressed(Key.cmd):
+            keyboard.press("v")
+            keyboard.release("v")
+        return True
+    except Exception as e:
+        log_error(T("发送 Cmd+V 失败: {e}", e=e), "Clipboard")
         return False
 
 
