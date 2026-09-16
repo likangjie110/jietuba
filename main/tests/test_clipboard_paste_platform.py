@@ -1,165 +1,152 @@
 # -*- coding: utf-8 -*-
-"""
-剪贴板「粘贴回原程序」的跨平台路径
+"""剪贴板「粘贴回原程序」的编排。
 
-Windows 用 SetForegroundWindow 记住窗口、keybd_event 发 Ctrl+V；macOS 没有这两个
-API，焦点记的是前台应用（NSRunningApplication）、粘贴发的是 Cmd+V。
+两半的实现都在平台层（``core/platform/focus`` 记前台目标并切回、``pointer`` 注入
+粘贴键），这里测 ``clipboard/controllers`` 怎么用它们：
 
-两条分支在这里都钉住：Windows 那条通过注入假的 user32 在 macOS 上也能验证，macOS
-那条通过假的 AppKit/pynput 验证。真按键不发——那会往当前应用里粘东西。
+- 窗口显示时记下前台目标（在显示我们自己的窗口之前，否则记到的是自己）；
+- 粘贴时先切回目标、延迟一点再发粘贴键——目标是外部程序时，焦点切换是异步的，
+  立刻发键会打到自己身上；
+- 目标为空时仍然写出粘贴键（用户可能已经手动切好了窗口），但没有任何目标时不该崩。
+
+平台差异本身（Windows 的 SetForegroundWindow、macOS 的 activateWithOptions_、
+Cmd+V 与 Ctrl+V 的映射）在 test_platform_clipboard.py 与 test_platform_pointer.py。
 """
-import sys
 
 import pytest
 
 from clipboard.controllers import clipboard_controller as cc
 
 
-class _FakeTarget:
-    """冒充 NSRunningApplication：只关心 activateWithOptions_ 收到了什么。"""
-
-    def __init__(self):
-        self.activate_calls = []
-
-    def activateWithOptions_(self, options):  # noqa: N802 —— 冒充 Cocoa 的选择器名
-        self.activate_calls.append(options)
-        return True
-
-
-def _fake_appkit(monkeypatch, frontmost=None, activate_constant=2):
-    """装一个假的 AppKit。"""
-
-    class _Workspace:
-        @staticmethod
-        def frontmostApplication():  # noqa: N802 —— 冒充 Cocoa 的选择器名
-            return frontmost
-
-    class _NSWorkspace:
-        @staticmethod
-        def sharedWorkspace():  # noqa: N802
-            return _Workspace()
-
-    module = type(sys)("AppKit")
-    module.NSWorkspace = _NSWorkspace
-    module.NSApplicationActivateIgnoringOtherApps = activate_constant
-    monkeypatch.setitem(sys.modules, "AppKit", module)
-    return module
-
-
 @pytest.fixture
-def macos(monkeypatch):
-    """把模块切到 macOS 分支。"""
-    monkeypatch.setattr(cc, "_IS_MACOS", True)
-    monkeypatch.setattr(cc, "_user32", None)
-    return cc
+def controller():
+    """只有被调用到的那两个字段的控制器。
+
+    完整构造要一个 ClipboardManager（会连真实剪贴板历史），而这里测的是粘贴编排，
+    与数据来源无关，所以直接绕过 __init__。
+    """
+    instance = cc.ClipboardController.__new__(cc.ClipboardController)
+    instance.auto_paste_enabled = True
+    instance._previous_target = None
+    return instance
 
 
-class TestForegroundTarget:
+class TestForegroundIsCapturedBeforeShowing:
+    def test_window_show_records_the_target(self, controller, monkeypatch):
+        """必须在显示剪贴板窗口之前记录，否则记到的是我们自己。"""
+        captured = []
+        monkeypatch.setattr(cc, "capture_foreground",
+                            lambda: captured.append(True) or "target")
+        monkeypatch.setattr(controller, "load_history", lambda: None)
 
-    def test_macos_captures_the_frontmost_application(self, monkeypatch, macos):
-        target = _FakeTarget()
-        _fake_appkit(monkeypatch, frontmost=target)
+        controller.on_window_show()
 
-        assert cc.get_foreground_window() is target
+        assert captured == [True]
+        assert controller._previous_target == "target"
 
-    def test_unavailable_appkit_is_not_an_error(self, monkeypatch, macos):
-        """取不到就当没记过——粘贴时会退回"只复制不粘贴"，不该崩。"""
-        monkeypatch.setitem(sys.modules, "AppKit", None)
 
-        assert cc.get_foreground_window() is None
+class TestPasteDelegatesToPlatformLayer:
+    def _run_paste(self, controller, monkeypatch, target="previous-window",
+                   capability=True):
+        """执行一次自动粘贴，返回 (切回调用, 发键调用)。
 
-    def test_macos_activates_with_ignoring_other_apps(self, monkeypatch, macos):
-        constant = 2
-        _fake_appkit(monkeypatch, activate_constant=constant)
-        target = _FakeTarget()
+        QTimer.singleShot 换成同步执行，免得用例要等真实的 50ms + 30ms。
+        """
+        activated, sent = [], []
+        monkeypatch.setattr(cc, "activate_foreground", lambda t: activated.append(t))
+        monkeypatch.setattr(cc, "send_paste_shortcut", lambda: sent.append(True))
+        monkeypatch.setattr(cc, "available", lambda *a, **k: capability)
 
-        assert cc.set_foreground_window(target) is True
-        # 不带这个选项的话，我们自己的窗口可能又把焦点抢回去
-        assert target.activate_calls == [constant]
+        import PySide6.QtCore as qtcore
 
-    def test_macos_does_nothing_without_a_target(self, macos):
-        assert cc.set_foreground_window(None) is False
+        monkeypatch.setattr(qtcore.QTimer, "singleShot",
+                            lambda _ms, fn: fn() if callable(fn) else None)
+        controller._previous_target = target
+        controller._schedule_paste_to_previous_window()
+        return activated, sent
 
-    def test_windows_branch_still_drives_user32(self, monkeypatch, macos):
-        """注入假 user32 就能在非 Windows 上验证 Windows 那条路。"""
+    def test_activates_then_pastes(self, controller, monkeypatch):
+        activated, sent = self._run_paste(controller, monkeypatch)
+        assert activated == ["previous-window"]
+        assert sent == [True]
+
+    def test_pastes_without_a_recorded_target(self, controller, monkeypatch):
+        """没记到目标也要发键：用户可能已经手动把窗口切好了。"""
+        activated, sent = self._run_paste(controller, monkeypatch, target=None)
+        assert sent == [True]
+        assert activated == []
+
+    def test_respects_the_auto_paste_setting(self, controller, monkeypatch):
+        controller.auto_paste_enabled = False
+        activated, sent = self._run_paste(controller, monkeypatch)
+        assert (activated, sent) == ([], [])
+
+    def test_unsupported_platform_skips_and_warns_once(self, controller, monkeypatch):
+        """平台没有自动粘贴能力时不该装作发了键，也不该每次粘贴都刷日志。"""
+        monkeypatch.setattr(cc, "_paste_unsupported_logged", False)
+        logged = []
+        monkeypatch.setattr(cc, "log_info", lambda *a, **k: logged.append(a))
+
+        activated, sent = self._run_paste(controller, monkeypatch, capability=False)
+        controller._schedule_paste_to_previous_window()
+
+        assert (activated, sent) == ([], []), "不该调用焦点切换或发键"
+        assert len(logged) == 1, "只该提醒一次"
+
+
+class TestPlatformLayerIsUsedDirectly:
+    def test_controller_no_longer_owns_native_calls(self):
+        """控制器里不该再有裸 ctypes.windll 或 AppKit——那正是平台层要收口的东西。"""
+        import inspect
+
+        source = inspect.getsource(cc)
+        assert "ctypes" not in source
+        assert "AppKit" not in source
+        assert "keybd_event" not in source
+
+    def test_imports_come_from_the_platform_layer(self):
+        from core.platform import focus, pointer
+
+        assert cc.capture_foreground is focus.capture_foreground
+        assert cc.activate_foreground is focus.activate_foreground
+        assert cc.send_paste_shortcut is pointer.send_paste_shortcut
+
+
+class TestCapabilityGating:
+    def test_auto_paste_capability_reflects_the_platform(self):
+        from core.platform import Capability, Support, available, support
+
+        assert support(Capability.PASTE_TO_APP, "windows") is Support.FULL
+        assert support(Capability.PASTE_TO_APP, "macos") is Support.DEGRADED
+        assert available(Capability.PASTE_TO_APP, "linux") is False
+
+
+class TestExportedNames:
+    def test_controllers_package_no_longer_exports_the_old_helpers(self):
+        """旧入口已迁到平台层；留在导出列表里会让人以为还有两条路。"""
+        import clipboard.controllers as controllers
+
+        for name in ("get_foreground_window", "set_foreground_window", "send_ctrl_v"):
+            assert not hasattr(controllers, name), name
+
+
+class TestDeliverImageAsyncUsesPlatformClipboard:
+    def test_clipboard_write_goes_through_the_platform_layer(self, monkeypatch):
+        from PySide6.QtGui import QImage
+
+        from core import clipboard_utils
+
         calls = []
-        fake_user32 = type(sys)("user32")
-        fake_user32.GetForegroundWindow = staticmethod(lambda: 4242)
-        fake_user32.SetForegroundWindow = staticmethod(lambda hwnd: calls.append(hwnd) or True)
-        fake_user32.keybd_event = staticmethod(lambda *args: calls.append(args))
-        monkeypatch.setattr(cc, "_user32", fake_user32)
+        monkeypatch.setattr(clipboard_utils, "clipboard_clipboard_copy",
+                            lambda img: calls.append(id(img)))
 
-        assert cc.get_foreground_window() == 4242
-        assert cc.set_foreground_window(4242) is True
-        assert cc.send_ctrl_v() is True
-        assert calls[0] == 4242
+        image = QImage(4, 4, QImage.Format.Format_ARGB32)
+        image.fill(0xFF112233)
 
-        # Ctrl 按下、V 按下、V 抬起、Ctrl 抬起
-        key_events = calls[1:]
-        assert [event[0] for event in key_events] == [
-            cc.VK_CONTROL, cc.VK_V, cc.VK_V, cc.VK_CONTROL]
-        assert key_events[0][2] == 0 and key_events[-1][2] == cc.KEYEVENTF_KEYUP
+        assert clipboard_utils.deliver_image_async(image, save_service=None) is None
+        assert calls == [id(image)]
 
+    def test_null_image_is_skipped(self):
+        from core import clipboard_utils
 
-class TestPasteShortcut:
-
-    @pytest.fixture
-    def fake_keyboard(self, monkeypatch):
-        """冒充 pynput 的键盘控制器，记录按下/释放的键。"""
-        events = []
-
-        class _Controller:
-            def pressed(self, *keys):
-                events.append(("down", keys))
-                return _Pressed(events)
-
-            def press(self, key):
-                events.append(("press", key))
-
-            def release(self, key):
-                events.append(("release", key))
-
-        class _Pressed:
-            def __init__(self, sink):
-                self._sink = sink
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *exc):
-                events.append(("up", ()))
-                return False
-
-        module = type(sys)("pynput.keyboard")
-        module.Controller = _Controller
-        module.Key = type(sys)("Key")
-        module.Key.cmd = "<cmd>"
-        monkeypatch.setitem(sys.modules, "pynput.keyboard", module)
-        monkeypatch.setitem(sys.modules, "pynput", type(sys)("pynput"))
-        return events
-
-    def test_macos_sends_cmd_v(self, macos, fake_keyboard):
-        assert cc.send_ctrl_v() is True
-
-        kinds = [kind for kind, _ in fake_keyboard]
-        assert kinds == ["down", "press", "release", "up"]
-        assert fake_keyboard[0][1][0] == "<cmd>"      # 先按住 Cmd
-        assert fake_keyboard[1][1] == "v"             # 再敲 v
-
-    def test_paste_failure_is_reported_not_raised(self, macos, monkeypatch):
-        class _Boom:
-            def __init__(self, *args, **kwargs):
-                raise RuntimeError("没有辅助功能权限")
-
-        module = type(sys)("pynput.keyboard")
-        module.Controller = _Boom
-        module.Key = type(sys)("Key")
-        monkeypatch.setitem(sys.modules, "pynput.keyboard", module)
-
-        assert cc.send_ctrl_v() is False
-
-    def test_non_macos_without_user32_sends_nothing(self, monkeypatch, macos):
-        """既不是 Windows 也不是 macOS（比如 Linux 开发机）：明确返回 False。"""
-        monkeypatch.setattr(cc, "_IS_MACOS", False)
-
-        assert cc.send_ctrl_v() is False
+        assert clipboard_utils.deliver_image_async(None) is None

@@ -5,9 +5,7 @@
 负责数据加载、搜索筛选、分组管理、项目操作、侧边栏溢出计算等业务逻辑。
 """
 
-import ctypes
 import json
-import sys
 import os
 import re
 from datetime import datetime, time, timedelta
@@ -52,102 +50,27 @@ def calc_topbar_capacity(bar_width: int) -> int:
     return 0 if available <= 0 else available // _H_BTN_SLOT
 
 
-# Windows API 常量
-VK_CONTROL = 0x11
-VK_V = 0x56
-KEYEVENTF_KEYUP = 0x0002
+from core.platform import Capability, available
+from core.platform.focus import activate_foreground, capture_foreground
+from core.platform.pointer import send_paste_shortcut
 
-# 判断"有没有 user32"而不是"是不是 Windows"：两条路的差别就在这个 API 上，
-# 测试注入一个假的 user32 就能在任意平台上验证 Windows 那条分支。
-_windll = getattr(ctypes, "windll", None)
-_user32 = getattr(_windll, "user32", None) if _windll is not None else None
-
-# macOS 上的等价物：焦点记的是"前台那个应用"（NSRunningApplication），
-# 粘贴发的是 Cmd+V。两者都需要「辅助功能」权限，没授权时按键发不出去。
-_IS_MACOS = sys.platform == "darwin"
+# 前台焦点的记录与切回、粘贴键注入都在 core/platform（focus / pointer）。
+# 这里不再各自判断平台：以前三个函数各有 Windows 与 macOS 两条分支，
+# 而 Linux 上是静默失败——用户点了「自动粘贴」没有任何反应也没有原因。
+_paste_unsupported_logged = False
 
 
-def get_foreground_window():
-    """记住当前前台窗口（Windows）或前台应用（macOS），粘贴时再切回去。"""
-    if _user32 is None:
-        return _get_frontmost_app()
-    try:
-        return _user32.GetForegroundWindow()
-    except Exception as e:
-        log_exception(e, T("获取前台窗口"))
-        return None
+def _log_paste_unsupported_once() -> None:
+    """没有自动粘贴能力时只提醒一次。
 
-
-def _get_frontmost_app():
-    """macOS：返回当前前台应用对象；拿不到返回 None。"""
-    if not _IS_MACOS:
-        return None
-    try:
-        from AppKit import NSWorkspace
-        return NSWorkspace.sharedWorkspace().frontmostApplication()
-    except Exception as e:
-        log_exception(e, T("获取前台应用"))
-        return None
-
-
-def set_foreground_window(target):
-    """把焦点切回之前记下的窗口/应用。"""
-    if _user32 is None:
-        if target is None:
-            return False
-        try:
-            # 带上 IgnoringOtherApps：否则我们自己的窗口可能又把焦点抢回去
-            from AppKit import NSApplicationActivateIgnoringOtherApps
-            return bool(target.activateWithOptions_(NSApplicationActivateIgnoringOtherApps))
-        except Exception as e:
-            log_exception(e, T("设置前台窗口"))
-            return False
-    try:
-        if target:
-            _user32.SetForegroundWindow(target)
-            return True
-    except Exception as e:
-        log_exception(e, T("设置前台窗口"))
-    return False
-
-
-def send_ctrl_v():
+    每次粘贴都写一遍会把日志冲垮；但完全不写，用户会以为「自动粘贴坏了」而不是
+    「这个平台本来就没有」，这正是迁移前 Linux 上的表现。
     """
-    发送粘贴快捷键，实现自动粘贴。
-
-    Windows 用 keybd_event 发 Ctrl+V；macOS 用 pynput 发 Cmd+V（pynput 走的是
-    CGEventPost，同样需要辅助功能权限）。
-    """
-    if _user32 is None:
-        return _send_paste_shortcut_macos()
-    try:
-        # 按下 Ctrl
-        _user32.keybd_event(VK_CONTROL, 0, 0, 0)
-        # 按下 V
-        _user32.keybd_event(VK_V, 0, 0, 0)
-        # 释放 V
-        _user32.keybd_event(VK_V, 0, KEYEVENTF_KEYUP, 0)
-        # 释放 Ctrl
-        _user32.keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
-        return True
-    except Exception as e:
-        log_error(T("发送 Ctrl+V 失败: {e}", e=e), "Clipboard")
-        return False
-
-
-def _send_paste_shortcut_macos() -> bool:
-    if not _IS_MACOS:
-        return False
-    try:
-        from pynput.keyboard import Controller, Key
-        keyboard = Controller()
-        with keyboard.pressed(Key.cmd):
-            keyboard.press("v")
-            keyboard.release("v")
-        return True
-    except Exception as e:
-        log_error(T("发送 Cmd+V 失败: {e}", e=e), "Clipboard")
-        return False
+    global _paste_unsupported_logged
+    if _paste_unsupported_logged:
+        return
+    _paste_unsupported_logged = True
+    log_info(T("当前平台不支持自动粘贴，内容已复制到剪贴板，请手动粘贴"), "Clipboard")
 
 
 class ClipboardController(QObject):
@@ -196,7 +119,7 @@ class ClipboardController(QObject):
         self.paste_with_html = True
         
         # 记录打开窗口前的活动窗口
-        self._previous_window_hwnd = None
+        self._previous_target = None
 
         # 右键菜单数据控制逻辑已抽到独立模块
         self._context_menu_controller = ClipboardContextMenuController(self)
@@ -591,19 +514,33 @@ class ClipboardController(QObject):
                 on_close_callback()
             
             # 自动粘贴：发送 Ctrl+V
-            if self.auto_paste_enabled:
-                # 先恢复之前的窗口焦点，再发送 Ctrl+V
-                def do_paste():
-                    if self._previous_window_hwnd:
-                        set_foreground_window(self._previous_window_hwnd)
-                    # 稍微延迟确保焦点切换完成
-                    QTimer.singleShot(30, send_ctrl_v)
-                
-                # 延迟执行，确保剪贴板窗口已关闭/隐藏
-                QTimer.singleShot(50, do_paste)
+            self._schedule_paste_to_previous_window()
             
             return True
         return False
+
+    def _schedule_paste_to_previous_window(self) -> None:
+        """把内容粘贴回粘贴前那个窗口/应用。
+
+        两段式是必须的：目标是外部程序时焦点切换是异步的，立刻发按键会打到自己
+        身上，所以先切回焦点、再等一拍发粘贴键。整体再延后一点，等剪贴板窗口真的
+        隐藏完——它还在前台时按键同样会被它接走。
+
+        这段调度原先在 5 个粘贴入口里各抄了一份（带格式粘贴、保持顺序、纯文本、
+        文件转文本、图片），改一处就得记得改另外四处。
+        """
+        if not self.auto_paste_enabled:
+            return
+        if not available(Capability.PASTE_TO_APP):
+            _log_paste_unsupported_once()
+            return
+
+        def do_paste():
+            if self._previous_target:
+                activate_foreground(self._previous_target)
+            QTimer.singleShot(30, send_paste_shortcut)
+
+        QTimer.singleShot(50, do_paste)
 
     def paste_transformed_text(
         self, item_id: int, transform_key: str,
@@ -628,12 +565,7 @@ class ClipboardController(QObject):
                 log_info(T("保持顺序粘贴项 {item_id}", item_id=item_id), "Clipboard")
                 if on_close_callback:
                     on_close_callback()
-                if self.auto_paste_enabled:
-                    def do_paste_order():
-                        if self._previous_window_hwnd:
-                            set_foreground_window(self._previous_window_hwnd)
-                        QTimer.singleShot(30, send_ctrl_v)
-                    QTimer.singleShot(50, do_paste_order)
+                self._schedule_paste_to_previous_window()
                 return True
             return False
 
@@ -651,12 +583,7 @@ class ClipboardController(QObject):
             log_info(T("粘贴纯文本项 {item_id}", item_id=item_id), "Clipboard")
             if on_close_callback:
                 on_close_callback()
-            if self.auto_paste_enabled:
-                def do_paste():
-                    if self._previous_window_hwnd:
-                        set_foreground_window(self._previous_window_hwnd)
-                    QTimer.singleShot(30, send_ctrl_v)
-                QTimer.singleShot(50, do_paste)
+            self._schedule_paste_to_previous_window()
             return True
 
         from ..core.text_transform import TRANSFORM_REGISTRY
@@ -695,13 +622,7 @@ class ClipboardController(QObject):
             on_close_callback()
 
         # 自动粘贴：发送 Ctrl+V
-        if self.auto_paste_enabled:
-            def do_paste():
-                if self._previous_window_hwnd:
-                    set_foreground_window(self._previous_window_hwnd)
-                QTimer.singleShot(30, send_ctrl_v)
-
-            QTimer.singleShot(50, do_paste)
+        self._schedule_paste_to_previous_window()
 
         return True
 
@@ -748,13 +669,7 @@ class ClipboardController(QObject):
         if on_close_callback:
             on_close_callback()
 
-        if self.auto_paste_enabled:
-            def do_paste():
-                if self._previous_window_hwnd:
-                    set_foreground_window(self._previous_window_hwnd)
-                QTimer.singleShot(30, send_ctrl_v)
-
-            QTimer.singleShot(50, do_paste)
+        self._schedule_paste_to_previous_window()
 
         return True
 
@@ -873,7 +788,7 @@ class ClipboardController(QObject):
     def on_window_show(self):
         """窗口显示时调用"""
         # 记录当前前台窗口（在显示剪贴板窗口之前）
-        self._previous_window_hwnd = get_foreground_window()
+        self._previous_target = capture_foreground()
         # 重新加载数据
         self.load_history()
     

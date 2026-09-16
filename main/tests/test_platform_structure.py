@@ -37,10 +37,6 @@ EXCLUDED_DIRS = {"platform", "tests", "translations", "scripts"}
 REMAINING_PLATFORM_DEPENDENCIES = {
     "main/core/shortcut_manager.py":
         "全局热键（HOTKEY_KEYBOARD / HOTKEY_MOUSE）待迁到 core/platform/hotkey",
-    "main/core/clipboard_utils.py":
-        "剪贴板写图（CLIPBOARD_IMAGE）待迁到 core/platform/clipboard",
-    "main/clipboard/controllers/clipboard_controller.py":
-        "前台窗口与粘贴注入（KEY_INJECT）待迁到 core/platform",
     "main/core/bootstrap.py":
         "启动预热里 import win32gui/win32clipboard 与 platform.version 补丁，"
         "待收进平台层（或改成调用平台层的预加载接口）",

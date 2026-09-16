@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""clipboard_utils 后台投递测试。"""
+"""图像投递编排（core/clipboard_utils）测试。
+
+这里只测编排：剪贴板同步写、落盘放后台线程、两者拿到同一张图。平台差异（Win32 的
+DIBV5+PNG 与 Qt 回退、剪贴板占用重试）随实现搬到了 core/platform/clipboard，
+在 test_platform_clipboard.py 里测。
+"""
 
 import threading
 
@@ -32,8 +37,7 @@ def test_deliver_image_async_reuses_same_qimage(monkeypatch, tmp_path):
         seen["save_kwargs"] = kwargs
         return True, str(tmp_path / "saved.png")
 
-    monkeypatch.setattr(clipboard_utils.sys, "platform", "win32")
-    monkeypatch.setattr(clipboard_utils, "copy_image_to_clipboard", fake_copy)
+    monkeypatch.setattr(clipboard_utils, "clipboard_clipboard_copy", fake_copy)
     monkeypatch.setattr(SaveService, "save_qimage", fake_save)
 
     thread = clipboard_utils.deliver_image_async(
@@ -54,73 +58,6 @@ def test_deliver_image_async_reuses_same_qimage(monkeypatch, tmp_path):
     assert seen["save_id"] == id(image)
     assert seen["save_thread"] != caller_thread
     assert seen["save_kwargs"]["directory"] == str(tmp_path)
-
-
-def test_copy_image_to_clipboard_uses_win32_on_win32(monkeypatch):
-    from core import clipboard_utils
-
-    image = QImage(10, 10, QImage.Format.Format_ARGB32)
-    image.fill(0xFF204060)
-    seen = []
-
-    def fake_win32(target_image):
-        seen.append(("win32", id(target_image)))
-
-    def fake_qt_fallback(target_image):
-        seen.append(("qt-fallback", id(target_image)))
-
-    monkeypatch.setattr(clipboard_utils.sys, "platform", "win32")
-    monkeypatch.setattr(clipboard_utils, "_copy_win32", fake_win32)
-    monkeypatch.setattr(clipboard_utils, "_copy_qt_fallback", fake_qt_fallback)
-
-    clipboard_utils.copy_image_to_clipboard(image)
-
-    assert seen == [("win32", id(image))]
-
-
-def test_copy_image_to_clipboard_falls_back_on_win32_failure(monkeypatch):
-    from core import clipboard_utils
-
-    image = QImage(10, 10, QImage.Format.Format_ARGB32)
-    image.fill(0xFF406080)
-    seen = []
-
-    def fake_win32(target_image):
-        seen.append(("win32", id(target_image)))
-        raise RuntimeError("win32 failed")
-
-    def fake_qt_fallback(target_image):
-        seen.append(("qt-fallback", id(target_image)))
-
-    monkeypatch.setattr(clipboard_utils.sys, "platform", "win32")
-    monkeypatch.setattr(clipboard_utils, "_copy_win32", fake_win32)
-    monkeypatch.setattr(clipboard_utils, "_copy_qt_fallback", fake_qt_fallback)
-
-    clipboard_utils.copy_image_to_clipboard(image)
-
-    assert seen == [("win32", id(image)), ("qt-fallback", id(image))]
-
-
-def test_copy_image_to_clipboard_uses_qt_fallback_off_windows(monkeypatch):
-    from core import clipboard_utils
-
-    image = QImage(10, 10, QImage.Format.Format_ARGB32)
-    image.fill(0xFF406080)
-    seen = []
-
-    def fake_win32(target_image):
-        seen.append(("win32", id(target_image)))
-
-    def fake_qt_fallback(target_image):
-        seen.append(("qt-fallback", id(target_image)))
-
-    monkeypatch.setattr(clipboard_utils.sys, "platform", "linux")
-    monkeypatch.setattr(clipboard_utils, "_copy_win32", fake_win32)
-    monkeypatch.setattr(clipboard_utils, "_copy_qt_fallback", fake_qt_fallback)
-
-    clipboard_utils.copy_image_to_clipboard(image)
-
-    assert seen == [("qt-fallback", id(image))]
 
 
 def test_pin_window_copy_to_clipboard_dispatches_async(monkeypatch):

@@ -24,6 +24,7 @@ from core.platform.detection import IS_MACOS, IS_WINDOWS
 
 # ── 输入注入用到的 Windows 常量 ─────────────────────────
 VK_CONTROL = 0x11
+VK_V = 0x56
 VK_INSERT = 0x2D
 VK_LBUTTON = 0x01
 VK_RBUTTON = 0x02
@@ -192,6 +193,24 @@ def send_copy_shortcut() -> bool:
     except Exception as e:
         log_error(T("发送复制快捷键失败: {e}", e=e), "Pointer")
         log_exception(e, T("发送复制快捷键"))
+        return False
+
+
+def send_paste_shortcut() -> bool:
+    """发送「粘贴」的快捷键。返回是否注入成功。
+
+    Windows 是 Ctrl+V，macOS 是 Cmd+V，Linux 是 Ctrl+V。调用方只表达「粘贴」，
+    映射由平台层负责——剪贴板历史窗口的自动粘贴就靠它把内容送回原程序。
+    """
+    from core.logger import log_error, log_exception, T
+
+    try:
+        if IS_WINDOWS:
+            return _inject_windows(VK_CONTROL, VK_V)
+        return _inject_pynput("v")
+    except Exception as e:
+        log_error(T("发送粘贴快捷键失败: {e}", e=e), "Pointer")
+        log_exception(e, T("发送粘贴快捷键"))
         return False
 
 

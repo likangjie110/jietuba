@@ -50,6 +50,7 @@ class Capability(str, Enum):
 
     # 剪贴板
     CLIPBOARD_IMAGE = "clipboard_image"
+    PASTE_TO_APP = "paste_to_app"
 
     # 桌面集成
     AUTOSTART = "autostart"
@@ -127,6 +128,12 @@ _SUPPORT_TABLE: dict[Capability, dict[str, Support]] = {
         _M: Support.DEGRADED,      # 退回 Qt：无重试、无 "PNG" 格式注册
         _L: Support.DEGRADED,
     },
+    Capability.PASTE_TO_APP: {
+        # 「粘贴回原程序」= 记住前台窗口/应用 + 切回 + 注入粘贴键
+        _W: Support.FULL,          # GetForegroundWindow/SetForegroundWindow + keybd_event
+        _M: Support.DEGRADED,      # 记的是前台应用、发的是 Cmd+V，需要辅助功能权限
+        _L: Support.NONE,          # 两半都没有实现
+    },
     Capability.AUTOSTART: {
         _W: Support.FULL,          # 注册表 HKCU\Run
         _M: Support.NONE,          # 需要 LaunchAgent plist，未实现
@@ -159,6 +166,7 @@ _BACKEND_NAMES: dict[Capability, dict[str, str]] = {
     Capability.SCROLL_INJECT: {_W: "win32", _M: "", _L: ""},
     Capability.KEY_INJECT: {_W: "win32", _M: "pynput", _L: "pynput"},
     Capability.CLIPBOARD_IMAGE: {_W: "win32", _M: "qt", _L: "qt"},
+    Capability.PASTE_TO_APP: {_W: "win32", _M: "appkit+pynput", _L: ""},
     Capability.AUTOSTART: {_W: "winreg", _M: "", _L: ""},
     Capability.DESKTOP_SHORTCUT: {_W: "powershell", _M: "", _L: ""},
     Capability.PROCESS_CONTROL: {_W: "win32", _M: "", _L: ""},

@@ -34,7 +34,8 @@ from core.shortcut_manager import ShortcutHandler, ShortcutManager
 from ui.dialogs import show_confirm_dialog
 from ui.fluent_lite import LineEdit
 
-from ...controllers import ClipboardController, SelectionManager, get_foreground_window
+from core.platform.focus import capture_foreground
+from ...controllers import ClipboardController, SelectionManager
 from ...core import ClipboardItem, ClipboardManager, GroupType
 from ..theme.theme_styles import ThemeStyleGenerator
 from ..theme.themes import Theme, get_theme_manager
@@ -940,7 +941,7 @@ class ClipboardWindow(QWidget, FramelessMixin):
             if current_group is not None and current_group.group_type == GroupType.FILE:
                 self._open_file_item(item_id)
                 return
-        self.controller._previous_window_hwnd = get_foreground_window()
+        self.controller._previous_target = capture_foreground()
         if self.controller.paste_item(item_id, on_close_callback=self.close):
             self.item_pasted.emit(item_id)
 
@@ -1008,13 +1009,13 @@ class ClipboardWindow(QWidget, FramelessMixin):
 
     def _special_paste(self, item_id: int, action_key: str):
         """执行特殊粘贴：先记录前台窗口，再调用 controller 的加工粘贴。"""
-        self.controller._previous_window_hwnd = get_foreground_window()
+        self.controller._previous_target = capture_foreground()
         self.controller.paste_transformed_text(item_id, action_key, on_close_callback=self.close)
         self.item_pasted.emit(item_id)
 
     def _file_special_paste(self, item_id: int, action_key: str):
         """执行文件项特殊粘贴。"""
-        self.controller._previous_window_hwnd = get_foreground_window()
+        self.controller._previous_target = capture_foreground()
         self.controller.paste_file_text(item_id, action_key, on_close_callback=self.close)
         self.item_pasted.emit(item_id)
 
@@ -1076,7 +1077,7 @@ class ClipboardWindow(QWidget, FramelessMixin):
             log_warning(T("打开文件失败: {e}", e=e), "Clipboard")
 
     def _paste_item_to_clipboard(self, item_id: int):
-        self.controller._previous_window_hwnd = get_foreground_window()
+        self.controller._previous_target = capture_foreground()
         if self.controller.paste_item(item_id, on_close_callback=self.close):
             self.item_pasted.emit(item_id)
 
