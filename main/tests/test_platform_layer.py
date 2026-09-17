@@ -159,6 +159,12 @@ class TestTruthTable:
             assert available(capability, "macos") is False
             assert available(capability, "linux") is False
 
+    def test_frame_capture_is_native_only_on_windows(self):
+        """GIF 抓帧：Windows 是 Rust 里的 GDI 线程；其它平台退化成 Python 抓帧。"""
+        assert support(Capability.FRAME_CAPTURE, "windows") is Support.FULL
+        assert support(Capability.FRAME_CAPTURE, "macos") is Support.DEGRADED
+        assert support(Capability.FRAME_CAPTURE, "linux") is Support.DEGRADED
+
     def test_current_platform_answers_are_consistent_with_detection(self):
         """当前平台的答案要跟 detection 的常量对得上（防止表里键名写错）。"""
         declared = PLATFORM_NAME if PLATFORM_NAME in PLATFORMS else "linux"

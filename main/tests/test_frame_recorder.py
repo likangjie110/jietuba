@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, patch
 from PySide6.QtCore import QRect
 
 import gif.frame_recorder as frame_recorder_module
+from core.platform import capture as capture_module
 from gif.frame_recorder import FrameRecorder, RecordState, FrameData, CursorSnapshot
 
 
@@ -40,9 +41,11 @@ def mock_gifrecorder():
 
     with patch.object(frame_recorder_module, "gifrecorder", fake_module), \
          patch.object(frame_recorder_module, "_gifrecorder_available", True), \
-         patch.object(frame_recorder_module, "IS_WINDOWS", True):
+         patch.object(capture_module, "gifrecorder", fake_module), \
+         patch.object(capture_module, "_gifrecorder_available", True), \
+         patch.object(capture_module, "IS_WINDOWS", True):
         # 这些用例测的是状态机本身，和"用哪条抓帧后端"无关：
-        # 钉在 Windows 分支（Rust RecordSession）上，跑在哪个平台都一样。
+        # 钉住 Windows 后端（Rust RecordSession），跑在哪个平台都一样。
         yield fake_module, fake_store, fake_session
 
 

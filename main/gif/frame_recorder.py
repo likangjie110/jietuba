@@ -2,7 +2,9 @@
 """
 帧采集控制器 — 全 Rust 架构 (gifrecorder)
 
-录制：Rust 线程 Win32 BitBlt 截屏 → JPEG 压缩 → FrameStore 存储
+抓帧：Windows 由 Rust 线程 GDI BitBlt 截屏，其它平台由 Python 用 mss 抓帧 —— 两条路径
+      都进同一个 Rust FrameStore（压缩、存储、导出全在 Rust），选哪条由
+      ``core/platform/capture.py`` 决定
       Python 侧仅 QTimer tick 通知 UI 帧数，完全不碰像素
 
 停止后：
@@ -12,7 +14,6 @@
 图像由 PlaybackEngine 通过 FrameStore.get_frame_rgb() / start_decoder() 解码。
 """
 
-import threading
 import time
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -21,7 +22,7 @@ from typing import List, Optional, Tuple
 from PySide6.QtCore import QObject, QTimer, QRect, QThread, Signal
 
 from core.logger import log_error, log_info, log_exception, T
-from core.platform import IS_WINDOWS
+from core.platform import capture
 from core.platform import pointer
 
 try:
@@ -61,71 +62,16 @@ class FrameData:
     cursor: Optional[CursorSnapshot] = None  # 鼠标状态（None = 未采集）
 
 
-class _MssCaptureThread(QThread):
-    """非 Windows 的抓帧线程，接口对齐 gifrecorder.RecordSession。
-
-    Windows 上抓帧在 Rust 里（GDI BitBlt，零 GIL 争用）；其它平台没有对应实现，
-    这里用 mss 抓帧后把 BGRA 原样交给同一个 FrameStore——压缩、存储、导出仍然全在
-    Rust。方法名刻意与 RecordSession 一致（stop/pause/resume），这样上层的
-    "暂停 / 恢复 / 停止" 三处调用不用分平台写两遍。
-    """
-
-    def __init__(self, store, left: int, top: int, width: int, height: int,
-                 fps: int, elapsed_ms, parent=None):
-        super().__init__(parent)
-        self._store = store
-        self._region = {"left": left, "top": top, "width": width, "height": height}
-        self._fps = max(1, fps)
-        self._elapsed_ms = elapsed_ms       # 可调用对象，返回距开始录制的毫秒数
-        self._stopped = threading.Event()
-        self._paused = threading.Event()
-
-    def stop(self):
-        self._stopped.set()
-        self.wait(2000)
-
-    def pause(self):
-        self._paused.set()
-
-    def resume(self):
-        self._paused.clear()
-
-    def run(self):
-        try:
-            import mss
-        except ImportError as e:
-            log_error(T("缺少 mss，非 Windows 平台无法抓帧: {e}", e=e), "GIF")
-            return
-
-        interval = 1.0 / self._fps
-        with mss.mss() as sct:
-            while not self._stopped.is_set():
-                if self._paused.is_set() or self._store.is_paused:   # is_paused 是属性
-                    time.sleep(0.01)
-                    continue
-                started = time.perf_counter()
-                try:
-                    shot = sct.grab(self._region)
-                    # mss 给的 raw 就是 BGRA，直接喂给 Rust，不做像素转换
-                    self._store.push_bgra(memoryview(shot.raw), int(self._elapsed_ms()))
-                except Exception as e:
-                    log_exception(e, T("mss 抓帧失败"))
-                spent = time.perf_counter() - started
-                if spent < interval:
-                    time.sleep(interval - spent)
-
-
 # ── 采集器 ──────────────────────────────────────────
 
 class FrameRecorder(QObject):
     """
-    以指定帧率截屏，通过 gifrecorder.RecordSession (Rust) 驱动。
+    以指定帧率截屏，抓帧后端由 ``core/platform/capture.py`` 提供。
 
     架构：
-      Rust 线程: Win32 BitBlt 截屏 → JPEG 压缩 → FrameStore
-      Python 侧: QTimer tick 仅发信号通知 UI 帧数变化
-
-    Python 完全不参与截屏和像素处理，零 GIL 争用。
+      Windows：Rust 线程 GDI BitBlt 截屏 → JPEG 压缩 → FrameStore
+      其它平台：Python 线程 mss 截屏 → 同一个 FrameStore
+      Python 侧: QTimer tick 仅发信号通知 UI 帧数变化（不碰像素）
     """
 
     frame_captured = Signal(int)   # 当前总帧数
@@ -151,7 +97,7 @@ class FrameRecorder(QObject):
 
         # gifrecorder 对象
         self._store = None            # gifrecorder.FrameStore
-        self._session = None          # gifrecorder.RecordSession
+        self._session = None          # 抓帧会话（RecordSession 或 mss 抓帧线程）
         self._rec_width: int = 0
         self._rec_height: int = 0
 
@@ -209,7 +155,7 @@ class FrameRecorder(QObject):
     # ── 生命周期 ──
 
     def start(self):
-        """开始录制。Rust 线程 Win32 BitBlt 截屏 → FrameStore。"""
+        """开始录制。抓帧后端由平台层决定（见 core/platform/capture.py）。"""
         if self._state not in (RecordState.IDLE, RecordState.STOPPED):
             return
         self._frames.clear()
@@ -248,24 +194,23 @@ class FrameRecorder(QObject):
             self._store = None
             return
 
-        # 启动抓帧：Windows 走 Rust 的 GDI BitBlt，其它平台用 mss 抓帧喂同一个 FrameStore
+        # 启动抓帧：用哪个后端（Windows 的 Rust GDI / 其它平台的 mss）由平台层决定
         try:
-            if IS_WINDOWS:
-                self._session = gifrecorder.RecordSession(
-                    self._store, left, top, w, h, self._fps,
-                )
-            else:
-                self._session = _MssCaptureThread(
-                    self._store, left, top, w, h, self._fps,
-                    elapsed_ms=lambda: (time.perf_counter() - self._start_time
-                                        - self._pause_offset) * 1000,
-                    parent=self,
-                )
-                self._session.start()
+            self._session = capture.create_session(
+                self._store, left, top, w, h, self._fps,
+                elapsed_ms=lambda: (time.perf_counter() - self._start_time
+                                    - self._pause_offset) * 1000,
+                parent=self,
+            )
         except Exception as e:
             log_error(T("抓帧会话启动失败: {e}", e=e), "GIF")
             self._store = None
             self._session = None
+            return
+        if self._session is None:
+            # 平台没有可用后端（Windows 缺 gifrecorder 扩展时）
+            log_error(T("gifrecorder 不可用，无法录制"), "GIF")
+            self._store = None
             return
 
         self._start_time = time.perf_counter()
@@ -278,7 +223,7 @@ class FrameRecorder(QObject):
         self.state_changed.emit(self._state.name)
         log_info(T("录制开始: {w}x{h} @ {fps}fps ({backend})",
                    w=w, h=h, fps=self._fps,
-                   backend="Rust Win32 BitBlt" if IS_WINDOWS else "mss"), "GIF")
+                   backend=capture.backend_name()), "GIF")
 
     def pause(self):
         """暂停录制"""
@@ -321,7 +266,7 @@ class FrameRecorder(QObject):
     def stop_async(self):
         """非阻塞停止录制。
 
-        立即停止计时器，在 QThread 后台线程等待 Rust 截屏线程退出，
+        立即停止计时器，在 QThread 后台线程等待抓帧线程退出，
         完成后发射 ``stop_finished`` 信号。
         """
         if self._state not in (RecordState.RECORDING, RecordState.PAUSED):
@@ -344,7 +289,7 @@ class FrameRecorder(QObject):
                         try:
                             self._session.stop()
                         except Exception as e:
-                            log_error(T("RecordSession.stop 异常: {e}", e=e), "GIF")
+                            log_error(T("抓帧会话停止异常: {e}", e=e), "GIF")
                     if self._rec._store is not None:
                         self._rec._store.set_state(gifrecorder.STATE_STOPPED)
                     self._rec._sync_frames_from_store()
@@ -405,13 +350,13 @@ class FrameRecorder(QObject):
     # ── 内部 ──
 
     def _stop_session(self):
-        """停止 Rust 截屏会话（阻塞等待线程退出）。"""
+        """停止抓帧会话（阻塞等待线程退出）。"""
         self._stop_scroll_listener()
         if self._session is not None:
             try:
                 self._session.stop()
             except Exception as e:
-                log_exception(e, T("停止 Rust 截屏会话"))
+                log_exception(e, T("停止抓帧会话"))
             self._session = None
 
     def _sync_frames_from_store(self):
@@ -424,7 +369,7 @@ class FrameRecorder(QObject):
         n_cursor = len(self._cursor_track)
 
         for i, ts in enumerate(timestamps):
-            # 鼠标采样数可能和帧数不完全一致（QTimer vs Rust 线程），
+            # 鼠标采样数可能和帧数不完全一致（QTimer vs 抓帧线程），
             # 按比例映射或直接按索引对齐
             cursor = None
             if n_cursor > 0:
