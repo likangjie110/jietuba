@@ -35,9 +35,8 @@ EXCLUDED_DIRS = {"platform", "tests", "translations", "scripts"}
 
 # 尚未迁移的模块 -> 所属能力。迁移完成后必须删掉对应行，否则 test_ledger 会失败。
 REMAINING_PLATFORM_DEPENDENCIES = {
-    "main/core/shortcut_manager.py":
-        "全局热键（HOTKEY_KEYBOARD / HOTKEY_MOUSE）待迁到 core/platform/hotkey；"
-        "它同时混着应用内的 Qt 快捷键分发（那部分与平台无关，留在原处即可）",
+    # 全局热键原先也在这里；键盘与鼠标侧键的机制已迁到 core/platform/hotkey（门面）
+    # 与 hotkey_win32（RegisterHotKey、WM_HOTKEY 过滤器、侧键钩子原语）。
     "main/ocr/engines.py":
         "windows_media_ocr 是构建变体（OCR_VARIANT == \"win\"）的专有引擎，"
         "属于按能力而不是按平台分派；保留，但需在 OCR 层显式登记为不可用引擎",

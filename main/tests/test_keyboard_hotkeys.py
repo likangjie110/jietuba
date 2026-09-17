@@ -19,13 +19,15 @@ import pytest
 from pynput.keyboard import Key, KeyCode
 
 from core import shortcut_manager as sm
+from core.platform import hotkey as platform_hotkey
 from core.shortcut_manager import ShortcutHandler, ShortcutManager
 
 
 @pytest.fixture
 def manager(monkeypatch):
     """一个不走单例、也不真的挂系统钩子的 ShortcutManager。"""
-    monkeypatch.setattr(sm, "_IS_WINDOWS", False)
+    # 键盘热键的分支判断已搬到平台层（core/platform/hotkey）
+    monkeypatch.setattr(sm.platform_hotkey, "keyboard_backend_is_native", lambda: False)
     monkeypatch.setattr("pynput.keyboard.GlobalHotKeys.start", lambda self: None)
     monkeypatch.setattr("pynput.keyboard.GlobalHotKeys.stop", lambda self: None)
     mgr = ShortcutManager()
@@ -59,13 +61,13 @@ class TestHotkeySyntax:
         ("ctrl+printscreen", "<ctrl>+<print_screen>"),
     ])
     def test_maps_app_syntax_to_pynput(self, raw, expected):
-        assert ShortcutManager._to_pynput_hotkey(raw) == expected
+        assert platform_hotkey.to_pynput_hotkey(raw) == expected
 
     @pytest.mark.parametrize("bad", ["a", "ctrl", "", "ctrl+", "ctrl+повер", "nosuchmod+a"])
     def test_rejects_what_cannot_be_a_global_hotkey(self, bad):
         """没有修饰键的热键会吃掉用户所有正常打字，必须拒绝。"""
         with pytest.raises(ValueError):
-            ShortcutManager._to_pynput_hotkey(bad)
+            platform_hotkey.to_pynput_hotkey(bad)
 
 
 class TestRegistration:
@@ -172,11 +174,13 @@ class TestPermissionHint:
         fake_module = type(sys)("ApplicationServices")
         fake_module.AXIsProcessTrusted = lambda: False
         monkeypatch.setitem(sys.modules, "ApplicationServices", fake_module)
-        monkeypatch.setattr(sm, "log_warning",
+        # warn_if_permission_missing 在函数内延迟导入 logger（平台层避免与
+        # core.constants 成环），因此打桩的是 logger 模块上的名字
+        monkeypatch.setattr("core.logger.log_warning",
                             lambda msg, module=None: logged.append(msg.render()))
-        monkeypatch.setattr(sm.sys, "platform", "darwin")
+        monkeypatch.setattr(platform_hotkey, "IS_MACOS", True)
 
-        ShortcutManager._warn_if_not_trusted()
+        platform_hotkey.warn_if_permission_missing()
 
         assert logged and "辅助功能" in logged[0]
 
@@ -185,10 +189,12 @@ class TestPermissionHint:
         fake_module = type(sys)("ApplicationServices")
         fake_module.AXIsProcessTrusted = lambda: True
         monkeypatch.setitem(sys.modules, "ApplicationServices", fake_module)
-        monkeypatch.setattr(sm, "log_warning",
+        # warn_if_permission_missing 在函数内延迟导入 logger（平台层避免与
+        # core.constants 成环），因此打桩的是 logger 模块上的名字
+        monkeypatch.setattr("core.logger.log_warning",
                             lambda msg, module=None: logged.append(msg.render()))
-        monkeypatch.setattr(sm.sys, "platform", "darwin")
+        monkeypatch.setattr(platform_hotkey, "IS_MACOS", True)
 
-        ShortcutManager._warn_if_not_trusted()
+        platform_hotkey.warn_if_permission_missing()
 
         assert logged == []

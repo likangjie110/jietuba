@@ -11,11 +11,11 @@ if sys.platform != "win32":
 
 from pynput import mouse as _pynput_mouse
 
-from core.shortcut_manager import (
-    ShortcutManager, ShortcutHandler, HotkeySystem,
+from core.platform.hotkey import (
     MOUSE_BUTTON_BACK, MOUSE_BUTTON_FORWARD,
     is_mouse_button_hotkey,
 )
+from core.shortcut_manager import ShortcutManager, ShortcutHandler, HotkeySystem
 
 # 在任何 monkeypatch 之前抓住真实的 Listener：下面的替身会把
 # pynput.mouse.Listener 整个顶替掉，届时再去读这些常量读到的就是替身自己。
@@ -404,7 +404,7 @@ class TestHotkeyEditMouseCapture:
         assert widget.text() == MOUSE_BUTTON_FORWARD
 
     def test_mouse_token_reports_available_not_conflicting(self, qapp):
-        # 录入框用 ShortcutManager._parse_hotkey 检测冲突，鼠标 token 走不通那条
+        # 录入框用 parse_hotkey 检测冲突，鼠标 token 走不通那条
         # 键盘专属的解析路径——回归点在于它不该被误判为「已被占用」。
         from ui.hotkey_edit import HotkeyEdit
         widget = HotkeyEdit()

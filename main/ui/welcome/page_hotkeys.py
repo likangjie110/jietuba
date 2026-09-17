@@ -62,7 +62,7 @@ def pressed_tokens(hotkey_text: str) -> frozenset:
 class _KeyboardMap(QWidget):
     """一张静态的可用性示意图：能绑的键高亮，不能绑的置灰。
 
-    哪些键能绑不是随手涂的，而是照着 ShortcutManager._parse_hotkey 实际接受的
+    哪些键能绑不是随手涂的，而是照着 core/platform/hotkey.parse_hotkey 实际接受的
     范围来：字母、数字、F1–F24、Esc、以及各种标点都能作主键，Tab / Caps /
     Enter / Space / Backspace 解析不了。修改解析器时这张表要跟着改。
     """

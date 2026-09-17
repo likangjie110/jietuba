@@ -26,12 +26,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 在 macOS 上跑测试**不要设 `QT_QPA_PLATFORM=offscreen`**：`qframelesswindow` 的 macOS
   后端要真实 NSWindow，离屏平台下构造无边框窗口会直接段错误（整进程崩，不是断言失败）。
   conftest 已按平台处理。
-- **macOS 上不要一次性跑全套测试**：pytest 会话拆除时会在 GC 里段错误（Qt/ObjC 析构
-  顺序），崩溃点随文件组合漂移，同一份代码每次挂的位置都不一样。用
-  `python main/scripts/run_tests_per_file.py out.json` 逐文件跑（它会对失败文件重复采样，
-  用 `--diff old.json new.json` 比较两次运行判断有没有回归）。已知既有失败：
-  `test_handle_overlay.py`（失败数在 6~14 之间随机浮动）、`test_welcome_hotkey_page.py`
-  （2 个焦点相关用例）、`test_mosaic_tool.py`（拆除期段错误）。
+- **macOS 上测试有已知的不稳定，别把它当成回归**：
+  - pytest 会话拆除时会在强制 GC 里段错误（`_pytest/unraisableexception.py:gc_collect_harder`
+    → Qt/ObjC 析构顺序），**崩在哪个文件会漂移**：同一份代码换一个目录跑，某个文件的
+    崩溃率能从 100% 掉到 10%。实测过与代码无关（把同一份代码复制到干净目录对照即可），
+    因此不要靠"某文件崩了"判断改动好坏。
+  - `test_handle_overlay.py` 的失败数在 6~14 之间随机浮动。
+  - `test_welcome_hotkey_page.py` 有 2 个焦点相关用例长期失败（`show()` 后焦点没落到
+    第一格）。
+  - 用 `python main/scripts/run_tests_per_file.py out.json` 逐文件跑（会对有失败的文件
+    重复采样，区分「稳定红」与「随机红」），用 `--diff old.json new.json` 比较两次运行
+    的**最好值**判断有没有回归。
 
 ## 常用命令
 

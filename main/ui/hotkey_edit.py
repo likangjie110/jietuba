@@ -51,10 +51,8 @@ class _HotkeyEditHandler(ShortcutHandler):
         # 拦截系统热键，并合成 Qt KeyPress 事件投递给输入框
         from PySide6.QtCore import QEvent
         from PySide6.QtGui import QKeyEvent
-        from core.shortcut_manager import (
-            ShortcutManager,
-            MOD_CONTROL, MOD_ALT, MOD_SHIFT, MOD_WIN,
-        )
+        from core.platform.hotkey import MOD_ALT, MOD_CONTROL, MOD_SHIFT, MOD_WIN
+        from core.shortcut_manager import ShortcutManager
         mgr = ShortcutManager.instance()
         meta = mgr._id_to_metadata.get(hotkey_id)
         if meta is None:

@@ -176,11 +176,11 @@ class TestKeyboardMap:
                     yield label, token, bindable
 
     def test_bindable_flags_match_what_the_parser_accepts(self):
-        from core.shortcut_manager import ShortcutManager
+        from core.platform.hotkey import parse_hotkey
 
         for label, token, bindable in self._main_keys():
             try:
-                ShortcutManager._parse_hotkey(f"ctrl+{token}")
+                parse_hotkey(f"ctrl+{token}")
                 accepted = True
             except ValueError:
                 accepted = False
