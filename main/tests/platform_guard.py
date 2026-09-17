@@ -37,6 +37,20 @@ PLATFORM_ATTRIBUTE_CHAINS = (
     ("ctypes", "wintypes"),
 )
 
+# 平台分派常量与探针：业务模块拿它们做 if，等于把「是不是 Windows」写进业务逻辑。
+# 正确做法是问能力（``core/platform/capabilities.py``）或直接拿平台层给的后端/实现。
+PLATFORM_DISPATCH_NAMES = (
+    "IS_WINDOWS",
+    "IS_MACOS",
+    "IS_LINUX",
+    "PLATFORM_NAME",
+    "qt_platform_name",
+    "is_native_qt_platform",
+)
+
+# 上面这些名字的来源：平台层门面，以及唯一的探测模块
+PLATFORM_SOURCE_MODULES = ("core.platform", "core.platform.detection")
+
 
 def module_ast(module) -> ast.Module:
     """取模块源码的 AST（去掉公共缩进与 BOM 后解析）。
@@ -56,6 +70,58 @@ def source_ast(path) -> ast.Module:
 
 def _clean_source(text: str) -> str:
     return textwrap.dedent(text.lstrip("\ufeff"))
+
+
+def _dotted_name(node: ast.AST) -> str | None:
+    """``a.b.c`` 形式的属性链文本；不是纯名字/属性链时返回 None。"""
+    parts = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if not isinstance(node, ast.Name):
+        return None
+    parts.append(node.id)
+    return ".".join(reversed(parts))
+
+
+def platform_dispatch_usages(tree: ast.AST) -> set[str]:
+    """模块里直接使用平台分派常量/探针的地方（三种写法都算）。
+
+    - ``from core.platform import IS_WINDOWS``
+    - ``from core.platform.detection import IS_MACOS``
+    - 先导入模块再取属性：``from core.platform import detection`` → ``detection.PLATFORM_NAME``
+      （``import core.platform as platform`` → ``platform.qt_platform_name()``、
+      ``core.platform.detection.IS_LINUX`` 同样算）
+
+    只对「模块形式」要求真的取了值（``detection.IS_WINDOWS``）：直接把常量 import 进来
+    本身就是违规——业务模块没有别的理由导这个名字。
+    """
+    found: set[str] = set()
+    # 本地名 -> 真实模块名；真实模块名本身也登记，好覆盖 ``core.platform.IS_WINDOWS``
+    aliases: dict[str, str] = {name: name for name in PLATFORM_SOURCE_MODULES}
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.level == 0:
+            module = node.module or ""
+            if module not in PLATFORM_SOURCE_MODULES:
+                continue
+            for alias in node.names:
+                if alias.name in PLATFORM_DISPATCH_NAMES:
+                    found.add(f"from {module} import {alias.name}")
+                elif module == "core.platform" and alias.name == "detection":
+                    aliases[alias.asname or alias.name] = "core.platform.detection"
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in PLATFORM_SOURCE_MODULES:
+                    aliases[alias.asname or alias.name] = alias.name
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Attribute) or node.attr not in PLATFORM_DISPATCH_NAMES:
+            continue
+        path = _dotted_name(node.value)
+        if path is not None and aliases.get(path, path) in PLATFORM_SOURCE_MODULES:
+            found.add(f"{path}.{node.attr}")
+    return found
 
 
 def is_importable_module_name(stem: str) -> bool:
