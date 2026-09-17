@@ -8,13 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **发行版只有 Windows**，但目标结构是天然跨平台（Windows / macOS / Linux）：
   - **平台差异一律走 `main/core/platform/`**，业务模块不直接 `import win32gui` /
-    `ctypes.windll` / 判断 `sys.platform`。新增平台相关代码时不要再写
-    `if sys.platform == "win32": ...`，而是往平台层补能力或后端；这条由
-    `main/tests/test_platform_structure.py` 强制（带一份尚未迁移的账本）。
+    `ctypes.windll` / 判断 `sys.platform`，也不拿 `IS_WINDOWS` 这类常量做分派。新增平台
+    相关代码时不要写 `if sys.platform == "win32": ...`，而是往平台层补能力或后端；这两条
+    由 `main/tests/test_platform_structure.py` 强制（第一道扫描带一份账本，现在只剩
+    OCR 的 Windows 构建变体引擎一条）。
   - **macOS 上可以开发调试**（`setup_macos.sh` 准备环境）：截图、标注、钉图、OCR、
     翻译、全局热键、剪贴板历史、窗口智能选区、GIF 录制都能跑（Windows 走 Rust 的
     GDI 抓屏，其它平台由 Python 用 mss 抓帧后喂进同一个 Rust FrameStore）。
-  - 窗口智能选区在 macOS 上走 Quartz（`window_finder_macos.py`）：
+  - 窗口智能选区在 macOS 上走 Quartz（`core/platform/window_macos.py`）：
     `CGWindowListCopyWindowInfo` 天然按 Z 序返回、天然不含投影，命中逻辑与 Windows
     共用。读窗口标题需要屏幕录制权限，没授权时退化为应用名。
   - 全局热键在非 Windows 上走 pynput 键盘监听，需要 macOS 的「辅助功能」权限，没授权
@@ -31,12 +32,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     → Qt/ObjC 析构顺序），**崩在哪个文件会漂移**：同一份代码换一个目录跑，某个文件的
     崩溃率能从 100% 掉到 10%。实测过与代码无关（把同一份代码复制到干净目录对照即可），
     因此不要靠"某文件崩了"判断改动好坏。
-  - `test_handle_overlay.py` 的失败数在 6~14 之间随机浮动。
-  - `test_welcome_hotkey_page.py` 有 2 个焦点相关用例长期失败（`show()` 后焦点没落到
-    第一格）。
-  - 用 `python main/scripts/run_tests_per_file.py out.json` 逐文件跑（会对有失败的文件
-    重复采样，区分「稳定红」与「随机红」），用 `--diff old.json new.json` 比较两次运行
-    的**最好值**判断有没有回归。
+  - `main/tests/conftest.py` 现在每个用例结束后按 Qt 的父子顺序销毁用例自己创建的
+    `QGraphicsScene`（`shiboken6.isValid` 校验后 `deleteLater` + `processEvents`，被
+    模块/fixture 持有的场景跳过），针对的正是上面那条「循环 GC 拆环时级联析构」的根因。
+    段错误本来就是随机的，一次跑通不能证明它已根治；要判断有没有退化仍按下面的采样法。
+  - 2026-09-17 复测（`venv311` 与全新安装的 venv 各跑一次整套，各约 21 分钟）：**没再出现
+    拆除期段错误**，覆盖率 56%（棘轮 37% 通过）；但整套会话里**不是全绿**——
+    `test_welcome_hotkey_page.py` 的两个焦点用例（`TestKeyboardHighlight`）两次都失败，
+    单独跑这个文件是 13 passed；另一次还额外挂了 2 个 `test_handle_overlay.py` 的用例
+    （历史账上就随机红）。那两条的症状是按键根本没到控件（断言时 `keyboard._pressed` 是
+    空集）——`show()` 之后焦点没落到第一格，与逐文件跑的结果不同，属会话/环境相关，
+    不是代码回归。
+  - 所以回归判据仍看逐文件：`python main/scripts/run_tests_per_file.py out.json`（会对有
+    失败的文件重复采样，区分「稳定红」与「随机红」），用 `--diff old.json new.json` 比较
+    两次运行的**最好值**。今天逐文件 104 个文件全绿、无波动文件。
+  - 那个逐用例销毁 Qt 对象的 fixture 不是万能药：把不带它的 conftest 放进干净副本跑
+    `test_handle_overlay.py` 同样是 40/40，可见那几条红与目录/用例组合相关。
 
 ## 常用命令
 
@@ -90,7 +101,7 @@ python main/compile_translations.py                 # app_*.xml → app_*.qm（�
 - `canvas/` 是编辑核心：QGraphicsScene + `CommandUndoStack`（QUndoStack 封装）+ `SelectionModel`；每个绘图工具是 `tools/base.Tool` 的子类，注册进 `ToolController` 后由它分发鼠标事件，依赖通过 `ToolContext` 注入。
 - `pin/`：`PinManager` 单例管理所有置顶钉图窗口。
 - `clipboard/`：四层结构 `controllers/`（交互）→ `core/`（`ClipboardManager` 存储与监听，底层是 Rust `pyclipboard`）→ `services/`（文件 payload、分组、导入导出）→ `ui/`。
-- `gif/`：状态机（选区 → 录制 → 回放 → 导出）+ 三层窗口，编码走 `gifrecorder`。
+- `gif/`：状态机（选区 → 录制 → 回放 → 导出）+ 三层窗口，编码走 `gifrecorder`，抓帧后端由 `core/platform/capture.py` 提供。
 - `stitch/` 长截图调 Rust `longstitch`；`ocr/` 用 `ppocr_rust`（单例、异步线程，模型在 `models/`）；`barcode/` 用 zxing-cpp。
 - `translation/` 是可插拔 provider 架构（`provider.py` 契约 + `registry.py` 注册 + `service.py` 编排，DeepL/Google/Azure/Amazon 四个实现）。
 - `ui/fluent_lite/` 是自研的 Fluent 风格组件库，`ui/settings_ui/` 是设置对话框的各页面；通用样式和配色走 `ui/fluent_lite/theme.py` 与 `core/theme.py`。
@@ -103,6 +114,7 @@ python main/compile_translations.py                 # app_*.xml → app_*.qm（�
 |---|---|
 | `detection.py` | 全项目唯一的平台探测点（`IS_WINDOWS`/`IS_MACOS`/`IS_LINUX`、Qt 平台插件名） |
 | `capabilities.py` | 能力支持矩阵：`support()` / `available()` / `backend_name()`，三态（完整/降级/无实现） |
+| `contracts.py` | 跨后端共用的数据模型（`WindowInfo`），单独放以免后端与门面互相导入成环 |
 | `paths.py` | 应用数据目录、日志目录、默认截图与桌面目录 |
 | `fonts.py` | QSS 字体栈与 QFont 字体族（按语言） |
 | `shell.py` | 用系统默认程序打开文件/文件夹、在文件管理器定位、桌面快捷方式 |
@@ -110,6 +122,11 @@ python main/compile_translations.py                 # app_*.xml → app_*.qm（�
 | `process.py` | 工作集回收、进程身份/终止、DPI 感知、任务栏 AppUserModelID |
 | `pointer.py` | 光标位置、鼠标键状态、全局滚轮监听、横向滚动与复制快捷键注入 |
 | `window_ops.py` | 置顶、鼠标穿透、从截图排除、任务栏图标 |
+| `window.py`（+ `window_win32.py` / `window_macos.py`） | 窗口枚举与 Z 序命中：Windows 走 `EnumWindows` + DWM 去阴影，macOS 走 Quartz |
+| `hotkey.py`（+ `hotkey_win32.py`） | 全局热键：Windows 用 `RegisterHotKey` + `WM_HOTKEY` 过滤器与侧键钩子，其它平台用 pynput 监听；热键字符串解析三平台共用 |
+| `clipboard.py` | 剪贴板写图（Windows CF_DIBV5 + 注册 "PNG" 格式，其它平台退 Qt ）、预热 |
+| `focus.py` | 前台窗口/应用的记录与切回（「粘贴回原程序」用） |
+| `capture.py`（+ `capture_mss.py`） | GIF 录制的抓帧后端：Windows 是 Rust 的 GDI BitBlt，其它平台是 mss 抓帧线程 |
 
 约定：
 
@@ -124,10 +141,10 @@ python main/compile_translations.py                 # app_*.xml → app_*.qm（�
   「这个平台没有这个 API」。
 - 允许在平台层内部按平台分派，业务模块里不允许。
 
-尚未迁移（见 `main/tests/test_platform_structure.py` 的账本）：窗口枚举
-（`capture/window_finder*.py`）、全局热键（`core/shortcut_manager.py`）、剪贴板写图与
-粘贴注入（`core/clipboard_utils.py`、`clipboard/controllers/clipboard_controller.py`）、
-启动预热里的 pywin32 导入（`core/bootstrap.py`）。
+迁移状态：窗口枚举、全局热键、剪贴板写图与粘贴注入、启动预热里的 pywin32 导入都已收进
+平台层，`core/platform_utils.py`、`gif/click_through.py`、`capture/window_finder*.py`
+已删除。`main/tests/test_platform_structure.py` 的账本因此只剩一条：`ocr/engines.py` 里
+`windows_media_ocr` 的导入（构建变体专有，按 `is_available()` 能力登记，不是按平台分派）。
 
 ### Rust 扩展
 
