@@ -252,6 +252,9 @@ class PreloadManager:
             self._steps.append(self._init_clipboard_manager)
         # 最后：显示主界面 + 释放工作集（始终执行）
         self._steps.append(self._show_main_window_on_start)
+        # 抓屏权限的弹窗放在最后：它是阻塞的系统对话框，等托盘和窗口都起来再谈，
+        # 免得用户不在机器前时整个启动卡在弹窗上
+        self._steps.append(self._ensure_screen_capture_permission)
         self._steps.append(lambda: request_trim_working_set(1000))
         # 启动链式预加载（50ms 后开始，让事件循环先稳定）
         QTimer.singleShot(50, self._run_next)
@@ -433,8 +436,7 @@ class PreloadManager:
 
         if not self.app.settings_window:
             log_debug(T("预加载设置窗口..."), "Preload")
-            current_hotkey = self.config.get_hotkey()
-            self.app.settings_window = SettingsDialog(self.config, current_hotkey)
+            self.app.settings_window = SettingsDialog(self.config)
             self.app.settings_window.accepted.connect(self.app.on_settings_accepted)
             self.app.settings_window.wizard_requested.connect(self.app._on_wizard_requested)
             log_debug(T("设置窗口预加载完成"), "Preload")
@@ -465,6 +467,10 @@ class PreloadManager:
             self.app.setup_tray()
             self.app._setup_pin_tray_updates()
 
+            # 顶在托盘建好之后恢复贴图：托盘要能显示恢复出来的数量。
+            # 首次运行（走向导）那条分支不恢复——向导正开着，贴图会盖在上面。
+            self.app.restore_pins_if_enabled()
+
             # 根据用户设置决定是否显示设置窗口
             if self.config.should_show_main_window_on_start():
                 self.app.open_settings()
@@ -475,6 +481,33 @@ class PreloadManager:
         finally:
             if hasattr(self.config, "mark_as_run"):
                 self.config.mark_as_run()
+
+    def _ensure_screen_capture_permission(self):
+        """确认抓屏权限；macOS 缺「屏幕录制」时截出来的图只有桌面壁纸。
+
+        这条权限和「辅助功能」不同：它只在进程启动时读一次，所以用户授权之后必须重启
+        本程序——提示里必须说清楚，否则用户勾上了还是坏的，只会觉得功能没修好。顺手把
+        启动态的权限快照记给平台层（``permissions.note_startup_state``），设置里的权限页
+        才能对「本次运行才授权」的那条说出「要重启才生效」。
+        """
+        from core.logger import log_warning, T
+        from core.platform import capture as platform_capture
+        from core.platform import permissions
+
+        try:
+            permissions.note_startup_state()
+            if platform_capture.screen_capture_trusted():
+                return
+
+            platform_capture.request_screen_capture_permission()
+            if platform_capture.screen_capture_trusted():
+                log_warning(T("「屏幕录制」权限已开启，需要重启本程序后截图才包含窗口"), "Capture")
+            else:
+                platform_capture.warn_missing_screen_capture_permission()
+        except Exception as e:
+            from core.logger import log_exception
+
+            log_exception(e, T("检查屏幕录制权限"))
 
     def _preload_clipboard_window(self):
         """后台启动时预创建剪贴板窗口。"""

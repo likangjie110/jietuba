@@ -4,7 +4,7 @@
 import os
 import sys
 
-from core.logger import log_exception, log_warning, T
+from core.logger import log_debug, log_exception, log_warning, T
 
 
 # 立即光栅化时覆盖的目标框尺寸。
@@ -102,6 +102,124 @@ class ResourceManager:
             icon.addPixmap(render_to(target))
 
         return icon if not icon.isNull() else None
+
+    #: 品牌图标：应用图标（窗口/任务栏/打包）用它；托盘那一枚是另一回事
+    BRAND_ICON_NAME = "品牌.svg"
+    FALLBACK_BRAND_ICON_NAME = "托盘.svg"
+    #: 配置里自定义 logo 的键（app/custom_logo_path）
+    CUSTOM_LOGO_SETTING_KEY = "custom_logo_path"
+
+    @staticmethod
+    def custom_logo_path() -> str:
+        """配置里指定的自定义 logo 图片路径。
+
+        没配、路径不存在、配置读不出来都返回空串——调用方据此回退内置图标，
+        不需要自己判断这些情况。
+        """
+        try:
+            from settings import get_tool_settings_manager
+
+            path = get_tool_settings_manager().get_app_setting(
+                ResourceManager.CUSTOM_LOGO_SETTING_KEY, ""
+            )
+        except Exception as e:
+            log_exception(e, T("读取自定义 logo 路径"))
+            return ""
+
+        if not isinstance(path, str) or not path.strip():
+            return ""
+        path = path.strip()
+        if not os.path.exists(path):
+            log_warning(T("自定义 logo 文件不存在: {path}", path=path), "Resource")
+            return ""
+        return path
+
+    @staticmethod
+    def custom_logo_icon():
+        """自定义 logo 的 QIcon；没配或读不出图返回 None（调用方回退内置图标）。
+
+        用户挑的可能是 SVG、PNG、JPG 或根本不是图片：统一走 QIcon 加载 + 判空，
+        读不出就当作没设，绝不返回一个「什么都画不出来」的空图标。
+        """
+        from PySide6.QtGui import QIcon
+
+        path = ResourceManager.custom_logo_path()
+        if not path:
+            return None
+
+        key = f"__custom_logo__:{path}"
+        cached = ResourceManager._icon_cache.get(key)
+        if cached is not None:
+            return cached or None
+
+        icon = QIcon(path)
+        if icon.isNull():
+            log_warning(T("自定义 logo 无法解析为图片: {path}", path=path), "Resource")
+            ResourceManager._icon_cache[key] = QIcon()
+            return None
+
+        ResourceManager._icon_cache[key] = icon
+        return icon
+
+    @staticmethod
+    def refresh_app_icons() -> bool:
+        """配置里的 logo 变了之后重新解析，并套到应用与已存在的顶层窗口上。
+
+        返回当前是否在用自定义 logo。托盘那一枚由 main_app 自己重设（它持有
+        QSystemTrayIcon），这里管窗口图标与 ``QApplication`` 的默认图标。
+        """
+        from PySide6.QtGui import QGuiApplication
+
+        # 只清应用图标那一份缓存；按路径缓存的 logo 复用，避免每保存一次都重新解码
+        ResourceManager._icon_cache.pop("__app_icon__", None)
+        icon = ResourceManager.get_app_icon()
+
+        app = QGuiApplication.instance()
+        if app is not None:
+            app.setWindowIcon(icon)
+            for widget in app.topLevelWidgets():
+                try:
+                    if widget.isWindow():
+                        widget.setWindowIcon(icon)
+                except Exception:
+                    continue
+
+        using_custom = bool(ResourceManager.custom_logo_path())
+        log_debug(
+            T("应用图标已刷新: {state}", state="自定义 logo" if using_custom else "内置品牌图标"),
+            "Resource",
+        )
+        return using_custom
+
+    @staticmethod
+    def get_app_icon():
+        """应用（品牌）图标的 QIcon：自定义 logo 优先，其次内置品牌图标。
+
+        调用方拿到的可能仍是空 QIcon（资源全丢时），所以别在这里抛异常——图标坏了
+        不该让窗口建不出来。
+        """
+        from PySide6.QtGui import QIcon
+
+        cached = ResourceManager._icon_cache.get("__app_icon__")
+        if cached is not None:
+            return cached
+
+        custom = ResourceManager.custom_logo_icon()
+        if custom is not None:
+            ResourceManager._icon_cache["__app_icon__"] = custom
+            return custom
+
+        icon = QIcon()
+        for name in (ResourceManager.BRAND_ICON_NAME,
+                     ResourceManager.FALLBACK_BRAND_ICON_NAME):
+            path = ResourceManager.get_icon_path(name)
+            if os.path.exists(path):
+                candidate = QIcon(path)
+                if not candidate.isNull():
+                    icon = candidate
+                    break
+        ResourceManager._icon_cache["__app_icon__"] = icon
+        return icon
 
     @staticmethod
     def get_icon(svg_path: str, size: int = 0):

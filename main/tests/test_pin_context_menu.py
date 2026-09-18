@@ -27,7 +27,7 @@ from pin.pin_context_menu import PinContextMenu, _get_shortcut_display
 CALLBACKS = (
     "copy_to_clipboard",
     "save_image",
-    "_on_translate_clicked",
+    "request_translation",
     "reset_to_original_size",
     "rotate_image_cw",
     "rotate_image_ccw",
@@ -38,6 +38,8 @@ CALLBACKS = (
     "toggle_stay_on_top",
     "toggle_border_effect",
     "toggle_text_selection",
+    "toggle_lock",
+    "close_selected_pins",
     "toggle_thumbnail_mode",
     "close_window",
 )
@@ -125,8 +127,8 @@ class TestNormalModeStructure:
         labels = _labels(menu)
         assert labels[0] == "Copy"
         assert labels[1] == "Save as"
-        for prefix in ("Translate", "Reset size", "Image transform", "Toolbar",
-                       "Always on top", "Shadow effect", "Text selection",
+        for prefix in ("Translate", "Reset size", "Image transform", "Lock",
+                       "Toolbar", "Always on top", "Shadow effect", "Text selection",
                        "Thumbnail mode", "Close"):
             assert _has(menu, prefix), prefix
 
@@ -162,7 +164,7 @@ class TestThumbnailModeStructure:
     def test_entries_that_make_no_sense_on_a_thumbnail_are_hidden(
             self, parent, stub_shortcuts):
         menu = _build(parent, thumbnail_mode=True)
-        for prefix in ("Translate", "Reset size", "Image transform",
+        for prefix in ("Translate", "Reset size", "Image transform", "Lock",
                        "Toolbar", "Shadow effect", "Text selection"):
             assert not _has(menu, prefix), prefix
 
@@ -263,7 +265,7 @@ class TestActionDispatch:
         cases = {
             "Copy": "copy_to_clipboard",
             "Save as": "save_image",
-            "Translate": "_on_translate_clicked",
+            "Translate": "request_translation",
             "Reset size": "reset_to_original_size",
             "Toolbar": "toggle_toolbar",
             "Always on top": "toggle_stay_on_top",
@@ -344,3 +346,20 @@ class TestShowSignature:
         monkeypatch.setattr(pin_context_menu_module, "QMenu", _NonBlockingMenu)
         PinContextMenu(parent).show(QPoint(120, 340), {"thumbnail_mode": False})
         assert positions == [QPoint(120, 340)]
+
+
+class TestSelectedPinsEntry:
+    """多选时右键菜单里出现「关闭选中的贴图 (N)」。"""
+
+    def test_entry_appears_only_with_a_selection(self, parent, stub_shortcuts):
+        assert not _has(_build(parent, thumbnail_mode=False), "Close Selected Pins")
+        assert _has(_build(parent, thumbnail_mode=False, selected_count=2),
+                    "Close Selected Pins (2)")
+
+    def test_entry_reaches_the_handler(self, parent, stub_shortcuts):
+        menu = _build(parent, thumbnail_mode=False, selected_count=1)
+        action = _find(menu, "Close Selected Pins")
+
+        action.trigger()
+
+        assert parent.close_selected_pins.called

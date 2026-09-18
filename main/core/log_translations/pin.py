@@ -2,7 +2,44 @@
 
 TRANSLATIONS: dict[str, str] = {
     # pin_window.py
-    "创建成功: {width}x{height}, 位置: ({x}, {y})": "Created successfully: {width}x{height}, position: ({x}, {y})",
+    "创建成功: {width}x{height}, 位置: ({x}, {y}), 透明度: {opacity:.2f}, 阴影: {shadow}":
+        "Created: {width}x{height}, position: ({x}, {y}), opacity: {opacity:.2f}, shadow: {shadow}",
+    "关闭贴图前二次确认": "Confirming before closing the pin",
+    "读取贴图配置": "Reading pin settings",
+    "贴图窗口收到关闭事件（自发={spontaneous}）": "Pin window got a close event (spontaneous={spontaneous})",
+    # 多选
+    "贴图多选: {selected}": "Pin selection: {selected}",
+    "移动选中的贴图": "Moving selected pins",
+    "没有选中的贴图": "No pins selected",
+    "关闭选中的 {count} 张贴图": "Closing {count} selected pins",
+    "关闭选中的贴图失败: {e}": "Failed to close selected pins: {e}",
+    "调整贴图前后顺序": "Reordering pinned windows",
+    # pin/pin_actions.py 与贴图手势
+    "贴图动作: {action_id}": "Pin action: {action_id}",
+    "不认识的贴图动作: {action_id}": "Unknown pin action: {action_id}",
+    "忽略不认识的贴图手势: {gesture}": "Ignoring unknown pin gesture: {gesture}",
+    "忽略不认识的贴图动作: {action_id}": "Ignoring unknown pin action: {action_id}",
+    "读取贴图手势配置": "Reading pin gesture config",
+    "贴图已锁定，忽略缩放": "Pin is locked, ignoring zoom",
+    "贴图已锁定，忽略拖动": "Pin is locked, ignoring drag",
+    "贴图锁定状态: {locked}": "Pin lock state: {locked}",
+    "还没有 OCR 结果，无法复制文字": "No OCR result yet, cannot copy text",
+    "没有识别到文字": "No text recognized",
+    "读取识别文字": "Reading recognized text",
+    "已复制识别出的文字（{count} 字）": "Copied recognized text ({count} characters)",
+    # pin/pin_session.py（退出保存 / 启动恢复贴图）
+    "已保存 {count} 张贴图的会话": "Saved a session of {count} pinned images",
+    "已恢复 {count} 张贴图": "Restored {count} pinned images",
+    "序列化贴图": "Serializing a pinned image",
+    "恢复贴图": "Restoring a pinned image",
+    "贴图图像保存失败，跳过这张": "Failed to save a pin image, skipping it",
+    "贴图太大无法保存（{size} 字节），跳过这张":
+        "Pin image too large to save ({size} bytes), skipping it",
+    "清理旧贴图文件": "Cleaning up old pin files",
+    "写入贴图会话文件": "Writing the pin session file",
+    "读取贴图会话文件": "Reading the pin session file",
+    "贴图会话里的图片读不出来，跳过: {name}": "Pin session image unreadable, skipping: {name}",
+    "保存贴图会话": "Saving the pin session",
     "继承了 {count} 个绘制项目（向量数据）": "Inherited {count} drawing item(s) (vector data)",
     "创建工具栏，信号已由 PinCanvas 连接": "Toolbar created, signals connected by PinCanvas",
     "OCR 识别中，翻译将在识别完成后自动执行": "OCR recognition in progress, translation will run automatically once it completes",

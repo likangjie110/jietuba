@@ -124,7 +124,7 @@ class PinContextMenu:
             translate_action = QAction(
                 self.parent.tr("Translate (Text Recognition)"), self.parent
             )
-            translate_action.triggered.connect(self.parent._on_translate_clicked)
+            translate_action.triggered.connect(self.parent.request_translation)
             menu.addAction(translate_action)
             
             # 恢复原始大小
@@ -182,6 +182,12 @@ class PinContextMenu:
         menu.addAction(toggle_top_action)
         
         if not is_thumbnail:
+            # 锁定位置与大小
+            locked = state.get('locked', False)
+            lock_action = QAction(_toggle_text(self.parent.tr("Lock"), locked), self.parent)
+            lock_action.triggered.connect(self.parent.toggle_lock)
+            menu.addAction(lock_action)
+
             # 切换阴影效果
             shadow_enabled = state.get('shadow_enabled', True)
             shadow_action = QAction(_toggle_text(self.parent.tr("Shadow effect"), shadow_enabled), self.parent)
@@ -197,6 +203,15 @@ class PinContextMenu:
             text_selection_action.triggered.connect(self.parent.toggle_text_selection)
             menu.addAction(text_selection_action)
         
+        # 关闭选中的贴图（多选时才出现）
+        selected_count = state.get('selected_count', 0)
+        if selected_count:
+            selected_close = QAction(
+                self.parent.tr("Close Selected Pins") + f" ({selected_count})", self.parent)
+            selected_close.triggered.connect(self.parent.close_selected_pins)
+            menu.addAction(selected_close)
+            menu.addSeparator()
+
         # 缩略图模式（任何模式都可用）
         thumbnail_mode = state.get('thumbnail_mode', False)
         thumbnail_key = _get_shortcut_display("inapp_thumbnail")

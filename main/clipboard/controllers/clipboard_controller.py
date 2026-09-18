@@ -508,7 +508,12 @@ class ClipboardController(QObject):
         
         if self.manager.paste_item(item_id, self.paste_with_html, move_to_top):
             log_info(T("已粘贴项 {item_id} (带格式: {with_html}, 移到最前: {move_to_top})", item_id=item_id, with_html=self.paste_with_html, move_to_top=move_to_top), "Clipboard")
-            
+
+            # 回写是一次「本程序自己写剪贴板」：先标记，免得监听器把它当成一次新复制
+            self._mark_own_write(item_id)
+            # 图片项按设置补上 PNG 文件（只认文件的程序也能粘贴）
+            self._offer_image_file(item_id)
+
             # 调用关闭回调
             if on_close_callback:
                 on_close_callback()
@@ -518,6 +523,43 @@ class ClipboardController(QObject):
             
             return True
         return False
+
+    def _mark_own_write(self, item_id: int) -> None:
+        """把这次回写标记给监听器（见 ClipboardManager.mark_own_write）。"""
+        try:
+            item = self.manager.get_item(item_id)
+            if item is not None:
+                self.manager.mark_own_write(item)
+        except Exception as e:
+            log_exception(e, T("标记剪贴板回写"))
+
+    def _offer_image_file(self, item_id: int) -> None:
+        """图片项：按 `app/clipboard_image_copy_mode` 决定要不要再放一份 PNG 文件。"""
+        from core.clipboard_utils import attach_image_file_to_clipboard
+
+        try:
+            from settings import get_tool_settings_manager
+
+            mode = get_tool_settings_manager().get_clipboard_image_copy_mode()
+        except Exception as e:
+            log_exception(e, T("读取图片复制形态"))
+            return
+        if mode == "image_only":
+            return
+
+        try:
+            from PySide6.QtGui import QImage
+
+            item = self.manager.get_item(item_id)
+            if item is None or not getattr(item, "image_id", None):
+                return
+            data = self.manager.get_image_data(item.image_id)
+            image = QImage.fromData(data) if data else None
+            if image is None or image.isNull():
+                return
+            attach_image_file_to_clipboard(image, keep_image=mode == "auto")
+        except Exception as e:
+            log_exception(e, T("把图片以文件形式放进剪贴板"))
 
     def _schedule_paste_to_previous_window(self) -> None:
         """把内容粘贴回粘贴前那个窗口/应用。

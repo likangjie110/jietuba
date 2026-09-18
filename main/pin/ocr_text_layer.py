@@ -848,6 +848,11 @@ class OCRTextLayer(QWidget):
             clipboard.setText(selected_text)
             text_preview = selected_text[:50] + ('...' if len(selected_text) > 50 else '')
             log_info(T("已复制: {text_preview}", text_preview=text_preview), module="OCRTextLayer")
+
+            # 设置里勾了「复制选定文本时显示对话框」才弹（默认不弹）
+            from ocr.result_dialog import maybe_show_ocr_result
+
+            maybe_show_ocr_result(selected_text, "copy_selection")
     
     @safe_event
     def keyPressEvent(self, event):

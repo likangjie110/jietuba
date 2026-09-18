@@ -72,6 +72,9 @@ class ClipboardManager:
         self._initialized = True
         self._callback = None
         self._manager = None
+        #: 本程序自己回写的内容签名（粘贴时标记），用于跳过「自己写自己」的那条变化
+        self._own_write_signature: Optional[str] = None
+        self._own_write_until = 0.0
         
         if PYCLIPBOARD_AVAILABLE:
             try:
@@ -217,6 +220,12 @@ class ClipboardManager:
         def _on_change(py_item):
             """内部回调，转换类型后调用用户回调"""
             item = ClipboardItem.from_py_item(py_item)
+
+            if self._consume_own_write(item):
+                log_debug(T("忽略本程序回写的剪贴板内容: {preview}", preview=item.display_text[:30]),
+                          "Clipboard")
+                return
+
             # 预处理显示文本：去掉换行符，避免日志行被切断
             preview = item.display_text[:50].replace('\r\n', ' ').replace('\n', ' ').replace('\r', ' ').strip()
             # char_count 编码了格式数据字节统计：raw * 10_000_000 + compressed
@@ -247,6 +256,58 @@ class ClipboardManager:
         except Exception as e:
             log_error(T("启动监听失败: {e}", e=e), "Clipboard")
     
+    # ── 「忽略自己回写」的支持 ────────────────────────────────
+
+    #: 标记的有效期（秒）：只覆盖「粘贴 → 系统剪贴板变化」之间那一小段，
+    #: 用户之后真的再复制同样的内容时不会被误当成自己回写（设置里关掉即可完全不管）
+    OWN_WRITE_TTL = 2.0
+
+    @staticmethod
+    def _item_signature(item: ClipboardItem) -> str:
+        """内容签名：用来判断这次剪贴板变化是不是我们刚写进去的那一份。"""
+        return f"{item.content_type}:{hash(item.content)}"
+
+    def mark_own_write(self, item: ClipboardItem) -> None:
+        """标记「接下来这次剪贴板变化是本程序回写的」。
+
+        粘贴时后端会把内容写回系统剪贴板（并注入 Ctrl+V），监听器随即收到一条变化通知；
+        不标记的话这次回写会被当成一次新的复制：同一份内容多出一条记录、顺序还会跳。
+        """
+        import time
+
+        self._own_write_signature = self._item_signature(item)
+        self._own_write_until = time.monotonic() + self.OWN_WRITE_TTL
+
+    def _consume_own_write(self, item: ClipboardItem) -> bool:
+        """这次变化是不是自己回写的那一条；是的话吃掉标记并返回 True。
+
+        是否忽略由设置 ``app/clipboard_ignore_own_copy`` 决定（默认开）。
+        """
+        import time
+
+        signature = self._own_write_signature
+        if signature is None:
+            return False
+        if time.monotonic() > self._own_write_until:
+            # 超时了：不当成自己回写，也不留着一个过期的标记
+            self._own_write_signature = None
+            return False
+
+        try:
+            from settings import get_tool_settings_manager
+
+            ignore = get_tool_settings_manager().get_clipboard_ignore_own_copy()
+        except Exception:
+            ignore = True
+
+        if not ignore:
+            return False
+        if self._item_signature(item) != signature:
+            return False
+
+        self._own_write_signature = None
+        return True
+
     def stop_monitoring(self):
         """停止监听"""
         if self.is_available:

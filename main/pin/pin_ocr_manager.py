@@ -236,6 +236,13 @@ class PinOCRManager:
                         self._win._on_ocr_translation_finished(True, text)
 
                 log_info(T("钉图文字层已就绪，识别到 {text_count} 个文字块", text_count=text_count), "OCR")
+
+                # 设置里勾了「截图后显示对话框」才弹（默认不弹）；这里已经是主线程
+                from ocr.result_dialog import maybe_show_ocr_result
+
+                maybe_show_ocr_result(
+                    self.ocr_text_layer.get_all_text(separator="\n"), "capture"
+                )
             elif self._translate_pending:
                 self._translate_pending = False
                 log_warning(T("OCR 未识别到可翻译文字"), "Translate")

@@ -773,6 +773,1014 @@ Replace it?</translation>
         <source>Keep original text formatting</source>
         <translation>Keep original text formatting</translation>
     </message>
+    <message>
+        <source>UI Detection</source>
+        <translation>UI Detection</translation>
+    </message>
+    <message>
+        <source>Automatically frames the window or control under the mouse cursor.</source>
+        <translation>Automatically frames the window or control under the mouse cursor.</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>None</translation>
+    </message>
+    <message>
+        <source>Window only</source>
+        <translation>Window only</translation>
+    </message>
+    <message>
+        <source>Elements</source>
+        <translation>Elements</translation>
+    </message>
+    <message>
+        <source>Element Margin</source>
+        <translation>Element Margin</translation>
+    </message>
+    <message>
+        <source>Expands the detected element by this many pixels.</source>
+        <translation>Expands the detected element by this many pixels.</translation>
+    </message>
+    <message>
+        <source>Global Mouse</source>
+        <translation>Global Mouse</translation>
+    </message>
+    <message>
+        <source>Global Mouse Settings</source>
+        <translation>Global Mouse Settings</translation>
+    </message>
+    <message>
+        <source>Global Mouse Actions</source>
+        <translation>Global Mouse Actions</translation>
+    </message>
+    <message>
+        <source>No global mouse actions yet. Add one to trigger actions with the mouse.</source>
+        <translation>No global mouse actions yet. Add one to trigger actions with the mouse.</translation>
+    </message>
+    <message>
+        <source>Add Action</source>
+        <translation>Add Action</translation>
+    </message>
+    <message>
+        <source>Bind another modifier + mouse gesture to an action.</source>
+        <translation>Bind another modifier + mouse gesture to an action.</translation>
+    </message>
+    <message>
+        <source>Clear All</source>
+        <translation>Clear All</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Remove</translation>
+    </message>
+    <message>
+        <source>Scroll Up</source>
+        <translation>Scroll Up</translation>
+    </message>
+    <message>
+        <source>Scroll Down</source>
+        <translation>Scroll Down</translation>
+    </message>
+    <message>
+        <source>Middle Click</source>
+        <translation>Middle Click</translation>
+    </message>
+    <message>
+        <source>Back Button</source>
+        <translation>Back Button</translation>
+    </message>
+    <message>
+        <source>Forward Button</source>
+        <translation>Forward Button</translation>
+    </message>
+    <message>
+        <source>No Modifier</source>
+        <translation>No Modifier</translation>
+    </message>
+    <message>
+        <source>Cmd / Win</source>
+        <translation>Cmd / Win</translation>
+    </message>
+    <message>
+        <source>Global Mouse Capture</source>
+        <translation>Global Mouse Capture</translation>
+    </message>
+    <message>
+        <source>Show Mask While Capturing</source>
+        <translation>Show Mask While Capturing</translation>
+    </message>
+    <message>
+        <source>Briefly dims the screen and highlights the captured area after a global mouse screenshot, so you can see what was grabbed.</source>
+        <translation>Briefly dims the screen and highlights the captured area after a global mouse screenshot, so you can see what was grabbed.</translation>
+    </message>
+    <message>
+        <source>Ignored Applications</source>
+        <translation>Ignored Applications</translation>
+    </message>
+    <message>
+        <source>Global mouse actions do nothing while one of these applications is in front. Names are matched ignoring case, and .app / .exe suffixes.</source>
+        <translation>Global mouse actions do nothing while one of these applications is in front. Names are matched ignoring case, and .app / .exe suffixes.</translation>
+    </message>
+    <message>
+        <source>Application name</source>
+        <translation>Application name</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>Add</translation>
+    </message>
+    <message>
+        <source>No ignored applications.</source>
+        <translation>No ignored applications.</translation>
+    </message>
+    <message>
+        <source>💡 Modifier keys are read live: a binding without a modifier fires only when no modifier is held. On Windows the hotkey module and global mouse actions can fight over side buttons.</source>
+        <translation>💡 Modifier keys are read live: a binding without a modifier fires only when no modifier is held. On Windows the hotkey module and global mouse actions can fight over side buttons.</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy</source>
+        <translation>Screenshot and Copy</translation>
+    </message>
+    <message>
+        <source>Screenshot and Pin</source>
+        <translation>Screenshot and Pin</translation>
+    </message>
+    <message>
+        <source>Screenshot and Save</source>
+        <translation>Screenshot and Save</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy Text</source>
+        <translation>Screenshot and Copy Text</translation>
+    </message>
+    <message>
+        <source>Screenshot and Translate</source>
+        <translation>Screenshot and Translate</translation>
+    </message>
+    <message>
+        <source>GIF Capture</source>
+        <translation>GIF Capture</translation>
+    </message>
+    <message>
+        <source>Global Actions</source>
+        <translation>Global Actions</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation>Action</translation>
+    </message>
+    <message>
+        <source>Hotkey</source>
+        <translation>Hotkey</translation>
+    </message>
+    <message>
+        <source>Backup Hotkey</source>
+        <translation>Backup Hotkey</translation>
+    </message>
+    <message>
+        <source>Tray</source>
+        <translation>Tray</translation>
+    </message>
+    <message>
+        <source>Bind another action to a global hotkey.</source>
+        <translation>Bind another action to a global hotkey.</translation>
+    </message>
+    <message>
+        <source>Clear All Hotkeys</source>
+        <translation>Clear All Hotkeys</translation>
+    </message>
+    <message>
+        <source>No global actions yet. Add one to bind a hotkey.</source>
+        <translation>No global actions yet. Add one to bind a hotkey.</translation>
+    </message>
+    <message>
+        <source>Show in the tray menu</source>
+        <translation>Show in the tray menu</translation>
+    </message>
+    <message>
+        <source>Pin Settings</source>
+        <translation>Pin Settings</translation>
+    </message>
+    <message>
+        <source>Pin Interaction</source>
+        <translation>Pin Interaction</translation>
+    </message>
+    <message>
+        <source>Wheel Zoom Step</source>
+        <translation>Wheel Zoom Step</translation>
+    </message>
+    <message>
+        <source>How much one wheel notch scales the pinned image (1.05 means +5%).</source>
+        <translation>How much one wheel notch scales the pinned image (1.05 means +5%).</translation>
+    </message>
+    <message>
+        <source>Opacity Step</source>
+        <translation>Opacity Step</translation>
+    </message>
+    <message>
+        <source>How much Ctrl + wheel changes the window opacity.</source>
+        <translation>How much Ctrl + wheel changes the window opacity.</translation>
+    </message>
+    <message>
+        <source>Default Opacity</source>
+        <translation>Default Opacity</translation>
+    </message>
+    <message>
+        <source>Opacity of a newly pinned image.</source>
+        <translation>Opacity of a newly pinned image.</translation>
+    </message>
+    <message>
+        <source>Shadow and Border</source>
+        <translation>Shadow and Border</translation>
+    </message>
+    <message>
+        <source>Draw a border (and shadow) around new pinned images.</source>
+        <translation>Draw a border (and shadow) around new pinned images.</translation>
+    </message>
+    <message>
+        <source>Show Toolbar on Hover</source>
+        <translation>Show Toolbar on Hover</translation>
+    </message>
+    <message>
+        <source>On: shows the toolbar when the mouse enters a pinned window.</source>
+        <translation>On: shows the toolbar when the mouse enters a pinned window.</translation>
+    </message>
+    <message>
+        <source>New Pinned Image</source>
+        <translation>New Pinned Image</translation>
+    </message>
+    <message>
+        <source>Appearance Position</source>
+        <translation>Appearance Position</translation>
+    </message>
+    <message>
+        <source>Where a new pinned image shows up.</source>
+        <translation>Where a new pinned image shows up.</translation>
+    </message>
+    <message>
+        <source>At the captured area</source>
+        <translation>At the captured area</translation>
+    </message>
+    <message>
+        <source>At the mouse position</source>
+        <translation>At the mouse position</translation>
+    </message>
+    <message>
+        <source>Center of the screen</source>
+        <translation>Center of the screen</translation>
+    </message>
+    <message>
+        <source>Stacking Order</source>
+        <translation>Stacking Order</translation>
+    </message>
+    <message>
+        <source>Whether a new pinned image goes above or below the existing ones.</source>
+        <translation>Whether a new pinned image goes above or below the existing ones.</translation>
+    </message>
+    <message>
+        <source>Above existing pins</source>
+        <translation>Above existing pins</translation>
+    </message>
+    <message>
+        <source>Below existing pins</source>
+        <translation>Below existing pins</translation>
+    </message>
+    <message>
+        <source>Confirm Before Closing</source>
+        <translation>Confirm Before Closing</translation>
+    </message>
+    <message>
+        <source>Ask before closing a pinned image. Closing all pins at once and quitting never ask.</source>
+        <translation>Ask before closing a pinned image. Closing all pins at once and quitting never ask.</translation>
+    </message>
+    <message>
+        <source>💡 Values apply to pinned windows created from now on; changes to wheel steps apply immediately.</source>
+        <translation>💡 Values apply to pinned windows created from now on; changes to wheel steps apply immediately.</translation>
+    </message>
+    <message>
+        <source>Pin Mouse Actions</source>
+        <translation>Pin Mouse Actions</translation>
+    </message>
+    <message>
+        <source>Wheel Up</source>
+        <translation>Wheel Up</translation>
+    </message>
+    <message>
+        <source>Wheel Down</source>
+        <translation>Wheel Down</translation>
+    </message>
+    <message>
+        <source>Ctrl + Wheel Up</source>
+        <translation>Ctrl + Wheel Up</translation>
+    </message>
+    <message>
+        <source>Ctrl + Wheel Down</source>
+        <translation>Ctrl + Wheel Down</translation>
+    </message>
+    <message>
+        <source>Double Click</source>
+        <translation>Double Click</translation>
+    </message>
+    <message>
+        <source>Right Click</source>
+        <translation>Right Click</translation>
+    </message>
+    <message>
+        <source>Rolling the wheel up on a pinned image.</source>
+        <translation>Rolling the wheel up on a pinned image.</translation>
+    </message>
+    <message>
+        <source>Rolling the wheel down on a pinned image.</source>
+        <translation>Rolling the wheel down on a pinned image.</translation>
+    </message>
+    <message>
+        <source>Ctrl + wheel up; adjusts opacity by default.</source>
+        <translation>Ctrl + wheel up; adjusts opacity by default.</translation>
+    </message>
+    <message>
+        <source>Ctrl + wheel down; adjusts opacity by default.</source>
+        <translation>Ctrl + wheel down; adjusts opacity by default.</translation>
+    </message>
+    <message>
+        <source>Pressing the middle button on a pinned image.</source>
+        <translation>Pressing the middle button on a pinned image.</translation>
+    </message>
+    <message>
+        <source>Double-clicking a pinned image.</source>
+        <translation>Double-clicking a pinned image.</translation>
+    </message>
+    <message>
+        <source>Right-clicking a pinned image; opens the menu by default.</source>
+        <translation>Right-clicking a pinned image; opens the menu by default.</translation>
+    </message>
+    <message>
+        <source>Do nothing</source>
+        <translation>Do nothing</translation>
+    </message>
+    <message>
+        <source>Zoom In</source>
+        <translation>Zoom In</translation>
+    </message>
+    <message>
+        <source>Zoom Out</source>
+        <translation>Zoom Out</translation>
+    </message>
+    <message>
+        <source>Fine Zoom In</source>
+        <translation>Fine Zoom In</translation>
+    </message>
+    <message>
+        <source>Fine Zoom Out</source>
+        <translation>Fine Zoom Out</translation>
+    </message>
+    <message>
+        <source>Increase Opacity</source>
+        <translation>Increase Opacity</translation>
+    </message>
+    <message>
+        <source>Decrease Opacity</source>
+        <translation>Decrease Opacity</translation>
+    </message>
+    <message>
+        <source>Reset Size</source>
+        <translation>Reset Size</translation>
+    </message>
+    <message>
+        <source>Copy Content</source>
+        <translation>Copy Content</translation>
+    </message>
+    <message>
+        <source>Copy Recognized Text</source>
+        <translation>Copy Recognized Text</translation>
+    </message>
+    <message>
+        <source>Translate</source>
+        <translation>Translate</translation>
+    </message>
+    <message>
+        <source>Thumbnail Mode</source>
+        <translation>Thumbnail Mode</translation>
+    </message>
+    <message>
+        <source>Lock Position and Size</source>
+        <translation>Lock Position and Size</translation>
+    </message>
+    <message>
+        <source>Show Context Menu</source>
+        <translation>Show Context Menu</translation>
+    </message>
+    <message>
+        <source>Copy and Close</source>
+        <translation>Copy and Close</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Close</translation>
+    </message>
+    <message>
+        <source>Saved Pins</source>
+        <translation>Saved Pins</translation>
+    </message>
+    <message>
+        <source>How many pinned images are remembered when restoring on startup.</source>
+        <translation>How many pinned images are remembered when restoring on startup.</translation>
+    </message>
+    <message>
+        <source>Restore Pins on Startup</source>
+        <translation>Restore Pins on Startup</translation>
+    </message>
+    <message>
+        <source>Save the pinned images you leave open, and bring them back the next time jietuba starts.</source>
+        <translation>Save the pinned images you leave open, and bring them back the next time jietuba starts.</translation>
+    </message>
+    <message>
+        <source>Text Pin Font Size</source>
+        <translation>Text Pin Font Size</translation>
+    </message>
+    <message>
+        <source>Font size used when turning clipboard text into a pinned image.</source>
+        <translation>Font size used when turning clipboard text into a pinned image.</translation>
+    </message>
+    <message>
+        <source>Text Pin Max Width</source>
+        <translation>Text Pin Max Width</translation>
+    </message>
+    <message>
+        <source>Content width limit; longer text wraps like a note card.</source>
+        <translation>Content width limit; longer text wraps like a note card.</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Text</source>
+        <translation>Pin Clipboard Text</translation>
+    </message>
+    <message>
+        <source>Close Selected Pins</source>
+        <translation>Close Selected Pins</translation>
+    </message>
+    <message>
+        <source>Annotation</source>
+        <translation>Annotation</translation>
+    </message>
+    <message>
+        <source>Annotation Settings</source>
+        <translation>Annotation Settings</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation>Color</translation>
+    </message>
+    <message>
+        <source>Default color</source>
+        <translation>This tool's default color.</translation>
+    </message>
+    <message>
+        <source>Default value</source>
+        <translation>This tool's default value.</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>Thickness</translation>
+    </message>
+    <message>
+        <source>Pick a color</source>
+        <translation>Pick a color</translation>
+    </message>
+    <message>
+        <source>Mosaic Style</source>
+        <translation>Mosaic Style</translation>
+    </message>
+    <message>
+        <source>Pixelate for hard blocks, blur for soft ones.</source>
+        <translation>Pixelate for hard blocks, blur for soft ones.</translation>
+    </message>
+    <message>
+        <source>Pixelate</source>
+        <translation>Pixelate</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>Blur</translation>
+    </message>
+    <message>
+        <source>Mosaic Brush</source>
+        <translation>Mosaic Brush</translation>
+    </message>
+    <message>
+        <source>How coarse the mosaic brush is.</source>
+        <translation>How coarse the mosaic brush is.</translation>
+    </message>
+    <message>
+        <source>Coarse</source>
+        <translation>Coarse</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>Medium</translation>
+    </message>
+    <message>
+        <source>Fine</source>
+        <translation>Fine</translation>
+    </message>
+    <message>
+        <source>Restore Defaults</source>
+        <translation>Restore Defaults</translation>
+    </message>
+    <message>
+        <source>Reset every tool on this page to its factory style.</source>
+        <translation>Reset every tool on this page to its factory style.</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Restore</translation>
+    </message>
+    <message>
+        <source>💡 These are the defaults each tool starts with; the toolbar keeps remembering whatever you last used.</source>
+        <translation>💡 These are the defaults each tool starts with; the toolbar keeps remembering whatever you last used.</translation>
+    </message>
+    <message>
+        <source>Screenshot Appearance</source>
+        <translation>Screenshot Appearance</translation>
+    </message>
+    <message>
+        <source>Rounded Corners</source>
+        <translation>Rounded Corners</translation>
+    </message>
+    <message>
+        <source>Rounds the corners of the captured image.</source>
+        <translation>Rounds the corners of the captured image.</translation>
+    </message>
+    <message>
+        <source>Corner Radius</source>
+        <translation>Corner Radius</translation>
+    </message>
+    <message>
+        <source>How round the corners are (0-100).</source>
+        <translation>How round the corners are (0-100).</translation>
+    </message>
+    <message>
+        <source>Border or Shadow</source>
+        <translation>Border or Shadow</translation>
+    </message>
+    <message>
+        <source>Draws a border or a drop shadow around the captured image.</source>
+        <translation>Draws a border or a drop shadow around the captured image.</translation>
+    </message>
+    <message>
+        <source>Border Style</source>
+        <translation>Border Style</translation>
+    </message>
+    <message>
+        <source>Border draws a solid frame; shadow softens the edges.</source>
+        <translation>Border draws a solid frame; shadow softens the edges.</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>Shadow</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>Border</translation>
+    </message>
+    <message>
+        <source>Border or Shadow Size</source>
+        <translation>Border or Shadow Size</translation>
+    </message>
+    <message>
+        <source>Thickness of the border, or how far the shadow spreads (1-50).</source>
+        <translation>Thickness of the border, or how far the shadow spreads (1-50).</translation>
+    </message>
+    <message>
+        <source>Border Color</source>
+        <translation>Border Color</translation>
+    </message>
+    <message>
+        <source>Color used when the style is Border.</source>
+        <translation>Color used when the style is Border.</translation>
+    </message>
+    <message>
+        <source>Shadow Color</source>
+        <translation>Shadow Color</translation>
+    </message>
+    <message>
+        <source>Color used when the style is Shadow.</source>
+        <translation>Color used when the style is Shadow.</translation>
+    </message>
+    <message>
+        <source>Keep the Style On</source>
+        <translation>Keep the Style On</translation>
+    </message>
+    <message>
+        <source>Keeps border/shadow enabled for every new capture.</source>
+        <translation>Keeps border/shadow enabled for every new capture.</translation>
+    </message>
+    <message>
+        <source>Magnifier</source>
+        <translation>Magnifier</translation>
+    </message>
+    <message>
+        <source>Default Zoom</source>
+        <translation>Default Zoom</translation>
+    </message>
+    <message>
+        <source>Starting magnification of the magnifier (1-10).</source>
+        <translation>Starting magnification of the magnifier (1-10).</translation>
+    </message>
+    <message>
+        <source>Save Pinned Image</source>
+        <translation>Save Pinned Image</translation>
+    </message>
+    <message>
+        <source>Rotate Pinned Image</source>
+        <translation>Rotate Pinned Image</translation>
+    </message>
+    <message>
+        <source>Lock Pinned Image</source>
+        <translation>Lock Pinned Image</translation>
+    </message>
+    <message>
+        <source>Toggle Always on Top</source>
+        <translation>Toggle Always on Top</translation>
+    </message>
+    <message>
+        <source>Toggle Shadow</source>
+        <translation>Toggle Shadow</translation>
+    </message>
+    <message>
+        <source>Increase Pin Opacity</source>
+        <translation>Increase Pin Opacity</translation>
+    </message>
+    <message>
+        <source>Decrease Pin Opacity</source>
+        <translation>Decrease Pin Opacity</translation>
+    </message>
+    <message>
+        <source>Copy Pin and Close</source>
+        <translation>Copy Pin and Close</translation>
+    </message>
+    <message>
+        <source>Save Image</source>
+        <translation>Save Image</translation>
+    </message>
+    <message>
+        <source>Rotate Right</source>
+        <translation>Rotate Right</translation>
+    </message>
+    <message>
+        <source>Open Save Folder</source>
+        <translation>Open Save Folder</translation>
+    </message>
+    <message>
+        <source>Translate Clipboard Image</source>
+        <translation>Translate Clipboard Image</translation>
+    </message>
+    <message>
+        <source>Skin Colors</source>
+        <translation>Skin Colors</translation>
+    </message>
+    <message>
+        <source>Override the window background, text and accent colors.</source>
+        <translation>Override the window background, text and accent colors.</translation>
+    </message>
+    <message>
+        <source>Window Background</source>
+        <translation>Window Background</translation>
+    </message>
+    <message>
+        <source>Text Color</source>
+        <translation>Text Color</translation>
+    </message>
+    <message>
+        <source>Accent Color</source>
+        <translation>Accent Color</translation>
+    </message>
+    <message>
+        <source>Follow Theme</source>
+        <translation>Follow Theme</translation>
+    </message>
+    <message>
+        <source>Customized</source>
+        <translation>Customized</translation>
+    </message>
+    <message>
+        <source>Following the theme</source>
+        <translation>Following the theme</translation>
+    </message>
+    <message>
+        <source>Select Color</source>
+        <translation>Select Color</translation>
+    </message>
+    <message>
+        <source>Custom Logo</source>
+        <translation>Custom Logo</translation>
+    </message>
+    <message>
+        <source>Use your own image for the tray and window icons.</source>
+        <translation>Use your own image for the tray and window icons.</translation>
+    </message>
+    <message>
+        <source>Choose Image</source>
+        <translation>Choose Image</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Clear</translation>
+    </message>
+    <message>
+        <source>Built-in icon</source>
+        <translation>Built-in icon</translation>
+    </message>
+    <message>
+        <source>Cannot read this image, using the built-in icon</source>
+        <translation>Cannot read this image, using the built-in icon</translation>
+    </message>
+    <message>
+        <source>Choose Logo Image</source>
+        <translation>Choose Logo Image</translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.bmp *.gif *.svg *.ico)</source>
+        <translation>Images (*.png *.jpg *.jpeg *.bmp *.gif *.svg *.ico)</translation>
+    </message>
+    <message>
+        <source>Copy Table as Markdown</source>
+        <translation>Copy Table as Markdown</translation>
+    </message>
+    <message>
+        <source>Recognize Formula as LaTeX</source>
+        <translation>Recognize Formula as LaTeX</translation>
+    </message>
+    <message>
+        <source>Desktop &amp; Tray</source>
+        <translation>Desktop &amp; Tray</translation>
+    </message>
+    <message>
+        <source>Desktop Toolbar</source>
+        <translation>Desktop Toolbar</translation>
+    </message>
+    <message>
+        <source>A floating ball on the desktop: click to capture, right-click for the tray menu.</source>
+        <translation>A floating ball on the desktop: click to capture, right-click for the tray menu.</translation>
+    </message>
+    <message>
+        <source>Do Not Show</source>
+        <translation>Do Not Show</translation>
+    </message>
+    <message>
+        <source>Floating Ball</source>
+        <translation>Floating Ball</translation>
+    </message>
+    <message>
+        <source>Tray Click Action</source>
+        <translation>Tray Click Action</translation>
+    </message>
+    <message>
+        <source>What a single click on the tray icon does.</source>
+        <translation>What a single click on the tray icon does.</translation>
+    </message>
+    <message>
+        <source>Network Proxy</source>
+        <translation>Network Proxy</translation>
+    </message>
+    <message>
+        <source>Proxy Type</source>
+        <translation>Proxy Type</translation>
+    </message>
+    <message>
+        <source>Used by translation and other network features.</source>
+        <translation>Used by translation and other network features.</translation>
+    </message>
+    <message>
+        <source>No Proxy</source>
+        <translation>No Proxy</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>Manual</translation>
+    </message>
+    <message>
+        <source>Host</source>
+        <translation>Host</translation>
+    </message>
+    <message>
+        <source>Verify</source>
+        <translation>Verify</translation>
+    </message>
+    <message>
+        <source>Proxy</source>
+        <translation>Proxy</translation>
+    </message>
+    <message>
+        <source>Connected to the proxy server.</source>
+        <translation>Connected to the proxy server.</translation>
+    </message>
+    <message>
+        <source>Cannot reach the proxy server: {reason}</source>
+        <translation>Cannot reach the proxy server: {reason}</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Updates</translation>
+    </message>
+    <message>
+        <source>Update Source</source>
+        <translation>Update Source</translation>
+    </message>
+    <message>
+        <source>Releases page used by "Check for Updates".</source>
+        <translation>Releases page used by "Check for Updates".</translation>
+    </message>
+    <message>
+        <source>Default: GitHub releases page</source>
+        <translation>Default: GitHub releases page</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>Check for Updates</translation>
+    </message>
+    <message>
+        <source>Usage Data</source>
+        <translation>Usage Data</translation>
+    </message>
+    <message>
+        <source>Send Usage Statistics Automatically</source>
+        <translation>Send Usage Statistics Automatically</translation>
+    </message>
+    <message>
+        <source>Reserved: this version collects and uploads nothing.</source>
+        <translation>Reserved: this version collects and uploads nothing.</translation>
+    </message>
+    <message>
+        <source>Copy Images as Files</source>
+        <translation>Copy Images as Files</translation>
+    </message>
+    <message>
+        <source>Also offer a PNG file, for apps that only accept file pastes.</source>
+        <translation>Also offer a PNG file, for apps that only accept file pastes.</translation>
+    </message>
+    <message>
+        <source>Automatic</source>
+        <translation>Automatic</translation>
+    </message>
+    <message>
+        <source>File Only</source>
+        <translation>File Only</translation>
+    </message>
+    <message>
+        <source>Image Only</source>
+        <translation>Image Only</translation>
+    </message>
+    <message>
+        <source>Ignore Own Copy Key Macro</source>
+        <translation>Ignore Own Copy Key Macro</translation>
+    </message>
+    <message>
+        <source>Do not record the paste-back this app writes to the clipboard.</source>
+        <translation>Do not record the paste-back this app writes to the clipboard.</translation>
+    </message>
+    <message>
+        <source>Text Layout</source>
+        <translation>Text Layout</translation>
+    </message>
+    <message>
+        <source>How recognized lines are put together.</source>
+        <translation>How recognized lines are put together.</translation>
+    </message>
+    <message>
+        <source>One Line per Block</source>
+        <translation>One Line per Block</translation>
+    </message>
+    <message>
+        <source>Single Line</source>
+        <translation>Single Line</translation>
+    </message>
+    <message>
+        <source>Punctuation</source>
+        <translation>Punctuation</translation>
+    </message>
+    <message>
+        <source>Clean up the punctuation OCR guessed from image noise.</source>
+        <translation>Clean up the punctuation OCR guessed from image noise.</translation>
+    </message>
+    <message>
+        <source>Do Nothing</source>
+        <translation>Do Nothing</translation>
+    </message>
+    <message>
+        <source>Strip Trailing</source>
+        <translation>Strip Trailing</translation>
+    </message>
+    <message>
+        <source>Full-width to Half-width</source>
+        <translation>Full-width to Half-width</translation>
+    </message>
+    <message>
+        <source>Recognition Language</source>
+        <translation>Recognition Language</translation>
+    </message>
+    <message>
+        <source>Language passed to the OCR engine.</source>
+        <translation>Language passed to the OCR engine.</translation>
+    </message>
+    <message>
+        <source>Follow App</source>
+        <translation>Follow App</translation>
+    </message>
+    <message>
+        <source>Simplified Chinese</source>
+        <translation>Simplified Chinese</translation>
+    </message>
+    <message>
+        <source>Japanese</source>
+        <translation>Japanese</translation>
+    </message>
+    <message>
+        <source>Korean</source>
+        <translation>Korean</translation>
+    </message>
+    <message>
+        <source>Show Result Dialog</source>
+        <translation>Show Result Dialog</translation>
+    </message>
+    <message>
+        <source>When to pop up the recognized text (copying still happens either way).</source>
+        <translation>When to pop up the recognized text (copying still happens either way).</translation>
+    </message>
+    <message>
+        <source>After Capture</source>
+        <translation>After Capture</translation>
+    </message>
+    <message>
+        <source>Copy Selection</source>
+        <translation>Copy Selection</translation>
+    </message>
+    <message>
+        <source>Copy All Text</source>
+        <translation>Copy All Text</translation>
+    </message>
+    <message>
+        <source>Formula Recognition Engine</source>
+        <translation>Formula Recognition Engine</translation>
+    </message>
+    <message>
+        <source>PP-FormulaNet runs locally through the Rust binding.</source>
+        <translation>PP-FormulaNet runs locally through the Rust binding.</translation>
+    </message>
+    <message>
+        <source>PP-FormulaNet (Local, Rust)</source>
+        <translation>PP-FormulaNet (Local, Rust)</translation>
+    </message>
+    <message>
+        <source>External Service</source>
+        <translation>External Service</translation>
+    </message>
+    <message>
+        <source>Formula Service URL</source>
+        <translation>Formula Service URL</translation>
+    </message>
+    <message>
+        <source>Only used by the external service engine.</source>
+        <translation>Only used by the external service engine.</translation>
+    </message>
+    <message>
+        <source>API Key</source>
+        <translation>API Key</translation>
+    </message>
+    <message>
+        <source>Formula Service</source>
+        <translation>Formula Service</translation>
+    </message>
+    <message>
+        <source>The service answered.</source>
+        <translation>The service answered.</translation>
+    </message>
+    <message>
+        <source>Cannot use this service: {reason}</source>
+        <translation>Cannot use this service: {reason}</translation>
+    </message>
+    <message>
+        <source>💡 Hint: the local engine needs a formula model in models/formula/; without it, use an external service.</source>
+        <translation>💡 Hint: the local engine needs a formula model in models/formula/; without it, use an external service.</translation>
+    </message>
+    <message>
+        <source>English</source>
+        <translation>English</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to clear all clipboard history?
+This action cannot be undone.</source>
+        <translation>Are you sure you want to clear all clipboard history?
+This action cannot be undone.</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully, but the old files are still in the previous folder and can be deleted manually.</source>
+        <translation>Clipboard data location changed successfully, but the old files are still in the previous folder and can be deleted manually.</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully, but the old files are still in use and could not be deleted. You can remove them after restarting the app.
+{error}</source>
+        <translation>Clipboard data location changed successfully, but the old files are still in use and could not be deleted. You can remove them after restarting the app.
+{error}</translation>
+    </message>
 </context>
 
 <context>
@@ -1087,6 +2095,34 @@ Replace it?</translation>
         <source>Save Pin Image</source>
         <translation>Save Pin Image</translation>
     </message>
+    <message>
+        <source>Close pin</source>
+        <translation>Close pin</translation>
+    </message>
+    <message>
+        <source>Close this pinned image?</source>
+        <translation>Close this pinned image?</translation>
+    </message>
+    <message>
+        <source>Lock</source>
+        <translation>Lock</translation>
+    </message>
+    <message>
+        <source>Locked</source>
+        <translation>Locked</translation>
+    </message>
+    <message>
+        <source>Unlocked</source>
+        <translation>Unlocked</translation>
+    </message>
+    <message>
+        <source>Selected</source>
+        <translation>Selected</translation>
+    </message>
+    <message>
+        <source>Close Selected Pins</source>
+        <translation>Close Selected Pins</translation>
+    </message>
 </context>
 
 <!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
@@ -1195,6 +2231,62 @@ Replace it?</translation>
     <message><source>Choose folder to save pinned images</source><translation>Choose folder to save pinned images</translation></message>
     <message><source>Save Failed</source><translation>Save Failed</translation></message>
     <message><source>Saved {saved} pinned images, failed {failed}.</source><translation>Saved {saved} pinned images, failed {failed}.</translation></message>
+    <message>
+        <source>Screenshot and Copy</source>
+        <translation>Screenshot and Copy</translation>
+    </message>
+    <message>
+        <source>Screenshot and Pin</source>
+        <translation>Screenshot and Pin</translation>
+    </message>
+    <message>
+        <source>Screenshot and Save</source>
+        <translation>Screenshot and Save</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy Text</source>
+        <translation>Screenshot and Copy Text</translation>
+    </message>
+    <message>
+        <source>Screenshot and Translate</source>
+        <translation>Screenshot and Translate</translation>
+    </message>
+    <message>
+        <source>Long Screenshot</source>
+        <translation>Long Screenshot</translation>
+    </message>
+    <message>
+        <source>GIF Capture</source>
+        <translation>GIF Capture</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Text</source>
+        <translation>Pin Clipboard Text</translation>
+    </message>
+    <message>
+        <source>Open Save Folder</source>
+        <translation>Open Save Folder</translation>
+    </message>
+    <message>
+        <source>Translate Clipboard Image</source>
+        <translation>Translate Clipboard Image</translation>
+    </message>
+    <message>
+        <source>Copy Table as Markdown</source>
+        <translation>Copy Table as Markdown</translation>
+    </message>
+    <message>
+        <source>Recognize Formula as LaTeX</source>
+        <translation>Recognize Formula as LaTeX</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>Check for Updates</translation>
+    </message>
+    <message>
+        <source>Video Recording</source>
+        <translation>Video Recording</translation>
+    </message>
 </context>
 
 <!-- ========== Main App (Tray Menu) ========== -->
@@ -1206,9 +2298,6 @@ Replace it?</translation>
     <message><source>Clipboard</source><translation>Clipboard</translation></message>
     <message><source>Settings</source><translation>Settings</translation></message>
     <message><source>Exit</source><translation>Exit</translation></message>
-    <message><source>Screenshot (2)</source><translation>Screenshot (2)</translation></message>
-    <message><source>Translation (2)</source><translation>Translation (2)</translation></message>
-    <message><source>Clipboard (2)</source><translation>Clipboard (2)</translation></message>
     <message><source>Hotkey Registration Failed</source><translation>Hotkey Registration Failed</translation></message>
     <message><source>The following hotkeys failed to register:</source><translation>The following hotkeys failed to register:</translation></message>
     <message><source>The hotkey may be occupied by other programs. Please try a different combination.</source><translation>The hotkey may be occupied by other programs. Please try a different combination.</translation></message>
@@ -1222,6 +2311,62 @@ Replace it?</translation>
     <message><source>Choose folder to save pinned images</source><translation>Choose folder to save pinned images</translation></message>
     <message><source>Save Failed</source><translation>Save Failed</translation></message>
     <message><source>Saved {saved} pinned images, failed {failed}.</source><translation>Saved {saved} pinned images, failed {failed}.</translation></message>
+    <message>
+        <source>Screenshot and Copy</source>
+        <translation>Screenshot and Copy</translation>
+    </message>
+    <message>
+        <source>Screenshot and Pin</source>
+        <translation>Screenshot and Pin</translation>
+    </message>
+    <message>
+        <source>Screenshot and Save</source>
+        <translation>Screenshot and Save</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy Text</source>
+        <translation>Screenshot and Copy Text</translation>
+    </message>
+    <message>
+        <source>Screenshot and Translate</source>
+        <translation>Screenshot and Translate</translation>
+    </message>
+    <message>
+        <source>Long Screenshot</source>
+        <translation>Long Screenshot</translation>
+    </message>
+    <message>
+        <source>GIF Capture</source>
+        <translation>GIF Capture</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Text</source>
+        <translation>Pin Clipboard Text</translation>
+    </message>
+    <message>
+        <source>Open Save Folder</source>
+        <translation>Open Save Folder</translation>
+    </message>
+    <message>
+        <source>Translate Clipboard Image</source>
+        <translation>Translate Clipboard Image</translation>
+    </message>
+    <message>
+        <source>Copy Table as Markdown</source>
+        <translation>Copy Table as Markdown</translation>
+    </message>
+    <message>
+        <source>Recognize Formula as LaTeX</source>
+        <translation>Recognize Formula as LaTeX</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>Check for Updates</translation>
+    </message>
+    <message>
+        <source>Video Recording</source>
+        <translation>Video Recording</translation>
+    </message>
 </context>
 
 <!-- ========== Translation Dialog ========== -->
@@ -2923,6 +4068,14 @@ You can tweak more options in Settings anytime.</translation>
         <source>当前按下</source>
         <translation>Currently pressed</translation>
     </message>
+    <message>
+        <source>UI 检测</source>
+        <translation>UI Detection</translation>
+    </message>
+    <message>
+        <source>悬停时自动框出窗口或控件，单击即可精准截取。</source>
+        <translation>Frames the window or control under the cursor; one click captures it.</translation>
+    </message>
 </context>
 
 <!-- ========== GIF Record Toolbar ========== -->
@@ -3378,6 +4531,422 @@ SOFTWARE.</translation></message>
     <message>
         <source>Open link</source>
         <translation>Open link</translation>
+    </message>
+</context>
+<!-- ========== 权限页（SettingsDialog） ========== -->
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Permissions</source>
+        <translation>Permissions</translation>
+    </message>
+    <message>
+        <source>System Permissions</source>
+        <translation>System Permissions</translation>
+    </message>
+    <message>
+        <source>jietuba needs these system permissions. Grant them here; the status refreshes by itself once granted.</source>
+        <translation>jietuba needs these system permissions. Grant them here; the status refreshes by itself once granted.</translation>
+    </message>
+    <message>
+        <source>Accessibility Permission</source>
+        <translation>Accessibility Permission</translation>
+    </message>
+    <message>
+        <source>Global hotkeys only work with this permission, and smart selection uses it to detect the element under the cursor.</source>
+        <translation>Global hotkeys only work with this permission, and smart selection uses it to detect the element under the cursor.</translation>
+    </message>
+    <message>
+        <source>Screen Recording Permission</source>
+        <translation>Screen Recording Permission</translation>
+    </message>
+    <message>
+        <source>Screenshots contain window contents only with this permission; without it they show the desktop wallpaper only.</source>
+        <translation>Screenshots contain window contents only with this permission; without it they show the desktop wallpaper only.</translation>
+    </message>
+    <message>
+        <source>Granted</source>
+        <translation>Granted</translation>
+    </message>
+    <message>
+        <source>Not Granted</source>
+        <translation>Not Granted</translation>
+    </message>
+    <message>
+        <source>Granted. Restart jietuba for it to take effect.</source>
+        <translation>Granted. Restart jietuba for it to take effect.</translation>
+    </message>
+    <message>
+        <source>Authorize</source>
+        <translation>Authorize</translation>
+    </message>
+    <message>
+        <source>Open System Settings</source>
+        <translation>Open System Settings</translation>
+    </message>
+</context>
+<!-- ========== 权限页：重启本程序（SettingsDialog） ========== -->
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Restart jietuba</source>
+        <translation>Restart jietuba</translation>
+    </message>
+    <message>
+        <source>jietuba will close and reopen so the newly granted permission takes effect.</source>
+        <translation>jietuba will close and reopen so the newly granted permission takes effect.</translation>
+    </message>
+</context>
+<!-- ========== 权限缺失提示（PermissionPrompt） ========== -->
+<context>
+    <name>PermissionPrompt</name>
+    <message>
+        <source>Screen Recording Permission Missing</source>
+        <translation>Screen Recording Permission Missing</translation>
+    </message>
+    <message>
+        <source>Screenshots will contain the desktop only, because jietuba has no Screen Recording permission.</source>
+        <translation>Screenshots will contain the desktop only, because jietuba has no Screen Recording permission.</translation>
+    </message>
+    <message>
+        <source>Accessibility Permission Missing</source>
+        <translation>Accessibility Permission Missing</translation>
+    </message>
+    <message>
+        <source>Global hotkeys do nothing while jietuba has no Accessibility permission.</source>
+        <translation>Global hotkeys do nothing while jietuba has no Accessibility permission.</translation>
+    </message>
+    <message>
+        <source>System Permission Missing</source>
+        <translation>System Permission Missing</translation>
+    </message>
+    <message>
+        <source>jietuba is missing a system permission it needs to work.</source>
+        <translation>jietuba is missing a system permission it needs to work.</translation>
+    </message>
+    <message>
+        <source>Open Permission Settings</source>
+        <translation>Open Permission Settings</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>Later</translation>
+    </message>
+</context>
+<!-- ========== 向导权限步骤（WelcomeWizard） ========== -->
+<context>
+    <name>WelcomeWizard</name>
+    <message>
+        <source>权限</source>
+        <translation>Permissions</translation>
+    </message>
+    <message>
+        <source>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</source>
+        <translation>These two are system-level: without them hotkeys do nothing and screenshots show the desktop wallpaper only.</translation>
+    </message>
+    <message>
+        <source>权限只对本机生效，随时可以在设置里复查。</source>
+        <translation>Permissions apply to this Mac only and can be reviewed in the settings anytime.</translation>
+    </message>
+</context>
+<!-- ========== Formula Result ========== -->
+<context>
+    <name>FormulaResult</name>
+    <message>
+        <source>Formula Result</source>
+        <translation>Formula Result</translation>
+    </message>
+    <message>
+        <source>Formula Recognition Unavailable</source>
+        <translation>Formula Recognition Unavailable</translation>
+    </message>
+    <message>
+        <source>No formula engine is available on this machine: jietuba does not ship a formula model. Install a formula engine plugin and try again.</source>
+        <translation>No formula engine is available on this machine: jietuba does not ship a formula model. Install a formula engine plugin and try again.</translation>
+    </message>
+</context>
+
+<!-- ========== OcrResultDialog ========== -->
+<context>
+    <name>OcrResultDialog</name>
+    <message>
+        <source>Recognition Result</source>
+        <translation>Recognition Result</translation>
+    </message>
+</context>
+
+
+<!-- ========== 视频录制 ========== -->
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Video Recording</source>
+        <translation>Video Recording</translation>
+    </message>
+    <message>
+        <source>Video Container</source>
+        <translation>Video Container</translation>
+    </message>
+    <message>
+        <source>File format of the recorded video.</source>
+        <translation>File format of the recorded video.</translation>
+    </message>
+    <message>
+        <source>Video Codec</source>
+        <translation>Video Codec</translation>
+    </message>
+    <message>
+        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
+        <translation>H.264 is the safest choice; H.265 gives smaller files.</translation>
+    </message>
+    <message>
+        <source>Video Quality</source>
+        <translation>Video Quality</translation>
+    </message>
+    <message>
+        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
+        <translation>Follow the selected area, or cap the output at 1080p/720p/480p.</translation>
+    </message>
+    <message>
+        <source>Follow Selection</source>
+        <translation>Follow Selection</translation>
+    </message>
+    <message>
+        <source>Video Frame Rate</source>
+        <translation>Video Frame Rate</translation>
+    </message>
+    <message>
+        <source>Higher frame rates make smoother videos and larger files.</source>
+        <translation>Higher frame rates make smoother videos and larger files.</translation>
+    </message>
+    <message>
+        <source>Bitrate Limit</source>
+        <translation>Bitrate Limit</translation>
+    </message>
+    <message>
+        <source>0 lets the encoder decide from the quality preset.</source>
+        <translation>0 lets the encoder decide from the quality preset.</translation>
+    </message>
+    <message>
+        <source>Record Audio</source>
+        <translation>Record Audio</translation>
+    </message>
+    <message>
+        <source>Record the microphone together with the screen.</source>
+        <translation>Record the microphone together with the screen.</translation>
+    </message>
+    <message>
+        <source>No Audio</source>
+        <translation>No Audio</translation>
+    </message>
+    <message>
+        <source>Microphone</source>
+        <translation>Microphone</translation>
+    </message>
+    <message>
+        <source>Microphone Device</source>
+        <translation>Microphone Device</translation>
+    </message>
+    <message>
+        <source>Device used when recording audio (empty = system default).</source>
+        <translation>Device used when recording audio (empty = system default).</translation>
+    </message>
+    <message>
+        <source>System Default</source>
+        <translation>System Default</translation>
+    </message>
+    <message>
+        <source>Maximum Duration</source>
+        <translation>Maximum Duration</translation>
+    </message>
+    <message>
+        <source>Automatically stop after this many seconds (0 = no limit).</source>
+        <translation>Automatically stop after this many seconds (0 = no limit).</translation>
+    </message>
+    <message>
+        <source> seconds</source>
+        <translation> seconds</translation>
+    </message>
+    <message>
+        <source>Video Save Folder</source>
+        <translation>Video Save Folder</translation>
+    </message>
+    <message>
+        <source>Empty = follow the screenshot save folder.</source>
+        <translation>Empty = follow the screenshot save folder.</translation>
+    </message>
+    <message>
+        <source>Video recording is unavailable: no encoding backend.</source>
+        <translation>Video recording is unavailable: no encoding backend.</translation>
+    </message>
+    <message>
+        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
+        <translation>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</translation>
+    </message>
+
+    <message>
+        <source>Video Recording</source>
+        <translation>Video Recording</translation>
+    </message>
+    <message>
+        <source>Video Container</source>
+        <translation>Video Container</translation>
+    </message>
+    <message>
+        <source>File format of the recorded video.</source>
+        <translation>File format of the recorded video.</translation>
+    </message>
+    <message>
+        <source>Video Codec</source>
+        <translation>Video Codec</translation>
+    </message>
+    <message>
+        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
+        <translation>H.264 is the safest choice; H.265 gives smaller files.</translation>
+    </message>
+    <message>
+        <source>Video Quality</source>
+        <translation>Video Quality</translation>
+    </message>
+    <message>
+        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
+        <translation>Follow the selected area, or cap the output at 1080p/720p/480p.</translation>
+    </message>
+    <message>
+        <source>Follow Selection</source>
+        <translation>Follow Selection</translation>
+    </message>
+    <message>
+        <source>Video Frame Rate</source>
+        <translation>Video Frame Rate</translation>
+    </message>
+    <message>
+        <source>Higher frame rates make smoother videos and larger files.</source>
+        <translation>Higher frame rates make smoother videos and larger files.</translation>
+    </message>
+    <message>
+        <source>Bitrate Limit</source>
+        <translation>Bitrate Limit</translation>
+    </message>
+    <message>
+        <source>0 lets the encoder decide from the quality preset.</source>
+        <translation>0 lets the encoder decide from the quality preset.</translation>
+    </message>
+    <message>
+        <source>Record Audio</source>
+        <translation>Record Audio</translation>
+    </message>
+    <message>
+        <source>Record the microphone together with the screen.</source>
+        <translation>Record the microphone together with the screen.</translation>
+    </message>
+    <message>
+        <source>No Audio</source>
+        <translation>No Audio</translation>
+    </message>
+    <message>
+        <source>Microphone</source>
+        <translation>Microphone</translation>
+    </message>
+    <message>
+        <source>Microphone Device</source>
+        <translation>Microphone Device</translation>
+    </message>
+    <message>
+        <source>Device used when recording audio (empty = system default).</source>
+        <translation>Device used when recording audio (empty = system default).</translation>
+    </message>
+    <message>
+        <source>System Default</source>
+        <translation>System Default</translation>
+    </message>
+    <message>
+        <source>Maximum Duration</source>
+        <translation>Maximum Duration</translation>
+    </message>
+    <message>
+        <source>Automatically stop after this many seconds (0 = no limit).</source>
+        <translation>Automatically stop after this many seconds (0 = no limit).</translation>
+    </message>
+    <message>
+        <source> seconds</source>
+        <translation> seconds</translation>
+    </message>
+    <message>
+        <source>Video Save Folder</source>
+        <translation>Video Save Folder</translation>
+    </message>
+    <message>
+        <source>Empty = follow the screenshot save folder.</source>
+        <translation>Empty = follow the screenshot save folder.</translation>
+    </message>
+    <message>
+        <source>Video recording is unavailable: no encoding backend.</source>
+        <translation>Video recording is unavailable: no encoding backend.</translation>
+    </message>
+    <message>
+        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
+        <translation>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Browse</translation>
+    </message>
+</context>
+<context>
+    <name>VideoRecordToolbar</name>
+    <message>
+        <source>开始录制</source>
+        <translation>Start recording</translation>
+    </message>
+    <message>
+        <source>停止录制</source>
+        <translation>Stop recording</translation>
+    </message>
+    <message>
+        <source>暂停录制</source>
+        <translation>Pause recording</translation>
+    </message>
+    <message>
+        <source>恢复录制</source>
+        <translation>Resume recording</translation>
+    </message>
+    <message>
+        <source>拖动工具栏</source>
+        <translation>Drag toolbar</translation>
+    </message>
+    <message>
+        <source>关闭</source>
+        <translation>Close</translation>
+    </message>
+    <message>
+        <source>跟随区域</source>
+        <translation>Follow selection</translation>
+    </message>
+</context>
+<context>
+    <name>VideoRecordWindow</name>
+    <message>
+        <source>视频录制</source>
+        <translation>Video Recording</translation>
+    </message>
+    <message>
+        <source>视频已保存到:
+{path}</source>
+        <translation>Video saved to:
+{path}</translation>
+    </message>
+    <message>
+        <source>打开文件夹</source>
+        <translation>Open Folder</translation>
+    </message>
+    <message>
+        <source>复制路径</source>
+        <translation>Copy Path</translation>
+    </message>
+    <message>
+        <source>确定</source>
+        <translation>OK</translation>
     </message>
 </context>
 </TS>

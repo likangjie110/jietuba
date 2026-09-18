@@ -188,12 +188,17 @@ def start_keyboard_listener(mapping: dict) -> object | None:
     if not mapping:
         return None
     try:
+        # macOS：pynput 的监听线程一启动就会去读键盘布局，那一步在非主线程上会
+        # 直接崩掉进程（见 core/platform/pynput_macos.py）
+        from core.platform.pynput_macos import install as install_macos_keyboard_fix
+
+        install_macos_keyboard_fix()
+
         from pynput import keyboard
 
         listener = keyboard.GlobalHotKeys(dict(mapping))
         listener.start()
         log_debug(T("键盘热键监听已启动（{count} 个）", count=len(mapping)), "Shortcut")
-        warn_if_permission_missing()
         return listener
     except Exception as e:
         log_error(f"键盘热键监听启动失败: {e}", module="Hotkey")
@@ -212,22 +217,55 @@ def stop_listener(listener) -> None:
         log_exception(e, T("停止热键监听"))
 
 
-def warn_if_permission_missing() -> None:
-    """macOS 上没授权辅助功能时，监听器是活的但收不到任何事件。"""
+def input_monitoring_trusted() -> bool:
+    """本程序有没有监听全局输入所需的系统权限。
+
+    macOS 上就是「辅助功能」：pynput 靠 CGEventTap 收键盘事件，没这个权限时它连事件
+    tap 都建不出来（日志里只有一句 ``This process is not trusted``），监听线程随即
+    退出——监听器对象还在，但一个事件也收不到。其它平台没有这层系统门槛，恒为 True。
+
+    这里刻意不用 ``AXIsProcessTrusted``：pynput 的监听线程会同时去解析这个名字，而
+    pyobjc 的惰性函数表在**两个线程并发解析同一个函数名**时会 KeyError，把监听线程
+    整个打死（实测：监听器起来后热键静默失效，日志里只有一条线程回溯）。换成只在
+    自己这边用的 ``AXIsProcessTrustedWithOptions``（prompt=False 时语义相同）即可。
+    """
     if not IS_MACOS:
-        return
+        return True
     try:
-        from ApplicationServices import AXIsProcessTrusted
+        from ApplicationServices import (
+            AXIsProcessTrustedWithOptions,
+            kAXTrustedCheckOptionPrompt,
+        )
 
-        if not AXIsProcessTrusted():
-            from core.logger import log_warning, T
+        return bool(AXIsProcessTrustedWithOptions({kAXTrustedCheckOptionPrompt: False}))
+    except Exception as e:
+        # 查不了（pyobjc 装不上）时监听这条路本来也走不通，报「有权限」，免得再叠一层误导
+        from core.logger import log_debug
 
-            log_warning(T(
-                "全局热键需要「辅助功能」权限：系统设置 → 隐私与安全性 → 辅助功能，"
-                "把本程序加进去后重启生效"
-            ), "Hotkey")
-    except Exception:
-        pass  # 检查不了就算了，不影响启动
+        log_debug(f"检查输入监听权限失败: {e}", "Hotkey")
+        return True
+
+
+def request_input_monitoring_permission() -> bool:
+    """请求输入监听权限，返回请求之后的信任状态。
+
+    macOS 会弹出系统对话框（带一个「打开系统设置」按钮），并把本程序登记进「辅助功能」
+    列表；用户勾选之前返回值仍是 False。必须在主线程调用——它要弹窗。
+    """
+    if not IS_MACOS:
+        return True
+    try:
+        from ApplicationServices import (
+            AXIsProcessTrustedWithOptions,
+            kAXTrustedCheckOptionPrompt,
+        )
+
+        return bool(AXIsProcessTrustedWithOptions({kAXTrustedCheckOptionPrompt: True}))
+    except Exception as e:
+        from core.logger import log_exception, T
+
+        log_exception(e, T("请求辅助功能权限"))
+        return input_monitoring_trusted()
 
 
 # ──────────────────────────────────────────────

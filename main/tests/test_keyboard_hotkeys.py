@@ -166,35 +166,159 @@ class TestDispatch:
         qapp.processEvents()          # 崩出去的话这里就会红
 
 
-class TestPermissionHint:
+class TestInputPermission:
+    """macOS 的「辅助功能」权限：没授权时 pynput 收不到任何事件，平台层负责查与要。"""
 
-    def test_warns_when_accessibility_permission_is_missing(self, monkeypatch):
-        """没授权时监听器是活的但收不到事件，必须告诉用户去哪开。"""
-        logged = []
-        fake_module = type(sys)("ApplicationServices")
-        fake_module.AXIsProcessTrusted = lambda: False
-        monkeypatch.setitem(sys.modules, "ApplicationServices", fake_module)
-        # warn_if_permission_missing 在函数内延迟导入 logger（平台层避免与
-        # core.constants 成环），因此打桩的是 logger 模块上的名字
-        monkeypatch.setattr("core.logger.log_warning",
-                            lambda msg, module=None: logged.append(msg.render()))
+    @staticmethod
+    def _fake_services(monkeypatch, *, trusted, calls=None):
+        """假的 pyobjc ApplicationServices 模块。"""
+        module = type(sys)("ApplicationServices")
+        module.kAXTrustedCheckOptionPrompt = "AXTrustedCheckOptionPrompt"
+
+        def with_options(options):
+            if calls is not None:
+                calls.append(options)
+            return trusted
+
+        module.AXIsProcessTrustedWithOptions = with_options
+        monkeypatch.setitem(sys.modules, "ApplicationServices", module)
+
+    def test_trusted_on_platforms_without_the_restriction(self, monkeypatch):
+        monkeypatch.setattr(platform_hotkey, "IS_MACOS", False)
+        assert platform_hotkey.input_monitoring_trusted() is True
+        assert platform_hotkey.request_input_monitoring_permission() is True
+
+    def test_reports_the_missing_permission(self, monkeypatch):
+        calls = []
+        self._fake_services(monkeypatch, trusted=False, calls=calls)
         monkeypatch.setattr(platform_hotkey, "IS_MACOS", True)
 
-        platform_hotkey.warn_if_permission_missing()
+        assert platform_hotkey.input_monitoring_trusted() is False
+        # 查询用 prompt=False，别在「只是看看」的时候弹窗
+        assert calls == [{"AXTrustedCheckOptionPrompt": False}]
 
-        assert logged and "辅助功能" in logged[0]
+    def test_never_resolves_pynputs_own_symbol(self):
+        """pynput 在监听线程里解析 HIServices.AXIsProcessTrusted；pyobjc 的惰性函数表
+        在两个线程并发解析同名函数时会 KeyError，把监听线程打死。我们的检查必须换名字。"""
+        import inspect
 
-    def test_silent_when_permission_is_granted(self, monkeypatch):
-        logged = []
-        fake_module = type(sys)("ApplicationServices")
-        fake_module.AXIsProcessTrusted = lambda: True
-        monkeypatch.setitem(sys.modules, "ApplicationServices", fake_module)
-        # warn_if_permission_missing 在函数内延迟导入 logger（平台层避免与
-        # core.constants 成环），因此打桩的是 logger 模块上的名字
-        monkeypatch.setattr("core.logger.log_warning",
-                            lambda msg, module=None: logged.append(msg.render()))
+        source = inspect.getsource(platform_hotkey)
+        assert "AXIsProcessTrusted(" not in source
+        assert "AXIsProcessTrustedWithOptions" in source
+
+    def test_request_asks_macos_to_prompt(self, monkeypatch):
+        """必须带 prompt 选项：不带的话系统不会弹窗，用户根本不知道该去授权。"""
+        calls = []
+        self._fake_services(monkeypatch, trusted=False, calls=calls)
         monkeypatch.setattr(platform_hotkey, "IS_MACOS", True)
 
-        platform_hotkey.warn_if_permission_missing()
+        assert platform_hotkey.request_input_monitoring_permission() is False
+        assert calls == [{"AXTrustedCheckOptionPrompt": True}]
 
-        assert logged == []
+    def test_unavailable_api_is_treated_as_trusted(self, monkeypatch):
+        """pyobjc 缺失时查不了——监听这条路本来也不通，别在这里再叠一层误导。"""
+        monkeypatch.setitem(sys.modules, "ApplicationServices", None)
+        monkeypatch.setattr(platform_hotkey, "IS_MACOS", True)
+
+        assert platform_hotkey.input_monitoring_trusted() is True
+        assert platform_hotkey.request_input_monitoring_permission() is True
+
+
+class TestPermissionRecovery:
+    """没权限时快捷键完全没反应：要主动弹窗要权限，授权后自己恢复，不用重启程序。"""
+
+    def _fake_platform(self, monkeypatch, *, trusted=False):
+        state = {"trusted": trusted, "prompts": 0, "listeners": []}
+
+        class _Listener:
+            def stop(self):
+                pass
+
+        def start(mapping):
+            state["listeners"].append(mapping)
+            return _Listener()
+
+        monkeypatch.setattr(platform_hotkey, "input_monitoring_trusted",
+                            lambda: state["trusted"])
+        monkeypatch.setattr(platform_hotkey, "request_input_monitoring_permission",
+                            lambda: state.__setitem__("prompts", state["prompts"] + 1) or False)
+        monkeypatch.setattr(platform_hotkey, "start_keyboard_listener", start)
+        return state
+
+    def test_missing_permission_prompts_and_starts_watching(self, qapp, manager, monkeypatch):
+        state = self._fake_platform(monkeypatch)
+
+        manager.register_hotkey("ctrl+1", lambda: None)
+
+        assert state["prompts"] == 1
+        assert manager._input_permission_watch is not None
+        assert manager._input_permission_watch.isActive() is True
+
+    def test_prompt_is_not_repeated_when_the_listener_is_rebuilt(self, qapp, manager, monkeypatch):
+        """改热键会重建监听器，但用户只该被打扰一次。"""
+        state = self._fake_platform(monkeypatch)
+
+        manager.register_hotkey("ctrl+1", lambda: None)
+        manager.register_hotkey("ctrl+2", lambda: None)
+
+        assert state["prompts"] == 1
+        assert len(state["listeners"]) == 2
+
+    def test_granting_the_permission_restarts_the_listener(self, qapp, manager, monkeypatch):
+        """授权后必须重建监听器：没权限时那次连事件 tap 都没建出来，线程早就退出了。"""
+        state = self._fake_platform(monkeypatch)
+        manager.register_hotkey("ctrl+1", lambda: None)
+        assert len(state["listeners"]) == 1
+
+        state["trusted"] = True
+        manager._on_input_permission_tick()
+
+        assert len(state["listeners"]) == 2
+        assert manager._input_permission_watch is None
+
+    def test_still_untrusted_keeps_watching(self, qapp, manager, monkeypatch):
+        state = self._fake_platform(monkeypatch)
+        manager.register_hotkey("ctrl+1", lambda: None)
+
+        manager._on_input_permission_tick()
+
+        assert len(state["listeners"]) == 1
+        assert manager._input_permission_watch is not None
+
+    def test_still_untrusted_asks_the_app_to_tell_the_user(self, qapp, manager, monkeypatch):
+        """轮询到还没授权就发信号：启动时那个系统对话框用户可能已经关掉或没看见。"""
+        self._fake_platform(monkeypatch)
+        manager.register_hotkey("ctrl+1", lambda: None)
+        signals = []
+        manager.input_permission_missing.connect(lambda: signals.append(True))
+
+        manager._on_input_permission_tick()
+
+        assert signals == [True]
+
+    def test_granting_stops_asking_for_a_prompt(self, qapp, manager, monkeypatch):
+        state = self._fake_platform(monkeypatch)
+        manager.register_hotkey("ctrl+1", lambda: None)
+        signals = []
+        manager.input_permission_missing.connect(lambda: signals.append(True))
+
+        state["trusted"] = True
+        manager._on_input_permission_tick()
+
+        assert signals == []
+
+    def test_unregistering_stops_watching(self, qapp, manager, monkeypatch):
+        self._fake_platform(monkeypatch)
+        manager.register_hotkey("ctrl+1", lambda: None)
+
+        manager.unregister_all_hotkeys()
+
+        assert manager._input_permission_watch is None
+
+    def test_granted_permission_needs_no_watch(self, qapp, manager, monkeypatch):
+        state = self._fake_platform(monkeypatch, trusted=True)
+
+        manager.register_hotkey("ctrl+1", lambda: None)
+
+        assert state["prompts"] == 0
+        assert manager._input_permission_watch is None

@@ -442,8 +442,8 @@ def _dev_bootstrap():
         def get_clipboard_enabled(self): return self._def("clipboard_enabled", True)
         def set_clipboard_enabled(self, v): pass
 
-        def get_smart_selection(self): return self._def("smart_selection", True)
-        def set_smart_selection(self, v): pass
+        def get_ui_detection(self): return self._def("ui_detection", "element")
+        def set_ui_detection(self, v): pass
 
         def get_screenshot_save_enabled(self):
             return self._def("screenshot_save_enabled", True)

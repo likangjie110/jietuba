@@ -120,7 +120,8 @@ class TestScrollListener:
         started = []
 
         class _FakeListener:
-            def __init__(self, on_scroll=None):
+            def __init__(self, on_click=None, on_scroll=None):
+                self.on_click = on_click
                 self.on_scroll = on_scroll
 
             def start(self):
@@ -177,6 +178,184 @@ class TestScrollListener:
                 raise RuntimeError("already stopped")
 
         pointer.stop_listener(_Dead())
+
+
+class TestKeyListener:
+    """全局键盘监听（长截图横向模式按 Shift 触发用）。
+
+    迁移前 stitch 自己 ``keyboard.Listener(...).start()``：macOS 上 pynput 的监听线程
+    一启动就去读键盘布局，那一步会崩掉整个进程。创建与启动因此收进平台层，补丁在
+    这里装（见 core/platform/pynput_macos.py）。
+    """
+
+    @staticmethod
+    def _fake_keyboard(monkeypatch, listener_cls):
+        import sys
+
+        module = type(sys)("pynput")
+        keyboard_module = type(sys)("pynput.keyboard")
+        keyboard_module.Listener = listener_cls
+        module.keyboard = keyboard_module
+        monkeypatch.setitem(sys.modules, "pynput", module)
+        monkeypatch.setitem(sys.modules, "pynput.keyboard", keyboard_module)
+
+    def test_creates_and_starts_a_pynput_listener(self, monkeypatch):
+        started = []
+
+        class _FakeListener:
+            def __init__(self, on_press=None, on_release=None):
+                self.on_press = on_press
+                self.on_release = on_release
+
+            def start(self):
+                started.append(True)
+
+            def stop(self):
+                started.append("stopped")
+
+        self._fake_keyboard(monkeypatch, _FakeListener)
+
+        listener = pointer.create_key_listener(on_press=lambda *a: None)
+        assert listener is not None
+        assert started == [True]
+
+        pointer.stop_listener(listener)
+        assert started == [True, "stopped"]
+
+    def test_missing_pynput_returns_none(self, monkeypatch):
+        import sys
+
+        monkeypatch.setitem(sys.modules, "pynput", None)
+        monkeypatch.setitem(sys.modules, "pynput.keyboard", None)
+        assert pointer.create_key_listener(on_press=lambda *a: None) is None
+
+    def test_error_callback_is_used(self, monkeypatch):
+        class _Boom:
+            def __init__(self, **_kw):
+                raise RuntimeError("没有辅助功能权限")
+
+        self._fake_keyboard(monkeypatch, _Boom)
+
+        seen = []
+        assert pointer.create_key_listener(
+            on_press=lambda *a: None, on_error=seen.append
+        ) is None
+        assert isinstance(seen[0], RuntimeError)
+
+
+class TestPressedModifiers:
+    """全局鼠标动作要在「按键那一刻」知道修饰键状态，所以现读系统状态。"""
+
+    @staticmethod
+    def _fake_quartz(monkeypatch, flags):
+        import sys
+
+        module = type(sys)("Quartz")
+        module.kCGEventFlagMaskControl = 1 << 18
+        module.kCGEventFlagMaskAlternate = 1 << 19
+        module.kCGEventFlagMaskShift = 1 << 17
+        module.kCGEventFlagMaskCommand = 1 << 20
+        module.kCGEventSourceStateCombinedSessionState = 0
+        module.CGEventSourceFlagsState = lambda _state: flags
+        monkeypatch.setitem(sys.modules, "Quartz", module)
+
+    def test_macos_reads_the_flag_bits(self, as_macos, monkeypatch):
+        self._fake_quartz(monkeypatch, (1 << 18) | (1 << 17))   # ctrl + shift
+        assert pointer.pressed_modifiers() == frozenset({"ctrl", "shift"})
+
+    def test_macos_nothing_pressed(self, as_macos, monkeypatch):
+        self._fake_quartz(monkeypatch, 0)
+        assert pointer.pressed_modifiers() == frozenset()
+
+    def test_macos_failure_is_an_empty_set(self, as_macos, monkeypatch):
+        import sys
+
+        monkeypatch.setitem(sys.modules, "Quartz", None)
+        assert pointer.pressed_modifiers() == frozenset()
+
+    def test_windows_reads_get_async_key_state(self, as_windows, monkeypatch):
+        states = {0x11: 0x8000, 0x12: 0, 0x10: 0x8000, 0x5B: 0, 0x5C: 0}
+
+        class _User32:
+            @staticmethod
+            def GetAsyncKeyState(vk):
+                return states.get(vk, 0)
+
+        monkeypatch.setattr(
+            pointer.ctypes, "windll", SimpleNamespace(user32=_User32()), raising=False
+        )
+        assert pointer.pressed_modifiers() == frozenset({"ctrl", "shift"})
+
+    def test_linux_reports_nothing(self, as_linux):
+        assert pointer.pressed_modifiers() == frozenset()
+
+
+class TestMouseListener:
+    """全局鼠标监听（按键 + 滚轮）：长截图/GIF 只订阅滚轮，「全局鼠标动作」还要按键。"""
+
+    @staticmethod
+    def _fake_pynput(monkeypatch, listener_cls):
+        import sys
+
+        module = type(sys)("pynput")
+        mouse_module = type(sys)("pynput.mouse")
+        mouse_module.Listener = listener_cls
+        module.mouse = mouse_module
+        monkeypatch.setitem(sys.modules, "pynput", module)
+        monkeypatch.setitem(sys.modules, "pynput.mouse", mouse_module)
+
+    def test_passes_click_and_scroll_callbacks(self, monkeypatch):
+        started = []
+        seen = {}
+
+        class _FakeListener:
+            def __init__(self, on_click=None, on_scroll=None):
+                seen["on_click"], seen["on_scroll"] = on_click, on_scroll
+
+            def start(self):
+                started.append(True)
+
+            def stop(self):
+                started.append("stopped")
+
+        self._fake_pynput(monkeypatch, _FakeListener)
+
+        def on_click(*_a):
+            pass
+
+        def on_scroll(*_a):
+            pass
+
+        listener = pointer.create_mouse_listener(on_click=on_click, on_scroll=on_scroll)
+
+        assert listener is not None
+        assert started == [True]
+        assert seen["on_click"] is on_click
+        assert seen["on_scroll"] is on_scroll
+
+        pointer.stop_listener(listener)
+        assert started == [True, "stopped"]
+
+    def test_scroll_entry_reuses_the_same_listener(self, monkeypatch):
+        """只订阅滚轮的老入口不该另起一套实现（否则启动与降级要维护两份）。"""
+        calls = []
+        monkeypatch.setattr(
+            pointer, "create_mouse_listener",
+            lambda **kwargs: calls.append(kwargs) or "listener",
+        )
+
+        listener = pointer.create_scroll_listener(lambda *a: None)
+
+        assert listener == "listener"
+        assert calls and calls[0]["on_scroll"] is not None
+        assert calls[0].get("on_click") is None
+
+    def test_missing_pynput_returns_none(self, monkeypatch):
+        import sys
+
+        monkeypatch.setitem(sys.modules, "pynput", None)
+        monkeypatch.setitem(sys.modules, "pynput.mouse", None)
+        assert pointer.create_mouse_listener(on_click=lambda *a: None) is None
 
 
 class TestScrollInjection:
@@ -366,7 +545,7 @@ class TestScrollWindowRegression:
         assert "win32con" not in imported
 
     def test_scroll_window_calls_the_platform_layer(self):
-        """滚动注入与滚轮监听都经由 core/platform/pointer，而不是各自实现一遍。"""
+        """滚动注入、滚轮监听、键盘监听都经由 core/platform/pointer，而不是各自实现一遍。"""
         import ast
         import inspect
         import textwrap
@@ -377,6 +556,7 @@ class TestScrollWindowRegression:
         attrs = {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
         assert "scroll_horizontal" in attrs
         assert "create_scroll_listener" in attrs
+        assert "create_key_listener" in attrs
 
 
 class TestFrameRecorderUsesThePlatformLayer:

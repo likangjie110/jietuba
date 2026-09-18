@@ -30,10 +30,33 @@ try:
 except ImportError:
     MACOS_API_AVAILABLE = False
 
+# 元素级命中（UI 检测的「检测元素」档）用无障碍接口，比窗口枚举多一个依赖：
+# 辅助功能权限。没授权时 AXUIElementCopyElementAtPosition 返回 kAXErrorAPIDisabled，
+# 这里把它当成「查不到」，由上层回退到窗口级。
+try:
+    from ApplicationServices import (
+        AXUIElementCopyAttributeValue,
+        AXUIElementCopyElementAtPosition,
+        AXUIElementCreateSystemWide,
+        AXUIElementGetPid,
+        AXValueGetValue,
+        kAXValueCGPointType,
+        kAXValueCGSizeType,
+    )
+    ELEMENT_API_AVAILABLE = True
+except ImportError:
+    ELEMENT_API_AVAILABLE = False
+
 # 普通应用窗口都在 layer 0；Dock(20)、菜单栏(25)、浮动面板等都在别的层上
 _NORMAL_WINDOW_LAYER = 0
 # 与 Windows 后端一致的最小尺寸阈值
 _MIN_WINDOW_SIZE = 30
+
+# 太小的元素多半是装饰/分隔线，命中它们反而不如回退到窗口级
+_MIN_ELEMENT_SIZE = 8
+
+# 命中到这些角色说明「命中的就是窗口/应用本身」，元素级没有更细的东西可选
+_WINDOW_LEVEL_ROLES = ("AXWindow", "AXSheet", "AXApplication", "AXSystemWide", "AXDialog")
 
 
 def enumerate_windows(exclude_pid: int | None = None,
@@ -117,6 +140,73 @@ def enumerate_windows(exclude_pid: int | None = None,
                 module="SmartSelection",
             )
     return windows
+
+
+def _element_attribute(element, attribute: str):
+    """读一个 AX 属性；读不到返回 None。"""
+    try:
+        err, value = AXUIElementCopyAttributeValue(element, attribute, None)
+    except Exception:
+        return None
+    return value if err == 0 else None
+
+
+def _element_rect(element) -> list[int] | None:
+    """把元素的 AXPosition/AXSize 拼成屏幕坐标矩形（原生坐标是左上原点，与窗口枚举一致）。"""
+    position = _element_attribute(element, "AXPosition")
+    size = _element_attribute(element, "AXSize")
+    if position is None or size is None:
+        return None
+
+    try:
+        position_ok, point = AXValueGetValue(position, kAXValueCGPointType, None)
+        size_ok, dimensions = AXValueGetValue(size, kAXValueCGSizeType, None)
+    except Exception:
+        return None
+    if not (position_ok and size_ok):
+        return None
+
+    x, y = int(point.x), int(point.y)
+    width, height = int(dimensions.width), int(dimensions.height)
+    return [x, y, x + width, y + height]
+
+
+def element_rect_at_point(x: int, y: int) -> list[int] | None:
+    """该点最深的 UI 元素矩形（屏幕坐标）；查不到或命中的是窗口本身时返回 None。
+
+    ``None`` 不是错误，而是「这一档没东西可选」：调用方应当回退到窗口级命中。
+    辅助功能权限缺失时 AX 返回 kAXErrorAPIDisabled，同样落到这里。
+    """
+    if not ELEMENT_API_AVAILABLE:
+        return None
+
+    try:
+        err, element = AXUIElementCopyElementAtPosition(
+            AXUIElementCreateSystemWide(), float(x), float(y), None)
+    except Exception:
+        return None
+    if err != 0 or element is None:
+        return None
+
+    # 截图遮罩是我们自己的全屏窗口，它一定压在鼠标下面：命中它必须当成「没元素」，
+    # 否则元素档框的就是遮罩自己（整屏），窗口枚举那边是靠 exclude_pid 排掉自己的。
+    try:
+        pid_err, pid = AXUIElementGetPid(element, None)
+        if pid_err == 0 and pid == os.getpid():
+            return None
+    except Exception:
+        pass
+
+    role = _element_attribute(element, "AXRole")
+    if isinstance(role, str) and role in _WINDOW_LEVEL_ROLES:
+        return None
+
+    rect = _element_rect(element)
+    if rect is None:
+        return None
+    if rect[2] - rect[0] < _MIN_ELEMENT_SIZE or rect[3] - rect[1] < _MIN_ELEMENT_SIZE:
+        return None
+    return rect
 
 
 def virtual_desktop_rect() -> list[int] | None:

@@ -64,6 +64,190 @@ def _native_handle(window) -> int | None:
 # 置顶
 # ──────────────────────────────────────────────
 
+def keep_visible_when_inactive(window) -> bool:
+    """让窗口在应用不在前台时也保持可见；返回是否走了原生实现。
+
+    只在 macOS 上需要：Qt 的 Tool 窗口在那里是 NSPanel，默认 ``hidesOnDeactivate``
+    为真——应用一失去前台，系统就把这类窗口藏起来。贴图（以及任何要长期留在屏幕上的
+    窗口）必须把这条关掉，否则用户切到别的应用时贴图会凭空消失。Windows / Linux 的
+    窗口不因失焦隐藏，这里直接返回 False（能力矩阵登记为 NONE）。
+    """
+    from core.platform.capabilities import Capability, available
+
+    if not available(Capability.WINDOW_KEEP_VISIBLE_WHEN_INACTIVE):
+        return False
+
+    from core.logger import log_exception, T
+
+    try:
+        import objc
+
+        ns_window = objc.objc_object(c_void_p=int(window.winId())).window()
+        if ns_window is None:
+            return False
+        if ns_window.hidesOnDeactivate():
+            ns_window.setHidesOnDeactivate_(False)
+        return True
+    except Exception as e:
+        log_exception(e, T("保持窗口可见（不随失焦隐藏）"))
+        return False
+
+
+def _dwmapi():
+    """取 dwmapi（仅 Windows 可用，调用方需自行确保平台）。"""
+    return ctypes.windll.dwmapi
+
+
+#: Win11 起用 DwmSetWindowAttribute 指定「系统背景材质」
+DWMWA_SYSTEMBACKDROP_TYPE = 38
+DWMSBT_TRANSIENTWINDOW = 3          # 亚克力：轻微模糊 + 噪点
+
+#: Win10 1803+ 的 SetWindowCompositionAttribute 路径
+WCA_ACCENT_POLICY = 19
+ACCENT_ENABLE_ACRYLICBLURBEHIND = 4
+
+
+def _apply_acrylic_windows(hwnd: int, tint_argb: int) -> bool:
+    """Windows：先试 Win11 的系统背景材质，退回 Win10 的 SetWindowCompositionAttribute。
+
+    两条路都不可用才返回 False。Windows 路径在本机（macOS）无法真机验证，只由假 DLL
+    单测断言「确实发出了什么原生调用」。
+    """
+    try:
+        backdrop = ctypes.c_int(DWMSBT_TRANSIENTWINDOW)
+        hr = _dwmapi().DwmSetWindowAttribute(
+            hwnd, DWMWA_SYSTEMBACKDROP_TYPE, ctypes.byref(backdrop), ctypes.sizeof(backdrop)
+        )
+        if hr == 0:
+            return True
+    except Exception:
+        hr = -1       # 老系统没有这个属性：当作 Win11 材质不可用，继续走 accent 路径
+
+    from core.logger import log_debug, T
+
+    log_debug(T("Win11 系统背景材质不可用（hr={hr}），改试 accent 路径", hr=hr), "WindowOps")
+
+    try:
+        class _AccentPolicy(ctypes.Structure):
+            _fields_ = [
+                ("AccentState", ctypes.c_int),
+                ("AccentFlags", ctypes.c_int),
+                ("GradientColor", ctypes.c_uint),
+                ("AnimationId", ctypes.c_int),
+            ]
+
+        class _WindowCompositionAttributeData(ctypes.Structure):
+            _fields_ = [
+                ("Attribute", ctypes.c_int),
+                ("Data", ctypes.POINTER(_AccentPolicy)),
+                ("SizeOfData", ctypes.c_size_t),
+            ]
+
+        policy = _AccentPolicy(ACCENT_ENABLE_ACRYLICBLURBEHIND, 2, tint_argb, 0)
+        data = _WindowCompositionAttributeData(
+            WCA_ACCENT_POLICY, ctypes.pointer(policy), ctypes.sizeof(policy)
+        )
+        if _user32().SetWindowCompositionAttribute(hwnd, ctypes.byref(data)):
+            return True
+        log_debug(T("Windows 的亚克力两条路都不通，退回不透明外观"), "WindowOps")
+        return False
+    except Exception as e:
+        from core.logger import log_exception, T
+
+        log_exception(e, T("应用亚克力背景（Windows）"))
+        return False
+
+
+def _apply_acrylic_macos(window) -> bool:
+    """macOS：把 NSVisualEffectView 插到内容视图**下面**，让窗口背后的内容透出来。
+
+    必须放在 contentView 的 superview 里、相对 contentView 置于 ``NSWindowBelow``：
+    Qt 自己画在 contentView 上，而子视图一律盖在父视图的绘制之上——只把它加成
+    contentView 的子视图会挡住按钮。
+    """
+    if not IS_MACOS:
+        return False
+
+    try:
+        import objc
+        from AppKit import (
+            NSVisualEffectBlendingModeBehindWindow, NSVisualEffectMaterialHUDWindow,
+            NSVisualEffectStateActive, NSVisualEffectView,
+        )
+
+        ns_window = objc.objc_object(c_void_p=int(window.winId())).window()
+        if ns_window is None:
+            return False
+        content = ns_window.contentView()
+        frame_view = content.superview() if content is not None else None
+        if frame_view is None:
+            return False
+
+        # 幂等：同一个窗口重复应用时不重复挂视图（窗口还在、视图还在就直接复用）
+        existing = getattr(window, "_acrylic_effect_view", None)
+        if existing is not None and existing.superview() is frame_view:
+            return True
+
+        effect = NSVisualEffectView.alloc().initWithFrame_(content.bounds())
+        effect.setMaterial_(NSVisualEffectMaterialHUDWindow)
+        effect.setBlendingMode_(NSVisualEffectBlendingModeBehindWindow)
+        effect.setState_(NSVisualEffectStateActive)
+        effect.setAutoresizingMask_(18)      # NSViewWidthSizable | NSViewHeightSizable
+        frame_view.addSubview_positioned_relativeTo_(effect, -1, content)  # NSWindowBelow
+        window._acrylic_effect_view = effect
+        return True
+    except Exception as e:
+        from core.logger import log_exception, T
+
+        log_exception(e, T("应用亚克力背景（macOS）"))
+        return False
+
+
+def apply_acrylic_background(window, tint_argb: int = 0x99000000) -> bool:
+    """给窗口加上「毛玻璃 / 亚克力」背景；返回是否走了原生实现。
+
+    原生调用只在平台层做（Qt 没有可移植的背景模糊）。失败一律返回 False 并记日志，
+    调用方据此退回不透明外观——「透明到看不见」比没有效果糟得多。
+
+    - macOS：``NSVisualEffectView`` 插到内容视图之下
+    - Windows：Win11 系统背景材质，退回 Win10 的 SetWindowCompositionAttribute
+    - Linux：登记为 NONE（合成器模糊各桌面环境差异太大，不做）
+    """
+    from core.platform.capabilities import Capability, available
+
+    from core.logger import log_debug, log_exception, T
+
+    if not available(Capability.WINDOW_ACRYLIC):
+        log_debug(T("平台不支持亚克力背景，跳过"), "WindowOps")
+        return False
+
+    # 子部件没有自己的原生窗口：``winId()`` 会返回最近的原生祖先，把模糊挂上去等于给
+    # 整个截图窗口加背景（尺寸也不对）。这种情况如实返回 False，让调用方保持原外观。
+    try:
+        if not window.isWindow():
+            log_debug(T("窗口是子部件，没有独立原生窗口，跳过亚克力背景"), "WindowOps")
+            return False
+    except Exception:
+        return False
+
+    hwnd = _native_handle(window)
+    if hwnd is None:
+        return False
+
+    # 平台层的契约是「失败返回 False，绝不抛异常」：分支里的原生调用各自也兜了一层，
+    # 这里再兜一次是给「分支被替换/未来新增分支」留的保险。
+    try:
+        if IS_MACOS:
+            return _apply_acrylic_macos(window)
+        if IS_WINDOWS:
+            return _apply_acrylic_windows(hwnd, tint_argb)
+    except Exception as e:
+        log_exception(e, T("应用亚克力背景"))
+        return False
+
+    return False
+
+
 def set_topmost(window, enabled: bool) -> bool:
     """切换窗口置顶，返回是否走了原生实现。
 
@@ -228,6 +412,40 @@ def last_error() -> int:
 # ──────────────────────────────────────────────
 # 窗口图标
 # ──────────────────────────────────────────────
+
+def set_application_icon(icon_path: str) -> bool:
+    """设置「整个应用」的图标（macOS 的 Dock）；返回是否走了原生实现。
+
+    Windows / Linux 登记为 NONE：那边没有独立的「应用图标」，能设的就是各窗口的任务栏
+    图标与托盘那一枚（分别由 ``set_taskbar_icon`` / ``ResourceManager`` 负责），所以
+    这里如实返回 False 并记一条降级日志。
+    """
+    from core.platform.capabilities import Capability, available
+
+    from core.logger import log_debug, log_exception, T
+
+    if not available(Capability.APPLICATION_ICON):
+        log_debug(T("当前平台没有独立的「应用图标」，跳过"), "WindowOps")
+        return False
+
+    if not icon_path or not os.path.exists(icon_path):
+        return False
+
+    try:
+        if not IS_MACOS:
+            return False
+
+        from AppKit import NSApplication, NSImage
+
+        image = NSImage.alloc().initWithContentsOfFile_(icon_path)
+        if image is None:
+            return False
+        NSApplication.sharedApplication().setApplicationIconImage_(image)
+        return True
+    except Exception as e:
+        log_exception(e, T("设置应用图标"))
+        return False
+
 
 def set_taskbar_icon(window, icon_path: str, size: int = 32) -> bool:
     """把图标设成该窗口在任务栏/标题栏上显示的那个（仅 Windows）。

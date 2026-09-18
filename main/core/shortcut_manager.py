@@ -45,9 +45,10 @@ from PySide6.QtWidgets import (
     QLineEdit, QPlainTextEdit, QTextEdit,
 )
 
-from core import log_debug, log_error, safe_event
+from core import actions, log_debug, log_error, log_info, log_warning, safe_event
 from core.logger import log_exception, T
 from core.platform import hotkey as platform_hotkey
+from core.platform import pointer as platform_pointer
 from core.platform.hotkey import (
     PYNPUT_BUTTON_NAME_TOKENS,
     is_mouse_button_hotkey,
@@ -174,6 +175,17 @@ class ShortcutManager(QObject):
     # 同上：pynput 键盘监听也在后台线程，回调统一排队回主线程执行
     _keyboard_hotkey_triggered = Signal(str)
 
+    # 全局鼠标手势（修饰键 + 鼠标键/滚轮）命中后发动作 id，同样排队回主线程执行
+    mouse_gesture_triggered = Signal(str)
+
+    #: 缺「辅助功能」权限时轮询系统权限的间隔（毫秒）。用户是在另一个窗口里勾选的，
+    #: 3 秒足够跟手，一次 AXIsProcessTrusted() 也几乎不花钱；拿到权限后立即停表。
+    _INPUT_PERMISSION_POLL_MS = 3000
+
+    #: 输入监听权限仍缺失（系统对话框已经问过、用户还没勾）。应用层接这个信号给一次
+    #: 用户可见的提示与「打开权限设置」入口——core 不认识界面，提示怎么做是 UI 的事。
+    input_permission_missing = Signal()
+
     def __init__(self):
         super().__init__()
         # ── handler 链 ──
@@ -189,6 +201,11 @@ class ShortcutManager(QObject):
         self._keyboard_hotkeys: Dict[str, Callable] = {}   # 归一化热键字符串 → 回调
         self._keyboard_ids: Dict[str, int] = {}            # 合成 id，只为日志和 handler 链
         self._keyboard_listener = None                     # pynput.keyboard.GlobalHotKeys
+        self._input_permission_watch = None                # 缺权限时轮询的 QTimer
+
+        # ── 全局鼠标手势（修饰键 + 鼠标键/滚轮 → 动作）──
+        self._mouse_gestures: Dict[Tuple[str, str], str] = {}   # (修饰键, 手势) → 动作 id
+        self._mouse_gesture_listener = None
         self._keyboard_hotkey_triggered.connect(
             self._on_keyboard_hotkey, Qt.ConnectionType.QueuedConnection
         )
@@ -524,6 +541,7 @@ class ShortcutManager(QObject):
         platform_hotkey.stop_listener(self._keyboard_listener)
         self._keyboard_listener = None
         if not self._keyboard_hotkeys:
+            self._stop_input_permission_watch()
             return
 
         mapping = {
@@ -533,6 +551,70 @@ class ShortcutManager(QObject):
             for hotkey in self._keyboard_hotkeys
         }
         self._keyboard_listener = platform_hotkey.start_keyboard_listener(mapping)
+        if self._keyboard_listener is not None:
+            self._ensure_input_permission()
+
+    # ── 输入监听权限（macOS 的「辅助功能」）────────────────
+
+    def _ensure_input_permission(self) -> None:
+        """确认全局输入权限；没有就弹系统授权对话框，并开始轮询等用户授权。
+
+        macOS 上没这个权限时 pynput 的事件 tap 建不出来，监听器虽然「启动成功」但
+        收不到任何事件——快捷键表现为完全没反应，且没有任何报错。所以这里必须主动
+        把权限要过来，而不是只写一条日志。
+        """
+        if platform_hotkey.input_monitoring_trusted():
+            self._stop_input_permission_watch()
+            return
+
+        if self._input_permission_watch is None:
+            # 系统对话框只在还没决策过时弹；重复调用不会有副作用，但没必要每次重建监听都弹
+            platform_hotkey.request_input_monitoring_permission()
+            log_warning(
+                T(
+                    "全局热键收不到事件：macOS 需要「辅助功能」权限（系统设置 → 隐私与安全性 → "
+                    "辅助功能）。授权后热键会自动生效，不用重启程序；"
+                    "重新打包过的应用请先用「−」移除旧条目再重新添加"
+                ),
+                "Hotkey",
+            )
+        self._start_input_permission_watch()
+
+    def _start_input_permission_watch(self) -> None:
+        if self._input_permission_watch is not None:
+            return
+        from PySide6.QtCore import QTimer
+
+        timer = QTimer(self)
+        timer.setInterval(self._INPUT_PERMISSION_POLL_MS)
+        timer.timeout.connect(self._on_input_permission_tick)
+        timer.start()
+        self._input_permission_watch = timer
+
+    def _stop_input_permission_watch(self) -> None:
+        timer = self._input_permission_watch
+        if timer is None:
+            return
+        self._input_permission_watch = None
+        timer.stop()
+        timer.deleteLater()
+
+    def _on_input_permission_tick(self) -> None:
+        """用户在系统设置里勾上之后，把键盘监听重建起来。
+
+        老监听器没法复用：没权限时它连事件 tap 都没建出来，那会儿线程就已经退出了
+        （pynput 的监听器是一次性的 Thread，不能重启），只能重建一个。
+
+        还没勾上就在这里发一次信号：系统对话框是刚启动时弹的，用户可能已经关掉或没看见，
+        轮询到这一拍说明权限仍然缺着。至于「只提示一次」由提示模块去重——抓屏那边是高频
+        调用，去重只能收在一处。
+        """
+        if not platform_hotkey.input_monitoring_trusted():
+            self.input_permission_missing.emit()
+            return
+        self._stop_input_permission_watch()
+        log_info(T("已获得「辅助功能」权限，全局热键监听已重启"), "Hotkey")
+        self._sync_keyboard_listener()
 
     def _on_native_hotkey(self, hotkey_id: int) -> None:
         """WM_HOTKEY 在主线程的执行入口（由平台层的原生过滤器直接调用）。
@@ -613,6 +695,94 @@ class ShortcutManager(QObject):
         if self._mouse_capture_refs > 0:
             return platform_hotkey._MOUSE_BUTTON_TOKENS
         return frozenset(self._mouse_callbacks)
+
+    # ── 全局鼠标手势（修饰键 + 鼠标键/滚轮 → 动作）────────────
+
+    def set_mouse_gestures(self, bindings: dict) -> None:
+        """整体替换手势绑定表，并按需启停全局鼠标监听。
+
+        绑定表来自配置（``{action_id: {"modifier", "gesture"}}``）。空表就把监听停掉——
+        为一个没绑任何东西的配置常驻全局鼠标钩子不值得。
+        """
+        self._mouse_gestures = self._normalize_mouse_gestures(bindings)
+        self._sync_mouse_gesture_listener()
+
+    def has_mouse_gestures(self) -> bool:
+        """是否配了至少一个全局鼠标手势。"""
+        return bool(self._mouse_gestures)
+
+    def _normalize_mouse_gestures(self, bindings: dict) -> Dict[Tuple[str, str], str]:
+        """收敛成 ``{(修饰键, 手势): 动作 id}``；不认识的键值丢掉并记一条日志。
+
+        配置可能来自旧版本或被手工改坏，这里必须挡住：否则一个拼错的手势会静默失效，
+        用户只会觉得「设了没用」。
+        """
+        normalized: Dict[Tuple[str, str], str] = {}
+        for action_id, binding in (bindings or {}).items():
+            if action_id not in actions.ACTIONS_BY_ID:
+                log_warning(T("忽略不认识的动作绑定: {action_id}", action_id=action_id),
+                            "MouseGesture")
+                continue
+            binding = binding or {}
+            modifier = str(binding.get("modifier", ""))
+            gesture = str(binding.get("gesture", ""))
+            if gesture not in platform_pointer.MOUSE_GESTURES:
+                log_warning(T("忽略不认识的鼠标手势: {gesture}", gesture=gesture),
+                            "MouseGesture")
+                continue
+            if modifier not in platform_pointer.MOUSE_MODIFIERS:
+                log_warning(T("忽略不认识的修饰键: {modifier}", modifier=modifier),
+                            "MouseGesture")
+                continue
+            normalized[(modifier, gesture)] = action_id
+        return normalized
+
+    def _sync_mouse_gesture_listener(self) -> None:
+        """有绑定时起一个全局鼠标监听，没有就停掉（幂等）。"""
+        if self._mouse_gestures and self._mouse_gesture_listener is None:
+            listener = platform_pointer.create_mouse_listener(
+                on_click=self._on_gesture_click,
+                on_scroll=self._on_gesture_scroll,
+            )
+            if listener is None:
+                log_warning(T("全局鼠标监听启动失败，鼠标动作不可用"), "MouseGesture")
+                return
+            self._mouse_gesture_listener = listener
+            log_debug(T("全局鼠标监听已启动（{count} 个手势）",
+                        count=len(self._mouse_gestures)), "MouseGesture")
+        elif not self._mouse_gestures and self._mouse_gesture_listener is not None:
+            platform_pointer.stop_listener(self._mouse_gesture_listener)
+            self._mouse_gesture_listener = None
+
+    def _on_gesture_scroll(self, _x, _y, dx, dy):
+        """pynput 监听线程上的滚轮回调：只做查表，动作在主线程执行。"""
+        gesture = platform_pointer.gesture_of_scroll(dx, dy)
+        if gesture:
+            self._dispatch_mouse_gesture(gesture)
+
+    def _on_gesture_click(self, _x, _y, button, pressed):
+        """pynput 监听线程上的按键回调（只处理按下）。"""
+        if not pressed:
+            return
+        gesture = platform_pointer.gesture_of_button(getattr(button, "name", ""))
+        if gesture:
+            self._dispatch_mouse_gesture(gesture)
+
+    def _dispatch_mouse_gesture(self, gesture: str) -> None:
+        """按「修饰键 + 手势」查表；命中就把动作 id 排队回主线程。
+
+        修饰键是现读的系统状态（``pointer.pressed_modifiers``），要求「无修饰键」的绑定
+        只有在真的没按修饰键时才命中。
+        """
+        if self._global_hotkeys_suppressed:
+            return
+        pressed = platform_pointer.pressed_modifiers()
+        for (modifier, bound_gesture), action_id in self._mouse_gestures.items():
+            if bound_gesture != gesture:
+                continue
+            if platform_pointer.matches_modifiers(modifier, pressed):
+                self.mouse_gesture_triggered.emit(action_id)
+                return
 
     def _sync_mouse_listener(self):
         """按当前状态收敛钩子的启停与抑制集合——状态变化的唯一出口（幂等）。"""
@@ -725,6 +895,15 @@ class HotkeySystem:
     def __init__(self):
         self._mgr = ShortcutManager.instance()
 
+    @property
+    def permission_missing(self):
+        """输入监听权限仍缺失的信号，应用层接它给用户提示。
+
+        权限判断在 ShortcutManager 里（监听器归它管），这里只是把信号转出来，
+        应用层不必知道单例的存在。
+        """
+        return self._mgr.input_permission_missing
+
     def register_hotkey(self, hotkey_str: str, callback: Callable) -> bool:
         return self._mgr.register_hotkey(hotkey_str, callback)
 
@@ -739,6 +918,10 @@ class HotkeySystem:
 
     def has_registered_hotkeys(self) -> bool:
         return self._mgr.has_registered_hotkeys()
+
+    def set_mouse_gestures(self, bindings: dict):
+        """设置全局鼠标手势绑定（修饰键 + 鼠标键/滚轮 → 动作）。"""
+        self._mgr.set_mouse_gestures(bindings)
 
 
 # ======================================================================
@@ -878,6 +1061,10 @@ def load_inapp_bindings(keys_of_interest: Optional[List[str]] = None) -> Dict:
             "inapp_confirm", "inapp_pin", "inapp_undo", "inapp_redo",
             "inapp_delete",
             "inapp_copy_pin", "inapp_thumbnail", "inapp_toggle_toolbar",
+            "inapp_pin_save", "inapp_pin_rotate", "inapp_pin_lock",
+            "inapp_pin_on_top", "inapp_pin_shadow",
+            "inapp_pin_opacity_up", "inapp_pin_opacity_down",
+            "inapp_pin_copy_all_text", "inapp_pin_copy_and_close",
             "inapp_zoom_in", "inapp_zoom_out", "inapp_translate",
         ]
 

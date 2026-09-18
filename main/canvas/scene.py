@@ -3,7 +3,7 @@
 """
 
 from PySide6.QtWidgets import QGraphicsScene
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal, Slot, Qt
 
 from .items import BackgroundItem, SelectionItem, SpotlightCurtain
 from .selection_model import SelectionModel
@@ -161,6 +161,7 @@ class CanvasScene(QGraphicsScene):
         """
         self.cursor_tool_update_requested.emit(tool_id, False)
     
+    @Slot()
     def _on_undo_stack_changed(self):
         """
         撤销栈变化时的回调（用于更新序号工具光标）

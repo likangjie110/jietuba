@@ -21,6 +21,7 @@ from types import SimpleNamespace
 import pytest
 from PySide6.QtCore import QPoint, QSize, Qt
 
+from pin import pin_actions
 from pin.pin_window import PinWindow
 
 NO_MOD = Qt.KeyboardModifier.NoModifier
@@ -45,6 +46,21 @@ class _FakeWheelEvent:
 
     def ignore(self):
         self.ignored += 1
+
+
+def _bind_action_dispatch(fake):
+    """把「手势 → 动作」的分派绑到假窗口上。
+
+    wheelEvent 现在只负责认出是哪个手势（滚轮上/下、带不带 Ctrl），算术在 apply_zoom /
+    adjust_opacity 里、绑定关系在动作表里。把真实实现绑到假窗口上，测的就还是同一段算术。
+    """
+    fake.gesture = lambda kind: pin_actions.DEFAULT_PIN_MOUSE_ACTIONS.get(
+        kind, pin_actions.ACTION_NONE)
+    fake.run_gesture = lambda kind: pin_actions.run_pin_action(fake.gesture(kind), fake)
+    fake.apply_zoom = lambda direction, fine=False: PinWindow.apply_zoom(
+        fake, direction, fine=fine)
+    fake.adjust_opacity = lambda direction: PinWindow.adjust_opacity(fake, direction)
+    return fake
 
 
 class _Recorder:
@@ -72,6 +88,7 @@ def _zoom_self(scale_factor=1.0, transform_size=None, thumbnail=False):
         _is_scaling=False,
         _orig_size=QSize(BASE_W, BASE_H),
         scale_factor=scale_factor,
+        config_manager=None,          # 没有配置就是默认步长（1.05）
         canvas=None,
         x=lambda: 10,
         y=lambda: 20,
@@ -83,16 +100,17 @@ def _zoom_self(scale_factor=1.0, transform_size=None, thumbnail=False):
     if transform_size is not None:
         fake._image_transform = SimpleNamespace(
             display_size=lambda orig: transform_size)
-    return fake
+    return _bind_action_dispatch(fake)
 
 
 def _opacity_self(opacity=1.0, thumbnail=False):
-    return SimpleNamespace(
+    return _bind_action_dispatch(SimpleNamespace(
         _thumbnail_mode=thumbnail,
         _win_opacity=opacity,
+        config_manager=None,          # 没有配置就是默认步长（0.05）
         setWindowOpacity=_Recorder(),
         _show_hint_label=_Recorder(),
-    )
+    ))
 
 
 def _scroll(fake, times, delta=120, modifiers=NO_MOD):
@@ -306,6 +324,7 @@ def _drag_self(dragging=False, start_pos=QPoint(100, 100),
         move=_Recorder(),
         setCursor=_Recorder(),
         pos=lambda: window_pos,
+        is_selected=lambda: False,      # 没在多选里：走「只动自己」这条路
     )
 
 
@@ -399,3 +418,173 @@ class TestManagerBackedProperties:
 
     def test_a_missing_thumbnail_manager_reports_inactive(self):
         assert PinWindow._thumbnail_mode.fget(SimpleNamespace()) is False
+
+
+# ============================================================================
+# 交互参数改成可配置之后（贴图设置页）
+# ============================================================================
+
+class TestConfigurableSteps:
+    """步长以前写死在 wheelEvent 里，现在读配置；范围与设置页共用一份常量。"""
+
+    def test_zoom_step_comes_from_the_config(self):
+        fake = _zoom_self()
+        fake.config_manager = SimpleNamespace(get_pin_zoom_step=lambda: 1.25)
+
+        _scroll(fake, 1)
+
+        assert fake.scale_factor == pytest.approx(1.25)
+
+    def test_zoom_out_uses_the_reciprocal_of_the_configured_step(self):
+        fake = _zoom_self()
+        fake.config_manager = SimpleNamespace(get_pin_zoom_step=lambda: 1.25)
+
+        _scroll(fake, 1, delta=-120)
+
+        assert fake.scale_factor == pytest.approx(1 / 1.25)
+
+    def test_opacity_step_comes_from_the_config(self):
+        fake = _opacity_self()
+        fake.config_manager = SimpleNamespace(get_pin_opacity_step=lambda: 0.2)
+
+        _scroll(fake, 1, delta=-120, modifiers=CTRL)
+
+        assert fake._win_opacity == pytest.approx(0.8)
+
+    def test_a_broken_config_getter_falls_back_to_the_default_step(self, monkeypatch):
+        monkeypatch.setattr("core.logger.log_exception", lambda *_a, **_k: None)
+        fake = _zoom_self()
+
+        def _boom():
+            raise RuntimeError("配置坏了")
+
+        fake.config_manager = SimpleNamespace(get_pin_zoom_step=_boom)
+
+        _scroll(fake, 1)
+
+        assert fake.scale_factor == pytest.approx(1.05)
+
+
+class TestPinConfigHelpers:
+    def test_missing_manager_or_getter_uses_the_default(self):
+        from pin.pin_window import pin_config_float, pin_config_value
+
+        assert pin_config_value(None, "get_pin_zoom_step", 1.05) == 1.05
+        assert pin_config_value(SimpleNamespace(), "get_pin_zoom_step", 1.05) == 1.05
+        assert pin_config_float(None, "get_pin_zoom_step", 1.05, (1.01, 1.30)) == 1.05
+
+    def test_values_are_clamped_to_the_shared_range(self):
+        from pin.pin_window import pin_config_float
+
+        high = SimpleNamespace(get_pin_zoom_step=lambda: 9.0)
+        low = SimpleNamespace(get_pin_zoom_step=lambda: 0.5)
+
+        assert pin_config_float(high, "get_pin_zoom_step", 1.05, (1.01, 1.30)) == 1.30
+        assert pin_config_float(low, "get_pin_zoom_step", 1.05, (1.01, 1.30)) == 1.01
+
+    @pytest.mark.parametrize("bad", ["abc", None, object()])
+    def test_unusable_values_fall_back_to_the_default(self, bad):
+        from pin.pin_window import pin_config_float
+
+        fake = SimpleNamespace(get_pin_zoom_step=lambda: bad)
+
+        assert pin_config_float(fake, "get_pin_zoom_step", 1.05, (1.01, 1.30)) == 1.05
+
+    def test_reading_failure_is_reported_not_raised(self, monkeypatch):
+        from pin.pin_window import pin_config_float
+
+        monkeypatch.setattr("core.logger.log_exception", lambda *_a, **_k: None)
+
+        def _boom():
+            raise RuntimeError("配置坏了")
+
+        fake = SimpleNamespace(get_pin_zoom_step=_boom)
+
+        assert pin_config_float(fake, "get_pin_zoom_step", 1.05, (1.01, 1.30)) == 1.05
+
+    def test_bool_helper_coerces(self):
+        from pin.pin_window import pin_config_bool
+
+        assert pin_config_bool(SimpleNamespace(get_pin_shadow_enabled=lambda: False),
+                              "get_pin_shadow_enabled", True) is False
+        assert pin_config_bool(None, "get_pin_shadow_enabled", True) is True
+
+
+# ============================================================================
+# 手势 → 动作的分派（贴图手势表）
+# ============================================================================
+
+class TestGestureDispatch:
+    """wheelEvent 只认手势，具体动作由 pin/pin_actions.py 的表决定。"""
+
+    def test_gesture_reads_the_configured_table(self):
+        fake = SimpleNamespace(config_manager=SimpleNamespace(
+            get_pin_mouse_actions=lambda: {"wheel_up": "copy_content"}))
+
+        assert PinWindow.gesture(fake, "wheel_up") == "copy_content"
+
+    def test_gesture_falls_back_to_defaults_for_missing_keys(self):
+        fake = SimpleNamespace(config_manager=SimpleNamespace(get_pin_mouse_actions=lambda: {}))
+
+        assert PinWindow.gesture(fake, "wheel_up") == "zoom_in"
+
+    def test_gesture_without_a_config_manager_uses_defaults(self):
+        assert PinWindow.gesture(SimpleNamespace(config_manager=None), "right_click") == (
+            "context_menu")
+
+    def test_run_gesture_executes_the_bound_action(self):
+        calls = []
+        fake = SimpleNamespace(
+            config_manager=SimpleNamespace(
+                get_pin_mouse_actions=lambda: {"middle_click": "copy_content"}),
+            copy_to_clipboard=lambda: calls.append("copy"),
+        )
+        fake.gesture = lambda kind: PinWindow.gesture(fake, kind)
+
+        assert PinWindow.run_gesture(fake, "middle_click") is True
+        assert calls == ["copy"]
+
+    def test_unbound_gesture_does_nothing(self):
+        calls = []
+        fake = SimpleNamespace(
+            config_manager=SimpleNamespace(
+                get_pin_mouse_actions=lambda: {"middle_click": "none"}),
+            copy_to_clipboard=lambda: calls.append("copy"),
+        )
+        fake.gesture = lambda kind: PinWindow.gesture(fake, kind)
+
+        assert PinWindow.run_gesture(fake, "middle_click") is False
+        assert calls == []
+
+    def test_thumbnails_do_not_zoom(self):
+        """缩略图模式把滚轮让给别的控件（源码里 event.ignore()）。"""
+        fake = _zoom_self(thumbnail=True)
+
+        _scroll(fake, 1)
+
+        assert fake.scale_factor == 1.0
+
+    def test_locked_pins_do_not_zoom(self, caplog):
+        fake = _zoom_self()
+        fake._locked = True
+
+        _scroll(fake, 1)
+
+        assert fake.scale_factor == 1.0
+
+
+class TestApplyZoom:
+    def test_fine_zoom_uses_a_smaller_step(self):
+        fake = _zoom_self()
+        fake.config_manager = SimpleNamespace(get_pin_zoom_step=lambda: 1.25)
+
+        PinWindow.apply_zoom(fake, 1, fine=True)
+
+        # 精细步长 = 1 + (1.25 - 1) / 5 = 1.05
+        assert fake.scale_factor == pytest.approx(1.05)
+
+    def test_zero_direction_is_a_no_op(self):
+        fake = _zoom_self()
+
+        assert PinWindow.apply_zoom(fake, 0) is False
+        assert fake.scale_factor == 1.0

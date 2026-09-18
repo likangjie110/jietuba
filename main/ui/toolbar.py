@@ -113,8 +113,24 @@ def cached_icon(relative_path):
     """获取缓存的 QIcon（首次加载 SVG，后续复用）"""
     return ResourceManager.get_icon(ResourceManager.get_resource_path(relative_path))
 
+#: 半透明底的不透明度：原生模糊时是磨砂观感、子部件降级时透出父窗口的画面，
+#: 取值是「看得清按钮」与「透得出背景」之间的折中。
+ACRYLIC_FILL_ALPHA = 120
+
+#: 工具栏背景三种落点的日志模板（key 是代码里的分支名）。分开写是为了英文日志能整句翻译。
+_BACKGROUND_LOG_TEXTS = {
+    "native": "工具栏背景: 原生模糊",
+    "translucent": "工具栏背景: 半透明降级",
+    "opaque": "工具栏背景: 不透明",
+}
+
+
 def _paint_toolbar_frame(widget):
-    """白底圆角 + 主题色描边。工具栏和「…」弹层共用，四角靠 WA_TranslucentBackground 保持透明"""
+    """圆角 + 主题色描边；底色取决于亚克力背景有没有生效。
+
+    工具栏与「…」弹层共用这个绘制函数：半透明底只在工具栏自己身上生效
+    （``_translucent_frame`` 由 ``Toolbar.showEvent`` 设置），弹层照旧用不透明白底。
+    """
     painter = QPainter(widget)
     painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -127,7 +143,10 @@ def _paint_toolbar_frame(widget):
     path.addRoundedRect(rect, radius, radius)
 
     painter.setPen(QPen(get_theme().theme_color, pen_width))
-    painter.setBrush(QBrush(QColor(255, 255, 255)))
+    if getattr(widget, "_translucent_frame", False):
+        painter.setBrush(QBrush(QColor(255, 255, 255, ACRYLIC_FILL_ALPHA)))
+    else:
+        painter.setBrush(QBrush(QColor(255, 255, 255)))
     painter.drawPath(path)
     painter.end()
 
@@ -247,6 +266,7 @@ class Toolbar(QWidget):
     screenshot_translate_clicked = Signal()  # 截图翻译按钮
     scan_code_clicked = Signal()  # 扫码按钮
     gif_record_clicked = Signal()  # GIF录制按钮
+    video_record_clicked = Signal()  # 视频录制按钮
     color_changed = Signal(QColor)  # 颜色改变
     number_style_changed = Signal(str)  # 序号样式改变
     stroke_width_changed = Signal(int)  # 线宽改变
@@ -339,6 +359,8 @@ class Toolbar(QWidget):
             "scan_code", "svg/扫码.svg", "Scan QR code / barcode", wide, self.scan_code_clicked.emit)
         self.gif_btn = self._add_button(
             "gif", "svg/gif.svg", "GIF recording", wide, self.gif_record_clicked.emit)
+        self.video_btn = self._add_button(
+            "video", "svg/录像.svg", "Video recording", wide, self.video_record_clicked.emit)
         # 复制按钮只在钉图里摆出来，截图的排布里没有它
         self.copy_btn = self._add_button(
             "copy", "svg/copy.svg", "Copy image", wide, self.copy_clicked.emit)
@@ -1200,6 +1222,38 @@ class Toolbar(QWidget):
         """工具栏移动时同步所有可见面板位置"""
         super().moveEvent(event)
         self._sync_all_panels_position()
+
+    @safe_event
+    def showEvent(self, event):
+        """显示后给工具栏上一次亚克力背景。
+
+        时机只放在这里一处：原生窗口要等 ``show()`` 之后才存在，而 Qt 在改窗口标志时
+        会重建原生窗口，所以每次显示都重新确认一次（平台函数自己保证幂等）。
+        截图会话里工具栏是截图窗口的子部件、没有独立原生窗口，那边会返回 False，
+        改用半透明底。
+        """
+        super().showEvent(event)
+        try:
+            from core.platform import window_ops
+
+            native_blur = window_ops.apply_acrylic_background(self)
+        except Exception as e:
+            log_exception(e, T("应用工具栏亚克力背景"))
+            native_blur = False
+
+        # 子部件（截图会话里的工具栏）拿不到窗口级模糊——它的「背后」是父窗口自己画的
+        # 冻结画面，不是别的窗口。这种情况改成半透明底把画面透出来，比整块不透明白更贴近
+        # 「工具栏浮在刚抓到的画面上」的预期；顶层工具栏在原生失败时保持原外观。
+        degraded = not native_blur and not self.isWindow()
+        translucent = native_blur or degraded
+
+        if translucent != getattr(self, "_translucent_frame", False):
+            # 三种状态各用一条完整模板，英文日志才不会剩半句中文
+            key = "native" if native_blur else ("translucent" if degraded else "opaque")
+            log_debug(T(_BACKGROUND_LOG_TEXTS[key]), "Toolbar")
+        self._translucent_frame = translucent
+        self._acrylic_native = native_blur
+        self.update()
 
     @safe_event
     def hideEvent(self, event):

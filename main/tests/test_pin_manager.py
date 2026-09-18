@@ -20,7 +20,7 @@ import os
 from types import SimpleNamespace
 
 import pytest
-from PySide6.QtCore import QPoint, QRect, Qt
+from PySide6.QtCore import QPoint, QRect, QSize, Qt
 
 from pin.pin_manager import PinManager, get_pin_manager
 
@@ -73,6 +73,16 @@ def fake_user32(monkeypatch):
     return fake
 
 
+class _FakeImage:
+    """create_pin 会读 image.size()（「新贴图位置」策略要用），给个最小替身。"""
+
+    def __init__(self, width, height):
+        self._size = QSize(width, height)
+
+    def size(self):
+        return self._size
+
+
 class _FakePin:
     """
     只实现 PinManager 会碰到的接口。
@@ -93,7 +103,11 @@ class _FakePin:
         self.hidden = 0
         self.toggled = 0
         self.moved_to = []
+        self._pos = QPoint(0, 0)
         self.saved_paths = []
+        self.close_confirm = None
+        self.lowered = 0
+        self.raised = 0
         self.edit_paused_calls = 0
         if with_edit_paused:
             self._with_edit_paused = self._pause_edit
@@ -106,8 +120,25 @@ class _FakePin:
         return self._hwnd
 
     # ── 批量操作 ──
-    def close_window(self):
+    def close_window(self, *, confirm=True):
+        # confirm=False 是批量关闭的路径（不逐张弹确认）
         self.closed_count += 1
+        self.close_confirm = confirm
+
+    def pos(self):
+        return QPoint(self._pos)
+
+    def move(self, *args):
+        """Qt 的 move 有两个重载（move(QPoint) 与 move(x, y)），假窗口两个都要支持。"""
+        target = QPoint(args[0]) if len(args) == 1 else QPoint(args[0], args[1])
+        self._pos = target
+        self.moved_to.append(target)
+
+    def lower(self):
+        self.lowered += 1
+
+    def raise_(self):
+        self.raised += 1
 
     def show(self):
         self.shown += 1
@@ -128,9 +159,6 @@ class _FakePin:
     def height(self):
         return 100
 
-    def move(self, x, y):
-        self.moved_to.append((x, y))
-
     # ── 保存 ──
     def get_current_image(self):
         pin = self
@@ -150,7 +178,7 @@ class _FakePin:
 
 
 class _RaisingPin(_FakePin):
-    def close_window(self):
+    def close_window(self, *, confirm=True):
         raise RuntimeError("窗口已被销毁")
 
 
@@ -352,7 +380,7 @@ class TestMoveToScreenCenter:
         pin = _FakePin()  # 200x100
         manager.pin_windows.append(pin)
         manager.move_all_to_screen_center()
-        assert pin.moved_to == [((1920 - 200) // 2, (1080 - 100) // 2)]
+        assert pin.moved_to == [QPoint((1920 - 200) // 2, (1080 - 100) // 2)]
 
     def test_secondary_screen_origin_is_added_to_the_offset(self, manager, monkeypatch):
         """副屏的 availableGeometry 原点不是 0，居中必须带上它"""
@@ -360,7 +388,8 @@ class TestMoveToScreenCenter:
         pin = _FakePin()
         manager.pin_windows.append(pin)
         manager.move_all_to_screen_center()
-        assert pin.moved_to == [(1920 + (1280 - 200) // 2, 40 + (1000 - 100) // 2)]
+        assert pin.moved_to == [
+            QPoint(1920 + (1280 - 200) // 2, 40 + (1000 - 100) // 2)]
 
     def test_a_failing_window_does_not_stop_the_rest(self, manager, monkeypatch):
         self._patch_screen(monkeypatch, QRect(0, 0, 1920, 1080))
@@ -522,7 +551,8 @@ class TestCreatePin:
         announced = []
         manager.pin_created.connect(announced.append)
 
-        pin = manager.create_pin(image=None, position=QPoint(3, 4), config_manager=None)
+        pin = manager.create_pin(image=_FakeImage(40, 30), position=QPoint(3, 4),
+                                 config_manager=None)
 
         assert manager.get_all_pins() == [pin]
         assert announced == [pin]
@@ -539,8 +569,204 @@ class TestCreatePin:
         monkeypatch.setattr("pin.pin_window.PinWindow", _StubPinWindow)
         items = [object()]
         manager.create_pin(
-            image=None, position=QPoint(0, 0), config_manager=None,
+            image=_FakeImage(40, 30), position=QPoint(0, 0), config_manager=None,
             drawing_items=items, selection_offset=QPoint(5, 6), number_next=7)
         assert seen["drawing_items"] is items
         assert seen["selection_offset"] == QPoint(5, 6)
         assert seen["number_next"] == 7
+
+
+# ============================================================================
+# 「贴图设置」页里的三项行为（新贴图位置 / 叠放顺序 / 批量关闭不确认）
+# ============================================================================
+
+class TestPinPositionPolicy:
+    """position 参数是选区位置；设置可以把它改成鼠标位置或屏幕中央。"""
+
+    def test_selection_mode_keeps_the_given_position(self, qapp):
+        from pin.pin_manager import resolve_pin_position
+
+        config = SimpleNamespace(get_pin_new_position=lambda: "selection")
+
+        assert resolve_pin_position(QPoint(11, 22), QSize(40, 30), config) == QPoint(11, 22)
+
+    def test_cursor_mode_follows_the_pointer(self, qapp, monkeypatch):
+        from pin.pin_manager import resolve_pin_position
+
+        monkeypatch.setattr("PySide6.QtGui.QCursor.pos", staticmethod(lambda: QPoint(300, 400)))
+        config = SimpleNamespace(get_pin_new_position=lambda: "cursor")
+
+        assert resolve_pin_position(QPoint(11, 22), QSize(40, 30), config) == QPoint(300, 400)
+
+    def test_center_mode_centers_the_window_on_the_primary_screen(self, qapp):
+        from pin.pin_manager import resolve_pin_position
+
+        config = SimpleNamespace(get_pin_new_position=lambda: "center")
+        center = qapp.primaryScreen().availableGeometry().center()
+
+        assert resolve_pin_position(QPoint(11, 22), QSize(40, 30), config) == QPoint(
+            center.x() - 20, center.y() - 15
+        )
+
+    def test_center_mode_without_a_size_falls_back_to_the_selection(self, qapp):
+        from pin.pin_manager import resolve_pin_position
+
+        config = SimpleNamespace(get_pin_new_position=lambda: "center")
+
+        assert resolve_pin_position(QPoint(11, 22), None, config) == QPoint(11, 22)
+
+    def test_unknown_mode_falls_back_to_the_selection(self, qapp):
+        from pin.pin_manager import resolve_pin_position
+
+        config = SimpleNamespace(get_pin_new_position=lambda: "nonsense")
+
+        assert resolve_pin_position(QPoint(11, 22), QSize(40, 30), config) == QPoint(11, 22)
+
+    def test_missing_config_keeps_the_selection(self, qapp):
+        from pin.pin_manager import resolve_pin_position
+
+        assert resolve_pin_position(QPoint(11, 22), QSize(40, 30), None) == QPoint(11, 22)
+
+
+class TestPinOrderPolicy:
+    def test_top_order_leaves_the_new_window_alone(self, qapp):
+        from pin.pin_manager import apply_pin_order
+
+        new_pin = _FakePin()
+        existing = [_FakePin()]
+        config = SimpleNamespace(get_pin_order=lambda: "top")
+
+        apply_pin_order(new_pin, existing, config)
+
+        assert new_pin.lowered == 0
+        assert existing[0].raised == 0
+
+    def test_bottom_order_sends_the_new_window_behind_and_raises_the_others(self, qapp):
+        from pin.pin_manager import apply_pin_order
+
+        new_pin = _FakePin()
+        existing = [_FakePin(), _FakePin()]
+        config = SimpleNamespace(get_pin_order=lambda: "bottom")
+
+        apply_pin_order(new_pin, existing, config)
+
+        assert new_pin.lowered == 1
+        assert [pin.raised for pin in existing] == [1, 1]
+
+    def test_failure_to_reorder_is_reported_not_raised(self, qapp, monkeypatch):
+        from pin.pin_manager import apply_pin_order
+
+        monkeypatch.setattr("pin.pin_manager.log_exception", lambda *_a, **_k: None)
+
+        class _Broken(_FakePin):
+            def lower(self):
+                raise RuntimeError("窗口已销毁")
+
+        apply_pin_order(_Broken(), [_FakePin()],
+                        SimpleNamespace(get_pin_order=lambda: "bottom"))
+
+
+class TestBatchCloseSkipsConfirmation:
+    def test_close_all_passes_confirm_false(self, manager):
+        """批量关闭是用户一次性的决定，不能逐张弹确认。"""
+        pins = [_FakePin(), _FakePin()]
+        manager.pin_windows.extend(pins)
+
+        manager.close_all()
+
+        assert [pin.close_confirm for pin in pins] == [False, False]
+
+
+# ============================================================================
+# 多选（选中集合属于管理器，拖动一张带动整组）
+# ============================================================================
+
+class TestSelection:
+    def test_selecting_and_deselecting_emits_once_per_change(self, manager):
+        pin = _FakePin()
+        manager.pin_windows.append(pin)
+        changes = []
+        manager.selection_changed.connect(lambda: changes.append(True))
+
+        assert manager.select(pin) is True
+        assert manager.is_selected(pin) is True
+        assert manager.selected_pins() == [pin]
+
+        assert manager.select(pin) is True          # 重复选中不算变化
+        assert len(changes) == 1
+
+        assert manager.select(pin, False) is False
+        assert manager.selected_pins() == []
+        assert len(changes) == 2
+
+    def test_toggle_flips_the_state(self, manager):
+        pin = _FakePin()
+        manager.pin_windows.append(pin)
+
+        assert manager.toggle_selection(pin) is True
+        assert manager.toggle_selection(pin) is False
+
+    def test_clear_selection_is_silent_when_empty(self, manager):
+        changes = []
+        manager.selection_changed.connect(lambda: changes.append(True))
+
+        manager.clear_selection()
+
+        assert changes == []
+
+    def test_selected_pins_drops_windows_that_are_gone(self, manager):
+        """关掉的窗口不能留在集合里，否则下次拖动会去动一个已销毁的窗口。"""
+        kept, closed = _FakePin(), _FakePin()
+        manager.pin_windows.extend([kept, closed])
+        manager.select(kept)
+        manager.select(closed)
+
+        manager.pin_windows.remove(closed)
+
+        assert manager.selected_pins() == [kept]
+
+    def test_closing_a_pin_removes_it_from_the_selection(self, manager):
+        pin = _FakePin()
+        manager.pin_windows.append(pin)
+        manager.select(pin)
+
+        manager._on_pin_closed(pin)
+
+        assert manager.selected_pins() == []
+
+    def test_move_selected_moves_the_others_by_the_same_delta(self, manager):
+        anchor, other = _FakePin(), _FakePin()
+        manager.pin_windows.extend([anchor, other])
+        manager.select(anchor)
+        manager.select(other)
+
+        manager.move_selected(anchor, QPoint(10, -5))
+
+        assert anchor.moved_to == []                    # 锚点自己已经动过了
+        assert other.moved_to == [QPoint(10, -5)]
+
+    def test_move_selected_ignores_unselected_pins(self, manager):
+        anchor, other = _FakePin(), _FakePin()
+        manager.pin_windows.extend([anchor, other])
+        manager.select(anchor)
+
+        manager.move_selected(anchor, QPoint(3, 3))
+
+        assert other.moved_to == []
+
+    def test_close_selected_closes_and_clears(self, manager):
+        first, second = _FakePin(), _FakePin()
+        manager.pin_windows.extend([first, second])
+        manager.select(first)
+        manager.select(second)
+
+        assert manager.close_selected() == 2
+
+        assert [pin.closed_count for pin in (first, second)] == [1, 1]
+        assert [pin.close_confirm for pin in (first, second)] == [False, False]
+        assert manager.selected_pins() == []
+
+    def test_close_selected_without_a_selection_does_nothing(self, manager):
+        manager.pin_windows.append(_FakePin())
+
+        assert manager.close_selected() == 0

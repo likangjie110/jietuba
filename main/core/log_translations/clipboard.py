@@ -128,4 +128,11 @@ TRANSLATIONS: dict[str, str] = {
     "设置剪贴板文件文本失败": "Failed to set clipboard file text",
     "文件特殊粘贴项 {item_id} ({transform_key})": "File special-pasted item {item_id} ({transform_key})",
     "已移动到分组 {group_id}": "Moved to group {group_id}",
+
+    # -- 2026-09-19 图像文件与忽略回写 --
+    "忽略本程序回写的剪贴板内容: {preview}": "Ignoring clipboard content written back by this app: {preview}",
+    "当前平台不支持自动粘贴，内容已复制到剪贴板，请手动粘贴": "Auto-paste is not supported on this platform; the content is on the clipboard, please paste manually",
+    "标记剪贴板回写": "Marking the clipboard write-back",
+    "读取图片复制形态": "Reading the image copy mode",
+    "把图片以文件形式放进剪贴板": "Offering the image to the clipboard as a file",
 }

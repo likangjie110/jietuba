@@ -15,6 +15,7 @@
 
 import ctypes
 
+from core.platform.capabilities import Capability, available
 from core.platform.detection import IS_MACOS, IS_WINDOWS
 
 
@@ -45,6 +46,57 @@ def capture_foreground():
             return NSWorkspace.sharedWorkspace().frontmostApplication()
         except Exception as e:
             log_exception(e, T("获取前台应用"))
+            return None
+
+    return None
+
+
+def foreground_app_name() -> str | None:
+    """当前前台程序的可读名字；没有实现或取不到时返回 None。
+
+    用来判断「这个程序在忽略列表里」：macOS 取的是 ``localizedName``
+    （「访达」这类本地化名字），Windows 取可执行文件名并去掉 ``.exe``。
+    名字本身不可比较（本地化、大小写、.exe 后缀都随平台变），所以比较规则由
+    调用方统一做（见 ``shortcut_manager._is_ignored_app``）。
+    """
+    from core.logger import log_exception, T
+
+    if not available(Capability.FOREGROUND_APP):
+        return None
+
+    if IS_WINDOWS:
+        try:
+            from ctypes import byref, wintypes
+
+            from core.platform.process import get_process_identity
+
+            hwnd = _user32().GetForegroundWindow()
+            if not hwnd:
+                return None
+            pid = wintypes.DWORD()
+            _user32().GetWindowThreadProcessId(hwnd, byref(pid))
+            identity = get_process_identity(int(pid.value))
+            if not identity:
+                return None
+            image_name = identity[1] or ""
+            if image_name.lower().endswith(".exe"):
+                image_name = image_name[:-4]
+            return image_name or None
+        except Exception as e:
+            log_exception(e, T("获取前台程序名"))
+            return None
+
+    if IS_MACOS:
+        try:
+            from AppKit import NSWorkspace
+
+            app = NSWorkspace.sharedWorkspace().frontmostApplication()
+            if app is None:
+                return None
+            name = app.localizedName()
+            return str(name) if name else None
+        except Exception as e:
+            log_exception(e, T("获取前台程序名"))
             return None
 
     return None

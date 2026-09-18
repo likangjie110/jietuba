@@ -234,6 +234,7 @@ class _DotIndicator(QWidget):
 class WelcomeWizard(FrostedFramelessDialog):
     """欢迎向导对话框"""
 
+    # 平台没有系统权限门槛（Windows/Linux）时的步骤数；macOS 会多一个权限步骤（见 __init__）
     PAGE_COUNT = 6
     WINDOW_W = 960
     WINDOW_H = 680
@@ -243,6 +244,13 @@ class WelcomeWizard(FrostedFramelessDialog):
         self._config = config_manager
         self._current = 0
         self._theme_manager = get_ui_theme()
+
+        # 有权限需求才有那一步：侧栏步骤项在 _build_ui 里按步骤数建，所以要在这里定下来
+        from core.platform import permissions
+
+        self._has_permission_step = bool(permissions.requirements())
+        if self._has_permission_step:
+            self.PAGE_COUNT += 1
 
         self._setup_titlebar()
 
@@ -466,6 +474,7 @@ class WelcomeWizard(FrostedFramelessDialog):
             from .page3_clipboard import ClipboardHotkeyPage
             from .page5_translation import TranslationPage
             from .page6_finish import FinishPage
+            from .page_permission import PermissionGuidePage
         else:
             from page1_welcome import WelcomePage
             from page_hotkeys import HotkeyPage
@@ -473,9 +482,13 @@ class WelcomeWizard(FrostedFramelessDialog):
             from page3_clipboard import ClipboardHotkeyPage
             from page5_translation import TranslationPage
             from page6_finish import FinishPage
+            from page_permission import PermissionGuidePage
 
-        self._pages = [
-            WelcomePage(self._config),
+        # 权限步骤紧跟在欢迎页之后：热键、截图都要先有权限才有意义
+        self._pages = [WelcomePage(self._config)]
+        if self._has_permission_step:
+            self._pages.append(PermissionGuidePage(self._config))
+        self._pages += [
             HotkeyPage(self._config),
             ScreenshotHotkeyPage(self._config),
             ClipboardHotkeyPage(self._config),

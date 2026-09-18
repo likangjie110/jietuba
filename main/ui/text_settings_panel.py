@@ -525,8 +525,11 @@ class TextSettingsPanel(QWidget):
         # 阻断信号防止循环触发
         self.blockSignals(True)
         
-        # 字体
+        # 字体：一段文字里混了多种格式时，回显光标所在那一段的字体，
+        # 否则面板会显示成整条标注的默认字体，跟用户眼前看到的不一致
         font = item.font()
+        if getattr(item, "has_mixed_char_formats", None) and item.has_mixed_char_formats():
+            font = item.cursor_char_format().font()
         self.font_combo.setCurrentText(font.family())
         point_size = font.pointSize()
         if point_size <= 0:
@@ -551,8 +554,11 @@ class TextSettingsPanel(QWidget):
         self._update_background_color_btn()
         self.background_opacity_slider.setValue(self.background_opacity)
         
-        # 颜色
-        self.current_color = item.defaultTextColor()
+        # 颜色（同样按光标那一段回显）
+        color = item.defaultTextColor()
+        if getattr(item, "has_mixed_char_formats", None) and item.has_mixed_char_formats():
+            color = item.cursor_char_format().foreground().color()
+        self.current_color = color
         self.color_btn.set_color(self.current_color)
         
         # 移除特效状态同步

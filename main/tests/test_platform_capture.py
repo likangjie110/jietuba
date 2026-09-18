@@ -140,6 +140,61 @@ class TestCapability:
         assert capabilities.available(Capability.FRAME_CAPTURE, platform_name) is True
 
 
+class TestScreenCapturePermission:
+    """macOS 的「屏幕录制」权限：没授权时抓屏"成功"但只有桌面壁纸。
+
+    这类缺失必须能查出来并留下一条说明，否则用户只看到一张没有窗口的截图。
+    """
+
+    @staticmethod
+    def _fake_quartz(monkeypatch, *, preflight, request=None):
+        module = type(sys)("Quartz")
+        module.CGPreflightScreenCaptureAccess = lambda: preflight
+        module.CGRequestScreenCaptureAccess = lambda: (
+            preflight if request is None else request)
+        monkeypatch.setitem(sys.modules, "Quartz", module)
+
+    def test_trusted_on_platforms_without_the_gate(self, monkeypatch):
+        monkeypatch.setattr(capture, "IS_MACOS", False)
+        assert capture.screen_capture_trusted() is True
+        assert capture.request_screen_capture_permission() is True
+
+    def test_reports_the_missing_permission(self, monkeypatch):
+        self._fake_quartz(monkeypatch, preflight=False)
+        monkeypatch.setattr(capture, "IS_MACOS", True)
+
+        assert capture.screen_capture_trusted() is False
+
+    def test_request_asks_the_system(self, monkeypatch):
+        """授权要用户点系统对话框，必须走 CGRequestScreenCaptureAccess 而不是只看状态。"""
+        self._fake_quartz(monkeypatch, preflight=False, request=True)
+        monkeypatch.setattr(capture, "IS_MACOS", True)
+
+        assert capture.request_screen_capture_permission() is True
+
+    def test_missing_pyobjc_is_treated_as_trusted(self, monkeypatch):
+        monkeypatch.setitem(sys.modules, "Quartz", None)
+        monkeypatch.setattr(capture, "IS_MACOS", True)
+
+        assert capture.screen_capture_trusted() is True
+        assert capture.request_screen_capture_permission() is True
+
+    def test_warning_is_logged_once(self, monkeypatch):
+        """抓屏是高频动作，同一条说明每进程只留一次。"""
+        logged = []
+        monkeypatch.setattr("core.logger.log_warning",
+                            lambda msg, module=None: logged.append(msg.render()))
+        capture.reset_permission_warning()
+
+        capture.warn_missing_screen_capture_permission()
+        capture.warn_missing_screen_capture_permission()
+
+        assert len(logged) == 1
+        # 不给具体措辞断言（语言可切换），只确认是「怎么修」那条说明：两种语言里都带这个提示
+        assert "−" in logged[0]
+        capture.reset_permission_warning()
+
+
 class TestCreateSession:
 
     @pytest.fixture

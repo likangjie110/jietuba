@@ -20,6 +20,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_DIR = SCRIPT_DIR
 MAIN_APP = "main/main_app.py"
 SVG_DIR = "svg"
+#: 品牌图标（make_app_icons.py 生成；缺了退回托盘图标）
+BRAND_ICON = os.path.join("build", "icons", "jietuba.ico")
 BUILD_DIR = "build"
 DIST_DIR = "dist"
 EXE_NAME = "jietuba_pp"
@@ -255,7 +257,7 @@ exe = EXE(
     a.datas,
     [],
     name='{EXE_NAME}',
-    icon='托盘.ico',
+    icon=BRAND_ICON if Path(BRAND_ICON).exists() else '托盘.ico',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

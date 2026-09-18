@@ -128,6 +128,8 @@ TRANSLATIONS: dict[str, str] = {
     "查询进程标识": "Querying process identity",
     "关闭进程句柄": "Closing process handle",
     "终止进程": "Terminating process",
+    "重开本程序": "Relaunching the app",
+    "已安排退出后重新打开 {path}": "Scheduled reopening {path} after exit",
 
     # core/resource_manager.py
     "SVG 渲染图标": "Rendering SVG icon",
@@ -152,4 +154,119 @@ TRANSLATIONS: dict[str, str] = {
     "按键被 {handler_name} 消费 (key=0x{key_hex:X})": "Key consumed by {handler_name} (key=0x{key_hex:X})",
     "系统热键被 {handler_name} 拦截 (id={hotkey_id})": "System hotkey intercepted by {handler_name} (id={hotkey_id})",
     "检查快捷键可用性": "Checking hotkey availability",
+
+    # core/platform/pynput_macos.py 与 core/platform/pointer.py 的键盘监听
+    "pynput 的 Darwin 后端不可用，跳过键盘布局主线程收口: {e}":
+        "pynput's Darwin backend is unavailable, skipping the main-thread keyboard layout fix: {e}",
+    "pynput 内部接口已变化，键盘布局主线程收口未安装（键盘监听可能崩进程）":
+        "pynput internals changed, the main-thread keyboard layout fix was not installed "
+        "(keyboard listeners may crash the process)",
+    "非主线程请求键盘布局（Carbon 输入源接口只能在主线程调用），已退回缓存值或空值":
+        "Keyboard layout requested off the main thread (Carbon input source APIs may only be "
+        "called on the main thread); falling back to the cached or empty value",
+    "启动键盘监听失败: {e}": "Failed to start keyboard listener: {e}",
+    "当前平台无法监听全局鼠标事件": "This platform cannot listen for global mouse events",
+    "启动鼠标监听失败: {e}": "Failed to start mouse listener: {e}",
+
+    # core/platform/hotkey.py 与 core/shortcut_manager.py 的输入监听权限（macOS 辅助功能）
+    "请求辅助功能权限": "Requesting accessibility permission",
+    "全局热键收不到事件：macOS 需要「辅助功能」权限（系统设置 → 隐私与安全性 → 辅助功能）。"
+    "授权后热键会自动生效，不用重启程序；重新打包过的应用请先用「−」移除旧条目再重新添加":
+        "Global hotkeys receive no events: macOS requires Accessibility permission "
+        "(System Settings → Privacy & Security → Accessibility). Hotkeys take effect as soon "
+        "as you grant it, no restart needed; for a rebuilt app, remove the stale entry with "
+        "\"−\" and add it again",
+    "已获得「辅助功能」权限，全局热键监听已重启":
+        "Accessibility permission granted, global hotkey listener restarted",
+
+    # core/platform/capture.py 与 core/bootstrap.py 的「屏幕录制」权限
+    "请求屏幕录制权限": "Requesting screen recording permission",
+    "检查屏幕录制权限": "Checking screen recording permission",
+    "截图里只有桌面、窗口都不见了：macOS 需要「屏幕录制」权限（系统设置 → 隐私与安全性 → 录屏与系统录音）。"
+    "授权后要重启本程序；重新打包过的应用请先用「−」移除旧条目再重新添加":
+        "Screenshots contain only the desktop and no windows: macOS requires Screen Recording "
+        "permission (System Settings → Privacy & Security → Screen & System Audio Recording). "
+        "Restart this app after granting it; for a rebuilt app, remove the stale entry with "
+        "\"−\" and add it again",
+    "保持窗口可见（不随失焦隐藏）": "Keeping a window visible when the app is inactive",
+    "「屏幕录制」权限已开启，需要重启本程序后截图才包含窗口":
+        "Screen Recording permission is now granted; restart this app before screenshots include windows",
+
+    # core/actions.py：动作注册表和全局鼠标动作的执行
+    "确定鼠标位置的抓取范围": "Determining the capture region at the cursor",
+    "静默截屏": "Silent capture",
+    "静默截屏: {width}x{height} @({x}, {y})": "Silent capture: {width}x{height} @({x}, {y})",
+    "静默截图失败，动作未执行: {action_id}": "Silent capture failed, action skipped: {action_id}",
+    "钉图创建失败": "Failed to create pinned window",
+    "显示截图遮罩: {rect}": "Showing capture mask: {rect}",
+    "显示截图遮罩": "Showing capture mask",
+    "读取忽略程序列表": "Reading the ignored-application list",
+    "不认识的动作: {action_id}": "Unknown action: {action_id}",
+    "动作触发: {action_id}": "Action triggered: {action_id}",
+    "开始识别截图文字": "Started reading text from the screenshot",
+    "开始识别表格文字": "Started reading table text from the screenshot",
+    "识别截图文字": "Reading text from the screenshot",
+    "未识别到文字": "No text recognized",
+    "识别到的文字已复制到剪贴板（{count} 字）":
+        "Recognized text copied to the clipboard ({count} characters)",
+    "OCR 不可用，无法识别截图文字": "OCR unavailable, cannot read text from the screenshot",
+    "截图内容为空，无法识别文字": "Empty screenshot, cannot read text",
+    # -- core/platform/window_ops.py（亚克力背景）--
+    "窗口是子部件，没有独立原生窗口，跳过亚克力背景":
+        "Window is a child widget without its own native window; skipping acrylic background",
+    "应用亚克力背景（Windows）": "Applying the acrylic background (Windows)",
+    "应用亚克力背景（macOS）": "Applying the acrylic background (macOS)",
+    "平台不支持亚克力背景，跳过": "Platform does not support the acrylic background, skipping",
+    "当前平台没有独立的「应用图标」，跳过":
+        "This platform has no separate application icon, skipping",
+    "设置应用图标": "Setting the application icon",
+    "Win11 系统背景材质不可用（hr={hr}），改试 accent 路径":
+        "Windows 11 system backdrop unavailable (hr={hr}), trying the accent path instead",
+    "Windows 的亚克力两条路都不通，退回不透明外观":
+        "Both Windows acrylic paths failed, falling back to an opaque look",
+    "应用亚克力背景": "Applying the acrylic background",
+
+    # -- core/platform/focus.py --
+    "获取前台程序名": "Getting the foreground app name",
+
+    # -- core/resource_manager.py（自定义 logo）--
+    "读取自定义 logo 路径": "Reading the custom logo path",
+    "自定义 logo 文件不存在: {path}": "Custom logo file does not exist: {path}",
+    "自定义 logo 无法解析为图片: {path}": "Custom logo could not be parsed as an image: {path}",
+    "应用图标已刷新: {state}": "Application icon refreshed: {state}",
+
+    # -- core/actions.py --
+    "剪贴板里没有图片，无法翻译": "No image in the clipboard, cannot translate",
+    "读取翻译参数": "Reading translation settings",
+    "图片翻译: {width}x{height}": "Image translation: {width}x{height}",
+    "读取截图保存目录": "Reading the screenshot save directory",
+    "没有配置截图保存目录，无法打开": "No screenshot save directory configured, cannot open it",
+    "打开截图保存目录失败: {folder}": "Failed to open the screenshot save directory: {folder}",
+    "剪贴板里没有文字，无法贴图": "No text in the clipboard, cannot create a pin",
+    "已把剪贴板文字做成贴图（{count} 字）":
+        "Created a pin from the clipboard text ({count} characters)",
+
+    # -- core/shortcut_manager.py --
+    "全局鼠标监听已启动（{count} 个手势）": "Global mouse listener started ({count} gestures)",
+    "全局鼠标监听启动失败，鼠标动作不可用":
+        "Failed to start the global mouse listener; mouse actions are unavailable",
+    "忽略不认识的动作绑定: {action_id}": "Ignoring unknown action binding: {action_id}",
+    "忽略不认识的鼠标手势: {gesture}": "Ignoring unknown mouse gesture: {gesture}",
+    "忽略不认识的修饰键: {modifier}": "Ignoring unknown modifier key: {modifier}",
+
+    # -- 2026-09-19 新增设置与更新源 --
+    "打开更新源失败: {url}": "Failed to open the update source: {url}",
+    "网络代理: 直连": "Network proxy: direct connection",
+    "网络代理: {host}:{port}": "Network proxy: {host}:{port}",
+    "读取代理配置": "Reading the proxy configuration",
+    "代理连接失败: {host}:{port} {e}": "Proxy connection failed: {host}:{port} {e}",
+    "图片已按文件形式放入剪贴板: {path}": "Image offered to the clipboard as a file: {path}",
+    "图片写入临时文件失败: {path}": "Failed to write the image to a temporary file: {path}",
+    "把图片以文件形式放进剪贴板": "Offering the image to the clipboard as a file",
+    "读取主程序实例": "Reading the main app instance",
+    "读取识别结果处理选项": "Reading the recognition result options",
+    "读取公式引擎设置": "Reading the formula engine setting",
+    "公式已复制到剪贴板（{count} 字）": "Formula copied to the clipboard ({count} characters)",
+    "设置的公式引擎不可用，改用 {engine}: {configured}": "Configured formula engine is unavailable, using {engine} instead: {configured}",
+    "未识别到公式": "No formula recognized",
 }

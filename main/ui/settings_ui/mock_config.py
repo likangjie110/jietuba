@@ -3,7 +3,7 @@
 import os
 import sys
 
-from settings.tool_settings import ANNOTATION_TOOL_SHORTCUTS
+from settings.tool_settings import ANNOTATION_TOOL_SHORTCUTS, ToolSettingsManager
 
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication
@@ -17,10 +17,14 @@ APP_DEFAULT_SETTINGS = {
     "clipboard_hotkey_2": "ctrl+shift+v",
     "translation_hotkey": "",
     "translation_hotkey_2": "",
+    # 动作快捷键/托盘开关：直接取真实默认值，避免 mock 里另抄一份
+    "action_hotkeys": dict(ToolSettingsManager.APP_DEFAULT_SETTINGS["action_hotkeys"]),
+    "action_tray": dict(ToolSettingsManager.APP_DEFAULT_SETTINGS["action_tray"]),
     "double_click_copy_close": True,
     "cross_tool_selection": True,
     "text_always_on_top": True,
-    "smart_selection": True,
+    "ui_detection": "element",
+    "ui_detection_margin": 0,
     "log_enabled": True,
     "log_level": "INFO",
     "log_retention_days": 7,
@@ -95,8 +99,10 @@ class MockConfig:
     def set_cross_tool_selection_enabled(self, v): pass
     def get_text_always_on_top_enabled(self): return True
     def set_text_always_on_top_enabled(self, v): pass
-    def get_smart_selection(self): return False
-    def set_smart_selection(self, v): pass
+    def get_ui_detection(self): return "element"
+    def set_ui_detection(self, v): pass
+    def get_ui_detection_margin(self): return 0
+    def set_ui_detection_margin(self, v): pass
     def get_log_enabled(self): return True
     def set_log_enabled(self, v): pass
     def get_log_dir(self): return os.path.expanduser("~")
@@ -180,6 +186,12 @@ class MockConfig:
     def get_translation_preserve_formatting(self): return True
     def set_translation_preserve_formatting(self, v): pass
     def set_translation_target_lang(self, v): pass
+    def get_action_hotkeys(self):
+        return {k: list(v) for k, v in self.APP_DEFAULT_SETTINGS["action_hotkeys"].items()}
+    def set_action_hotkeys(self, table): pass
+    def get_action_tray_flags(self):
+        return dict(self.APP_DEFAULT_SETTINGS["action_tray"])
+    def set_action_tray_flags(self, flags): pass
     def get_hotkey(self): return "ctrl+shift+a"
     def set_hotkey(self, v): pass
     def get_hotkey_2(self): return "ctrl+shift+a"
@@ -192,6 +204,12 @@ class MockConfig:
     def set_translation_hotkey(self, v): pass
     def get_translation_hotkey_2(self): return ""
     def set_translation_hotkey_2(self, v): pass
+    def get_mouse_gestures(self): return {}
+    def set_mouse_gestures(self, bindings): pass
+    def get_mouse_capture_overlay_enabled(self): return False
+    def set_mouse_capture_overlay_enabled(self, v): pass
+    def get_mouse_ignored_apps(self): return []
+    def set_mouse_ignored_apps(self, names): pass
     def get_clipboard_enabled(self): return True
     def set_clipboard_enabled(self, v): pass
     def get_clipboard_auto_paste(self): return False

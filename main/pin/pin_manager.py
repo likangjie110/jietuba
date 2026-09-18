@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt, QObject, Signal, QPoint
 from PySide6.QtGui import QImage
 from PySide6.QtWidgets import QApplication
 from core import log_debug, log_info, log_error
-from core.logger import T
+from core.logger import log_exception, T
 
 from core.platform import window_ops
 
@@ -19,6 +19,49 @@ from core.platform import window_ops
 def _set_topmost(pin, on: bool) -> None:
     """切换某个钉图窗口的置顶状态。"""
     window_ops.set_topmost(pin, on)
+
+
+def resolve_pin_position(position: QPoint, image_size, config_manager) -> QPoint:
+    # 说明：image_size 只有「屏幕中央」模式用得上；拿不到尺寸时退回选区位置。
+    """按设置决定新贴图出现在哪。
+
+    - ``selection``（默认）：跟着选区位置（贴图出现在刚框住的东西旁边）
+    - ``cursor``：鼠标位置
+    - ``center``：主屏中央（窗口自身居中，而不是左上角落在中央）
+    """
+    from pin.pin_window import pin_config_value
+
+    mode = str(pin_config_value(config_manager, "get_pin_new_position", "selection") or "")
+    if mode == "cursor":
+        from PySide6.QtGui import QCursor
+
+        return QCursor.pos()
+    if mode == "center" and image_size is not None:
+        screen = QApplication.primaryScreen()
+        if screen is not None:
+            center = screen.availableGeometry().center()
+            return QPoint(center.x() - image_size.width() // 2,
+                          center.y() - image_size.height() // 2)
+    return position
+
+
+def apply_pin_order(pin_window, existing_pins: List, config_manager) -> None:
+    """按设置决定新贴图压在已有贴图上面还是下面。
+
+    置顶标志（WindowStaysOnTopHint）管的是「压住别的应用」，贴图之间的前后顺序由
+    窗口的 raise/lower 决定：新建的窗口默认在最上面，``bottom`` 时把它放下去、
+    再把其它贴图提起来。
+    """
+    from pin.pin_window import pin_config_value
+
+    if str(pin_config_value(config_manager, "get_pin_order", "top") or "") != "bottom":
+        return
+    try:
+        pin_window.lower()
+        for other in existing_pins:
+            other.raise_()
+    except Exception as e:
+        log_exception(e, T("调整贴图前后顺序"))
 
 
 class PinManager(QObject):
@@ -39,6 +82,7 @@ class PinManager(QObject):
     pin_created = Signal(object)  # 钉图创建信号 (PinWindow)
     pin_closed = Signal(object)   # 钉图关闭信号 (PinWindow)
     all_pins_closed = Signal()    # 所有钉图关闭信号
+    selection_changed = Signal()  # 多选集合变化（各窗口据此刷新选中外观）
     
     def __new__(cls, *args, **kwargs):
         """确保单例：通过 __new__ 控制实例创建，静默返回已有实例"""
@@ -67,6 +111,8 @@ class PinManager(QObject):
         super().__init__()
         self._initialized = True
         self.pin_windows: List = []  # 所有钉图窗口列表
+        # 多选：被选中的窗口按点击顺序排列，拖动其中一张会带动整组
+        self._selected: List = []
         self._topmost_suppressed = False    # 是否已压制置顶
         self._suppressed_pins: List = []    # 被压制的 pin 窗口列表（用于精确恢复）
         
@@ -96,17 +142,21 @@ class PinManager(QObject):
             PinWindow: 创建的钉图窗口实例
         """
         from pin.pin_window import PinWindow
-        
+
+        existing = list(self.pin_windows)
+        image_size = image.size() if image is not None else None
+
         # 创建钉图窗口
         pin_window = PinWindow(
             image=image,
-            position=position,
+            position=resolve_pin_position(position, image_size, config_manager),
             config_manager=config_manager,
             drawing_items=drawing_items,
             selection_offset=selection_offset,
             number_next=number_next,
         )
-        
+        apply_pin_order(pin_window, existing, config_manager)
+
         # 连接关闭信号
         pin_window.closed.connect(lambda: self._on_pin_closed(pin_window))
         
@@ -122,6 +172,10 @@ class PinManager(QObject):
     
     def _on_pin_closed(self, pin_window):
         """钉图窗口关闭回调"""
+        if pin_window in self._selected:
+            # 关掉的窗口不能留在选中集合里，否则下次拖动会去动一个已销毁的窗口
+            self._selected.remove(pin_window)
+            self.selection_changed.emit()
         if pin_window in self.pin_windows:
             self.pin_windows.remove(pin_window)
             self.pin_closed.emit(pin_window)
@@ -144,6 +198,67 @@ class PinManager(QObject):
             self.pin_windows.remove(pin_window)
             log_debug(T("钉图已移除 (剩余 {count} 个)", count=len(self.pin_windows)), "PinManager")
     
+    # ── 多选 ──────────────────────────────────────────
+    #
+    # 选中集合属于管理器而不是单个窗口：拖动一张时要带动整组，画选中框时也要知道
+    # 别处选了什么。窗口只负责「把 Ctrl/Cmd+点击告诉自己属于哪个集合」。
+
+    def selected_pins(self) -> List:
+        """当前被选中的贴图（按选中顺序）。"""
+        return [pin for pin in self._selected if pin in self.pin_windows]
+
+    def is_selected(self, pin) -> bool:
+        return pin in self._selected
+
+    def select(self, pin, selected: bool = True) -> bool:
+        """选中/取消选中一张贴图；返回它现在的选中状态。"""
+        if selected:
+            if pin not in self._selected:
+                self._selected.append(pin)
+                self.selection_changed.emit()
+        elif pin in self._selected:
+            self._selected.remove(pin)
+            self.selection_changed.emit()
+        return pin in self._selected
+
+    def toggle_selection(self, pin) -> bool:
+        """切换一张贴图的选中状态；返回切换后的状态。"""
+        return self.select(pin, not self.is_selected(pin))
+
+    def clear_selection(self) -> None:
+        if not self._selected:
+            return
+        self._selected.clear()
+        self.selection_changed.emit()
+
+    def move_selected(self, anchor, delta: QPoint) -> None:
+        """把选中集合里的其它贴图按 ``delta`` 平移（``anchor`` 自己已经动过了）。"""
+        for pin in self.selected_pins():
+            if pin is anchor:
+                continue
+            try:
+                pin.move(pin.pos() + delta)
+                if pin.toolbar and pin.toolbar.isVisible():
+                    pin.toolbar.sync_with_pin_window()
+            except Exception as e:
+                log_exception(e, T("移动选中的贴图"))
+
+    def close_selected(self) -> int:
+        """关闭所有选中的贴图，返回关掉几张（批量关闭，不逐张确认）。"""
+        pins = self.selected_pins()
+        if not pins:
+            log_debug(T("没有选中的贴图"), "PinManager")
+            return 0
+        log_debug(T("关闭选中的 {count} 张贴图", count=len(pins)), "PinManager")
+        self._selected.clear()
+        for pin in pins:
+            try:
+                pin.close_window(confirm=False)
+            except Exception as e:
+                log_error(T("关闭选中的贴图失败: {e}", e=e), "PinManager")
+        self.selection_changed.emit()
+        return len(pins)
+
     def close_all(self):
         """关闭所有钉图窗口"""
         if len(self.pin_windows) == 0:
@@ -157,7 +272,8 @@ class PinManager(QObject):
 
         for pin_window in pins_to_close:
             try:
-                pin_window.close_window()
+                # 批量关闭不再逐张确认（见 PinWindow.close_window）
+                pin_window.close_window(confirm=False)
             except Exception as e:
                 log_error(T("关闭钉图窗口失败: {e}", e=e), "PinManager")
 

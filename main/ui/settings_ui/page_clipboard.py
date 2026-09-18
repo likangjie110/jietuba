@@ -16,10 +16,11 @@ from ui.dialogs import (
 )
 from ui.fluent_lite import (
     SwitchSettingCard, SettingCard as FSettingCard,
-    FluentIcon, SpinBox, CaptionLabel,
+    FluentIcon, SpinBox, CaptionLabel, ComboBox,
     PushButton, PrimaryPushButton, TransparentToolButton,
 )
 from .components import SettingCardGroup, WhiteCard, apply_theme_text_style
+from .page_misc import _select_combo
 
 
 def create_clipboard_page(dialog) -> QWidget:
@@ -46,6 +47,38 @@ def create_clipboard_page(dialog) -> QWidget:
     enabled_card.setChecked(dialog.config_manager.get_clipboard_enabled())
     dialog.clipboard_enabled_toggle = enabled_card
     grp_basic.addSettingCard(enabled_card)
+
+    # 复制图像为文件：有些程序（终端、聊天工具、IDE）粘贴时只认文件
+    image_mode_card = FSettingCard(
+        FluentIcon.PASTE,
+        dialog.tr("Copy Images as Files"),
+        dialog.tr("Also offer a PNG file, for apps that only accept file pastes."),
+        parent=grp_basic,
+    )
+    dialog.clipboard_image_mode_combo = ComboBox(image_mode_card)
+    dialog.clipboard_image_mode_combo.setFixedWidth(150)
+    dialog.clipboard_image_mode_combo.addItem(dialog.tr("Automatic"), userData="auto")
+    dialog.clipboard_image_mode_combo.addItem(dialog.tr("File Only"), userData="file_only")
+    dialog.clipboard_image_mode_combo.addItem(dialog.tr("Image Only"), userData="image_only")
+    _select_combo(dialog.clipboard_image_mode_combo,
+                  dialog.config_manager.get_clipboard_image_copy_mode())
+    image_mode_card.hBoxLayout.addWidget(
+        dialog.clipboard_image_mode_combo, 0, Qt.AlignmentFlag.AlignRight
+    )
+    image_mode_card.hBoxLayout.addSpacing(16)
+    grp_basic.addSettingCard(image_mode_card)
+
+    # 忽略复制按键宏：粘贴时程序自己会写回剪贴板并注入 Ctrl+V，
+    # 不忽略的话这次回写会被当成一次新的复制（重复条目 + 顺序跳动）
+    ignore_own_card = SwitchSettingCard(
+        FluentIcon.PASTE,
+        dialog.tr("Ignore Own Copy Key Macro"),
+        dialog.tr("Do not record the paste-back this app writes to the clipboard."),
+        parent=grp_basic,
+    )
+    ignore_own_card.setChecked(dialog.config_manager.get_clipboard_ignore_own_copy())
+    dialog.clipboard_ignore_own_toggle = ignore_own_card
+    grp_basic.addSettingCard(ignore_own_card)
 
     layout.addWidget(grp_basic)
 

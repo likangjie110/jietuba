@@ -126,4 +126,11 @@ TRANSLATIONS: dict[str, str] = {
     # -- canvas/items/drawing_items.py --
     "DrawingItem paint 异常: {e}": "DrawingItem paint exception: {e}",
     "内容为空，自动删除": "Content is empty, deleting automatically",
+
+    # -- canvas/view.py --
+    "UI 检测已启用（{mode}），找到 {window_count} 个窗口":
+        "UI detection enabled ({mode}), {window_count} windows found",
+    "UI 检测已关闭": "UI detection disabled",
+    "当前平台没有元素检测后端，UI 检测按「仅窗口」工作":
+        "This platform has no element detection backend; UI detection works at window level only",
 }

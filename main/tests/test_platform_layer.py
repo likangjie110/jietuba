@@ -6,6 +6,9 @@
 标了支持，都要在这里失败。当前平台的实际答案只做少量核对。
 """
 
+import sys
+from types import SimpleNamespace
+
 import pytest
 
 from core.platform import (
@@ -171,6 +174,39 @@ class TestTruthTable:
         for capability in ALL_CAPABILITIES:
             assert support(capability) is support(capability, declared)
 
+    def test_backend_name_table_is_well_formed(self):
+        """后端名表：每个能力一条、值必须是字符串、源码里不许有重复键。
+
+        出过一次事故：整段支持矩阵被误粘贴进 ``_BACKEND_NAMES``，重复键把真条目覆盖成
+        ``Support`` 枚举——而 ``backend_name()`` 的空值又被 ``or "native"`` 兜住，功能上
+        看不出来。所以这里连源码一起查：重复键在 dict 字面量里不报错，只能靠 AST 发现。
+        """
+        import ast
+        import inspect
+
+        from core.platform import capabilities as caps
+
+        tree = ast.parse(inspect.getsource(caps))
+        keys = None
+        for node in tree.body:
+            if isinstance(node, ast.AnnAssign) and getattr(node.target, "id", "") == "_BACKEND_NAMES":
+                keys = [ast.unparse(key) for key in node.value.keys]
+                break
+        assert keys is not None, "源码里找不到 _BACKEND_NAMES"
+        duplicates = {key for key in keys if keys.count(key) > 1}
+        assert not duplicates, f"后端名表里有重复键（后面的会静默覆盖前面的）: {duplicates}"
+
+        for capability in ALL_CAPABILITIES:
+            assert capability in caps._BACKEND_NAMES, capability
+            for platform, name in caps._BACKEND_NAMES[capability].items():
+                assert isinstance(name, str), f"{capability.value}/{platform} 的后端名不是字符串"
+
+    def test_foreground_app_is_missing_on_linux(self):
+        """忽略程序列表要靠「当前前台是哪个程序」，Linux 上没有实现。"""
+        assert available(Capability.FOREGROUND_APP, "windows") is True
+        assert available(Capability.FOREGROUND_APP, "macos") is True
+        assert available(Capability.FOREGROUND_APP, "linux") is False
+
 
 class TestSmartSelectionWiring:
     """窗口枚举可用性 = 「平台声明有后端」且「依赖真的导入成功」。
@@ -212,3 +248,84 @@ def _table(capability):
     from core.platform import capabilities as caps
 
     return caps._SUPPORT_TABLE[capability]
+
+
+class TestForegroundAppName:
+    """「当前前台是哪个程序」——忽略程序列表唯一依赖的查询。"""
+
+    def test_none_when_the_platform_declares_no_backend(self, monkeypatch):
+        from core.platform import focus
+
+        monkeypatch.setattr(focus, "available", lambda *a, **k: False)
+
+        assert focus.foreground_app_name() is None
+
+    def _enable(self, monkeypatch, focus):
+        monkeypatch.setattr(focus, "available", lambda *a, **k: True)
+
+    def test_macos_uses_the_localized_application_name(self, monkeypatch):
+        from core.platform import focus
+
+        self._enable(monkeypatch, focus)
+        monkeypatch.setattr(focus, "IS_WINDOWS", False)
+        monkeypatch.setattr(focus, "IS_MACOS", True)
+
+        app = SimpleNamespace(localizedName=lambda: "访达")
+        workspace = SimpleNamespace(frontmostApplication=lambda: app)
+        monkeypatch.setitem(sys.modules, "AppKit",
+                            SimpleNamespace(NSWorkspace=SimpleNamespace(
+                                sharedWorkspace=lambda: workspace)))
+
+        assert focus.foreground_app_name() == "访达"
+
+    def test_macos_without_a_frontmost_application_is_none(self, monkeypatch):
+        from core.platform import focus
+
+        self._enable(monkeypatch, focus)
+        monkeypatch.setattr(focus, "IS_WINDOWS", False)
+        monkeypatch.setattr(focus, "IS_MACOS", True)
+        workspace = SimpleNamespace(frontmostApplication=lambda: None)
+        monkeypatch.setitem(sys.modules, "AppKit",
+                            SimpleNamespace(NSWorkspace=SimpleNamespace(
+                                sharedWorkspace=lambda: workspace)))
+
+        assert focus.foreground_app_name() is None
+
+    def test_macos_query_failure_is_swallowed(self, monkeypatch):
+        """取不到名字只该少过滤一次，不能把鼠标动作整条链路打挂。"""
+        from core.platform import focus
+
+        self._enable(monkeypatch, focus)
+        monkeypatch.setattr(focus, "IS_WINDOWS", False)
+        monkeypatch.setattr(focus, "IS_MACOS", True)
+        monkeypatch.setattr("core.logger.log_exception", lambda *_a, **_k: None)
+        monkeypatch.setitem(sys.modules, "AppKit", SimpleNamespace())
+
+        assert focus.foreground_app_name() is None
+
+    def test_windows_strips_the_executable_suffix(self, monkeypatch):
+        from core.platform import focus, process
+
+        self._enable(monkeypatch, focus)
+        monkeypatch.setattr(focus, "IS_WINDOWS", True)
+        monkeypatch.setattr(focus, "IS_MACOS", False)
+
+        user32 = SimpleNamespace(
+            GetForegroundWindow=lambda: 4242,
+            GetWindowThreadProcessId=lambda hwnd, out: out._obj.__setattr__("value", 99),
+        )
+        monkeypatch.setattr(focus, "_user32", lambda: user32)
+        monkeypatch.setattr(process, "get_process_identity", lambda pid: (123, "chrome.exe"))
+
+        assert focus.foreground_app_name() == "chrome"
+
+    def test_windows_without_a_foreground_window_is_none(self, monkeypatch):
+        from core.platform import focus
+
+        self._enable(monkeypatch, focus)
+        monkeypatch.setattr(focus, "IS_WINDOWS", True)
+        monkeypatch.setattr(focus, "IS_MACOS", False)
+        monkeypatch.setattr(focus, "_user32",
+                            lambda: SimpleNamespace(GetForegroundWindow=lambda: 0))
+
+        assert focus.foreground_app_name() is None

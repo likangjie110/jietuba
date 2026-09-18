@@ -72,7 +72,7 @@ def test_pin_translation_uses_existing_ocr_result():
         _ocr_mgr=manager,
     )
 
-    PinWindow._on_translate_clicked(window)
+    PinWindow.request_translation(window)
 
     helper.translate.assert_called_once_with(layer)
     manager.recognize_for_translation.assert_not_called()
@@ -100,7 +100,7 @@ def test_pin_translation_shows_dialog_before_scheduling_ocr(monkeypatch):
         lambda delay, callback: scheduled.append((delay, callback)),
     )
 
-    PinWindow._on_translate_clicked(window)
+    PinWindow.request_translation(window)
 
     assert events == ["dialog"]
     manager.recognize_for_translation.assert_not_called()

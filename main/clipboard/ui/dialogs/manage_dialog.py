@@ -142,13 +142,9 @@ class ManageDialog(FrostedFramelessDialog):
         )
         try:
             from core.resource_manager import ResourceManager
-            import os
-
-            icon_path = ResourceManager.get_resource_path("svg/托盘.svg")
-            if os.path.exists(icon_path):
-                from PySide6.QtGui import QIcon
-
-                self.setWindowIcon(QIcon(icon_path))
+            icon = ResourceManager.get_app_icon()
+            if not icon.isNull():
+                self.setWindowIcon(icon)
         except Exception:
             pass
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)

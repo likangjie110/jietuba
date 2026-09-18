@@ -55,6 +55,16 @@ class _GlobalHotkeyWidget(_TextWidget):
         return not self.validation_error and self.system_available
 
 
+def _action_row(action_id, primary=None, secondary=None, in_tray=False):
+    """一条动作行：动作下拉 + 主/备热键录入框 + 托盘开关。"""
+    return {
+        "action": _Combo(data_map={action_id: 0}, index=0),
+        "primary": primary if primary is not None else _GlobalHotkeyWidget(""),
+        "secondary": secondary if secondary is not None else _GlobalHotkeyWidget(""),
+        "tray": _Toggle(in_tray),
+    }
+
+
 class _Toggle:
     def __init__(self, checked=False):
         self._checked = checked
@@ -88,6 +98,13 @@ class _Combo:
     def findData(self, value):
         """找不到时返回 -1，与 Qt 的约定一致"""
         return self._data_map.get(value, -1)
+
+    def currentData(self):
+        """当前下标对应的数据（找不到返回 None，与 Qt 一致）"""
+        for key, index in self._data_map.items():
+            if index == self._index:
+                return key
+        return None
 
 
 class _Spin:
@@ -133,10 +150,16 @@ DEFAULTS = {
     "clipboard_hotkey_2": "ctrl+alt+v",
     "translation_hotkey": "ctrl+shift+t",
     "translation_hotkey_2": "",
+    "action_hotkeys": {
+        "screenshot": ["ctrl+shift+a", "ctrl+alt+a"],
+        "clipboard": ["ctrl+shift+v", ""],
+    },
+    "action_tray": {"screenshot": True, "clipboard": True},
     "inapp_cursor_move_mode": "both",
     "inapp_confirm": "ctrl+c",
     "inapp_pin": "ctrl+d",
-    "smart_selection": True,
+    "ui_detection": "element",
+    "ui_detection_margin": 0,
     "screenshot_save_enabled": True,
     "screenshot_save_path": r"D:\shots",
     "screenshot_format": "PNG",
@@ -159,6 +182,23 @@ def _config(defaults=None):
     return SimpleNamespace(APP_DEFAULT_SETTINGS=dict(DEFAULTS if defaults is None else defaults))
 
 
+def _page_dialog(**attrs):
+    """最小可用的假对话框。
+
+    「恢复默认」会真的按默认表建动作行（ComboBox/HotkeyEdit/SwitchButton），所以这里得
+    提供 tr 与输入框样式；页面容器不存在时建行会跳过视觉挂载。
+    """
+    fake = SimpleNamespace(
+        config_manager=_config(),
+        _action_hotkey_rows=[],
+        tr=lambda text: text,
+        _get_input_style=lambda: "",
+    )
+    for key, value in attrs.items():
+        setattr(fake, key, value)
+    return fake
+
+
 # ============================================================================
 # 快照与未保存检测
 # ============================================================================
@@ -169,25 +209,30 @@ class TestSnapshotSettings:
         assert SettingsDialog._snapshot_settings(SimpleNamespace()) == {}
 
     def test_text_widgets_are_captured_by_attribute_name(self):
-        fake = SimpleNamespace(
-            hotkey_input=_TextWidget("ctrl+shift+a"),
-            save_path_lbl=_TextWidget(r"D:\shots"),
-        )
+        fake = SimpleNamespace(save_path_lbl=_TextWidget(r"D:\shots"))
         snap = SettingsDialog._snapshot_settings(fake)
-        assert snap == {"hotkey_input": "ctrl+shift+a", "save_path_lbl": r"D:\shots"}
+        assert snap == {"save_path_lbl": r"D:\shots"}
 
     def test_each_widget_family_uses_its_own_getter(self):
         fake = SimpleNamespace(
-            hotkey_input=_TextWidget("k"),
-            smart_toggle=_Toggle(True),
+            save_path_lbl=_TextWidget("k"),
+            ui_detection_combo=_Combo(index=2),
             log_level_combo=_Combo(index=3),
             cooldown_spinbox=_Spin(0.25),
         )
         snap = SettingsDialog._snapshot_settings(fake)
-        assert snap["hotkey_input"] == "k"
-        assert snap["smart_toggle"] is True
+        assert snap["save_path_lbl"] == "k"
+        assert snap["ui_detection_combo"] == 2
         assert snap["log_level_combo"] == 3
         assert snap["cooldown_spinbox"] == 0.25
+
+    def test_action_rows_are_captured_as_a_whole_table(self):
+        """动作是可增删的，快照必须把「行本身」记下来，否则加了行动作也算没变。"""
+        fake = _page_dialog(
+            _action_hotkey_rows=[_action_row("screenshot", _GlobalHotkeyWidget("ctrl+1"), _GlobalHotkeyWidget(""), True)],
+        )
+        snap = SettingsDialog._snapshot_settings(fake)
+        assert snap == {"action_hotkeys": [("screenshot", "ctrl+1", "", True)]}
 
     def test_inapp_shortcuts_are_namespaced_to_avoid_collisions(self):
         fake = SimpleNamespace(_inapp_edits={"inapp_undo": _TextWidget("ctrl+z")})
@@ -204,7 +249,7 @@ class TestSnapshotSettings:
 
     def test_widget_set_to_none_is_skipped(self):
         """源码用 getattr(..., None) 取控件，None 表示该页尚未构建"""
-        fake = SimpleNamespace(hotkey_input=None, smart_toggle=None)
+        fake = SimpleNamespace(save_path_lbl=None, ui_detection_combo=None)
         assert SettingsDialog._snapshot_settings(fake) == {}
 
 
@@ -215,15 +260,15 @@ class TestHasUnsavedChanges:
 
     def test_matching_snapshot_means_no_change(self):
         fake = SimpleNamespace(
-            _settings_snapshot={"smart_toggle": True},
-            _snapshot_settings=lambda: {"smart_toggle": True},
+            _settings_snapshot={"ui_detection_combo": 2},
+            _snapshot_settings=lambda: {"ui_detection_combo": 2},
         )
         assert SettingsDialog._has_unsaved_changes(fake) is False
 
     def test_any_difference_counts_as_unsaved(self):
         fake = SimpleNamespace(
-            _settings_snapshot={"smart_toggle": True},
-            _snapshot_settings=lambda: {"smart_toggle": False},
+            _settings_snapshot={"ui_detection_combo": 2},
+            _snapshot_settings=lambda: {"ui_detection_combo": 0},
         )
         assert SettingsDialog._has_unsaved_changes(fake) is True
 
@@ -231,21 +276,9 @@ class TestHasUnsavedChanges:
         """页面延迟构建后多出一个控件，也应视为有变更而不是静默相等"""
         fake = SimpleNamespace(
             _settings_snapshot={},
-            _snapshot_settings=lambda: {"smart_toggle": True},
+            _snapshot_settings=lambda: {"ui_detection_combo": 2},
         )
         assert SettingsDialog._has_unsaved_changes(fake) is True
-
-
-class TestHotkeyAccessors:
-
-    def test_get_hotkey_strips_surrounding_whitespace(self):
-        fake = SimpleNamespace(hotkey_input=_TextWidget("  ctrl+shift+a  "))
-        assert SettingsDialog.get_hotkey(fake) == "ctrl+shift+a"
-
-    def test_update_hotkey_writes_into_the_input(self):
-        widget = _TextWidget("old")
-        SettingsDialog.update_hotkey(SimpleNamespace(hotkey_input=widget), "ctrl+alt+x")
-        assert widget.set_texts == ["ctrl+alt+x"]
 
 
 class TestGlobalHotkeyValidation:
@@ -264,9 +297,11 @@ class TestGlobalHotkeyValidation:
         second = _GlobalHotkeyWidget("SHIFT+CTRL+A")
         unique = _GlobalHotkeyWidget("ctrl+shift+b")
         fake = SimpleNamespace(
-            hotkey_input=first,
-            clipboard_hotkey_edit=second,
-            translation_hotkey_edit=unique,
+            _action_hotkey_rows=[
+                _action_row("screenshot", primary=first),
+                _action_row("clipboard", primary=second),
+                _action_row("open_translation", primary=unique),
+            ],
             tr=lambda text: text,
         )
 
@@ -275,12 +310,15 @@ class TestGlobalHotkeyValidation:
         assert second.validation_error
         assert unique.validation_error == ""
 
-    def test_duplicate_mouse_hotkeys_are_in_the_same_conflict_domain(self):
+    def test_main_and_backup_hotkeys_share_the_conflict_domain(self):
+        """主键与备用键、键盘键与鼠标侧键都在同一域里判重。"""
         first = _GlobalHotkeyWidget("mouseback")
         second = _GlobalHotkeyWidget(" MouseBack ")
         fake = SimpleNamespace(
-            hotkey_input_2=first,
-            translation_hotkey_edit_2=second,
+            _action_hotkey_rows=[
+                _action_row("screenshot", primary=first),
+                _action_row("clipboard", secondary=second),
+            ],
             tr=lambda text: text,
         )
 
@@ -292,8 +330,9 @@ class TestGlobalHotkeyValidation:
         first = _GlobalHotkeyWidget("ctrl+shift+a")
         second = _GlobalHotkeyWidget("ctrl+shift+a")
         fake = SimpleNamespace(
-            hotkey_input=first,
-            hotkey_input_2=second,
+            _action_hotkey_rows=[
+                _action_row("screenshot", primary=first, secondary=second),
+            ],
             tr=lambda text: text,
         )
         validate_global_hotkey_edits(fake)
@@ -303,13 +342,30 @@ class TestGlobalHotkeyValidation:
         assert first.validation_error == ""
         assert second.validation_error == ""
 
+    def test_removing_a_row_takes_its_hotkeys_out_of_the_domain(self):
+        """删掉动作行之后，它原来的键不再占用冲突域。"""
+        kept = _GlobalHotkeyWidget("ctrl+shift+a")
+        removed = _GlobalHotkeyWidget("ctrl+shift+a")
+        fake = SimpleNamespace(
+            _action_hotkey_rows=[
+                _action_row("screenshot", primary=kept),
+                _action_row("clipboard", primary=removed),
+            ],
+            tr=lambda text: text,
+        )
+        assert validate_global_hotkey_edits(fake) is False
+
+        fake._action_hotkey_rows = [fake._action_hotkey_rows[0]]
+        assert validate_global_hotkey_edits(fake) is True
+
     def test_save_time_validation_refreshes_every_field(self):
         """别在第一个不可用的键上短路，否则红叉只能一次暴露一个。"""
         first = _GlobalHotkeyWidget("ctrl+shift+a", system_available=False)
         second = _GlobalHotkeyWidget("ctrl+shift+b", system_available=False)
         fake = SimpleNamespace(
-            hotkey_input=first,
-            hotkey_input_2=second,
+            _action_hotkey_rows=[
+                _action_row("screenshot", primary=first, secondary=second),
+            ],
             tr=lambda text: text,
         )
 
@@ -321,8 +377,9 @@ class TestGlobalHotkeyValidation:
         available = _GlobalHotkeyWidget("ctrl+shift+a", system_available=True)
         unavailable = _GlobalHotkeyWidget("ctrl+shift+b", system_available=False)
         fake = SimpleNamespace(
-            hotkey_input=available,
-            hotkey_input_2=unavailable,
+            _action_hotkey_rows=[
+                _action_row("screenshot", primary=available, secondary=unavailable),
+            ],
             tr=lambda text: text,
         )
 
@@ -337,7 +394,10 @@ class TestGlobalHotkeyValidation:
 
 RESET_METHODS = (
     "_reset_hotkey_page",
+    "_reset_mouse_page",
     "_reset_screenshot_settings_page",
+    "_reset_pin_page",
+    "_reset_annotation_page",
     "_reset_clipboard_page",
     "_reset_appearance_page",
     "_reset_translation_page",
@@ -349,13 +409,16 @@ RESET_METHODS = (
 # stack 下标 → 应被调用的方法名
 INDEX_TO_METHOD = {
     0: "_reset_hotkey_page",
-    1: "_reset_screenshot_settings_page",
-    2: "_reset_clipboard_page",
-    3: "_reset_appearance_page",
-    4: "_reset_translation_page",
-    5: "_reset_log_page",
-    6: "_reset_misc_page",
-    7: "_reset_long_screenshot_page",
+    1: "_reset_mouse_page",
+    2: "_reset_screenshot_settings_page",
+    3: "_reset_pin_page",
+    4: "_reset_annotation_page",
+    5: "_reset_clipboard_page",
+    6: "_reset_appearance_page",
+    7: "_reset_translation_page",
+    8: "_reset_log_page",
+    9: "_reset_misc_page",
+    10: "_reset_long_screenshot_page",
 }
 
 
@@ -376,12 +439,12 @@ class TestResetCurrentPageDispatch:
             assert called == [expected], (index, called)
 
     def test_about_page_has_nothing_to_reset(self):
-        fake = _dispatch_fake(8)
+        fake = _dispatch_fake(11)
         SettingsDialog._reset_current_page(fake)
         assert not any(getattr(fake, name).called for name in RESET_METHODS)
 
     def test_unknown_index_resets_nothing(self):
-        for index in (-1, 9, 99):
+        for index in (-1, 12, 99):
             fake = _dispatch_fake(index)
             SettingsDialog._reset_current_page(fake)
             assert not any(getattr(fake, name).called for name in RESET_METHODS), index
@@ -393,33 +456,35 @@ class TestResetCurrentPageDispatch:
 
 class TestResetHotkeyPage:
 
-    def test_primary_hotkey_is_always_restored(self):
-        widget = _TextWidget("changed")
-        fake = SimpleNamespace(config_manager=_config(), hotkey_input=widget)
-        SettingsDialog._reset_hotkey_page(fake)
-        assert widget.set_texts == ["ctrl+shift+a"]
+    def test_action_rows_are_rebuilt_from_the_defaults(self, qapp):
+        """恢复默认 = 按默认动作表重建行（动作清单、热键、托盘开关一起回默认）。"""
+        fake = _page_dialog()
 
-    def test_every_attached_secondary_input_is_restored(self):
-        fake = SimpleNamespace(
-            config_manager=_config(),
-            hotkey_input=_TextWidget(),
-            hotkey_input_2=_TextWidget(),
-            clipboard_hotkey_edit=_TextWidget(),
-            clipboard_hotkey_edit_2=_TextWidget(),
-            translation_hotkey_edit=_TextWidget(),
-            translation_hotkey_edit_2=_TextWidget(),
-        )
         SettingsDialog._reset_hotkey_page(fake)
-        assert fake.hotkey_input_2.set_texts == ["ctrl+alt+a"]
-        assert fake.clipboard_hotkey_edit.set_texts == ["ctrl+shift+v"]
-        assert fake.clipboard_hotkey_edit_2.set_texts == ["ctrl+alt+v"]
-        assert fake.translation_hotkey_edit.set_texts == ["ctrl+shift+t"]
-        assert fake.translation_hotkey_edit_2.set_texts == [""]
+
+        rows = fake._action_hotkey_rows
+        assert [row["action"].currentData() for row in rows] == ["screenshot", "clipboard"]
+        assert rows[0]["primary"].text() == "ctrl+shift+a"
+        assert rows[0]["secondary"].text() == "ctrl+alt+a"
+        assert rows[1]["primary"].text() == "ctrl+shift+v"
+        assert rows[1]["tray"].isChecked() is True
+
+    def test_existing_rows_are_replaced_not_duplicated(self, qapp):
+        fake = _page_dialog(
+            _action_hotkey_rows=[_action_row("gif_capture", _GlobalHotkeyWidget("ctrl+g"))],
+        )
+
+        SettingsDialog._reset_hotkey_page(fake)
+
+        assert [row["action"].currentData() for row in fake._action_hotkey_rows] == [
+            "screenshot", "clipboard",
+        ]
+
+
+class TestResetHotkeyPageInApp:
 
     def test_inapp_shortcut_without_a_default_falls_back_to_empty(self):
-        fake = SimpleNamespace(
-            config_manager=_config(),
-            hotkey_input=_TextWidget(),
+        fake = _page_dialog(
             _inapp_edits={
                 "inapp_confirm": _TextWidget(),
                 "inapp_unknown_future_key": _TextWidget(),
@@ -431,15 +496,13 @@ class TestResetHotkeyPage:
 
     def test_cursor_move_mode_is_selected_by_data(self):
         combo = _Combo(data_map={"both": 2})
-        fake = SimpleNamespace(
-            config_manager=_config(), hotkey_input=_TextWidget(), cursor_move_combo=combo)
+        fake = _page_dialog(cursor_move_combo=combo)
         SettingsDialog._reset_hotkey_page(fake)
         assert combo.set_indexes == [2]
 
     def test_missing_cursor_move_entry_leaves_the_combo_alone(self):
         combo = _Combo(data_map={})
-        fake = SimpleNamespace(
-            config_manager=_config(), hotkey_input=_TextWidget(), cursor_move_combo=combo)
+        fake = _page_dialog(cursor_move_combo=combo)
         SettingsDialog._reset_hotkey_page(fake)
         assert combo.set_indexes == []
 
@@ -471,13 +534,15 @@ class TestResetScreenshotSettingsPage:
     def test_toggles_and_path_follow_the_defaults(self):
         fake = SimpleNamespace(
             config_manager=_config(),
-            smart_toggle=_Toggle(False),
+            ui_detection_combo=_Combo(data_map={"element": 2, "none": 0, "window": 1}),
+            ui_detection_margin_spin=_Spin(0),
             save_toggle=_Toggle(False),
             save_path_lbl=_TextWidget(),
             ocr_enable_toggle=_Toggle(False),
         )
         SettingsDialog._reset_screenshot_settings_page(fake)
-        assert fake.smart_toggle.set_checked == [True]
+        assert fake.ui_detection_combo.set_indexes == [2]      # 默认档 = 检测元素
+        assert fake.ui_detection_margin_spin.set_values == [0]
         assert fake.save_toggle.set_checked == [True]
         assert fake.save_path_lbl.set_texts == [r"D:\shots"]
         assert fake.ocr_enable_toggle.set_checked == [True]
@@ -579,13 +644,17 @@ class TestResetClipboardPage:
 
 NAV_TITLES = {
     0: "Shortcut Settings",
-    1: "Capture Settings",
-    2: "Clipboard Settings",
-    3: "Appearance Settings",
-    4: "Translation Settings",
-    5: "Log Settings",
-    6: "Other Settings",
-    8: "Software Information",
+    1: "Global Mouse Settings",
+    2: "Capture Settings",
+    3: "Pin Settings",
+    4: "Annotation Settings",
+    5: "Clipboard Settings",
+    6: "Appearance Settings",
+    7: "Translation Settings",
+    8: "Log Settings",
+    9: "Other Settings",
+    11: "Software Information",
+    12: "Permissions",
 }
 
 
@@ -611,24 +680,24 @@ class TestOnNavChanged:
 
     def test_route_key_highlights_the_navigation_entry(self):
         fake = _nav_fake()
-        SettingsDialog._on_nav_changed(fake, 2, "clipboard")
+        SettingsDialog._on_nav_changed(fake, 5, "clipboard")
         assert fake._set_current_nav.calls == [("clipboard",)]
 
     def test_without_a_route_key_the_navigation_is_left_untouched(self):
         fake = _nav_fake()
-        SettingsDialog._on_nav_changed(fake, 2)
+        SettingsDialog._on_nav_changed(fake, 5)
         assert fake._set_current_nav.calls == []
 
     def test_developer_page_is_not_reachable_through_navigation(self):
-        """下标 7 是隐藏的开发者页，只能由 _open_developer_page 进入"""
+        """下标 10 是隐藏的开发者页，只能由 _open_developer_page 进入"""
         fake = _nav_fake()
-        SettingsDialog._on_nav_changed(fake, 7)
+        SettingsDialog._on_nav_changed(fake, 10)
         assert fake.content_stack.set_indexes == []
         assert fake.content_title.set_texts == []
         assert not fake._refresh_after_page_change.called
 
     def test_unknown_index_changes_nothing(self):
-        for index in (-1, 9, 99):
+        for index in (-1, 13, 99):
             fake = _nav_fake()
             SettingsDialog._on_nav_changed(fake, index)
             assert fake.content_stack.set_indexes == [], index
@@ -654,7 +723,7 @@ class TestNavigationHelpers:
             _refresh_after_page_change=_Recorder(),
         )
         SettingsDialog._open_developer_page(fake)
-        assert fake.content_stack.set_indexes == [7]
+        assert fake.content_stack.set_indexes == [10]
         assert fake.content_title.set_texts == ["Developer Options"]
         assert fake.nav_list.clearCurrentItem.called
 

@@ -9,7 +9,12 @@ WS_EX_LAYERED、是否强制重算非客户区）——本仓库发行版只有 
 在没有实机验证前不合并这些差异，因此这里也把它们钉住。
 """
 
+import sys
+from types import SimpleNamespace
+
 import pytest
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QWidget
 
 from core.platform import window_ops
 
@@ -202,6 +207,28 @@ class TestExcludeFromCapture:
         assert window_ops.last_error() == -1
 
 
+def _captured_logs(monkeypatch) -> list:
+    """把 log_* 收到的消息模板抓下来（``T()`` 给的是 LogMsg，模板在 .template 上）。"""
+    captured: list = []
+
+    def _record(message, *_args, **_kwargs):
+        captured.append(getattr(message, "template", str(message)))
+
+    for name in ("log_debug", "log_warning", "log_info", "log_exception"):
+        monkeypatch.setattr(f"core.logger.{name}", _record)
+    return captured
+
+
+def _write_png(path, color: str = "#FF00FF", size: int = 64):
+    """落一张纯色 PNG（自定义 logo 用例的素材）。"""
+    from PySide6.QtGui import QColor, QImage
+
+    image = QImage(size, size, QImage.Format.Format_ARGB32_Premultiplied)
+    image.fill(QColor(color))
+    assert image.save(str(path), "PNG")
+    return path
+
+
 class TestTaskbarIcon:
     def test_windows_sets_both_icon_sizes(self, windows, tmp_path, qapp):
         icon = tmp_path / "icon.svg"
@@ -233,6 +260,46 @@ class TestTaskbarIcon:
         icon = tmp_path / "icon.svg"
         icon.write_text("<svg/>", encoding="utf-8")
         assert window_ops.set_taskbar_icon(_FakeWindow(), str(icon)) is False
+
+
+class TestApplicationIcon:
+    """整应用的图标（macOS 的 Dock）。Windows/Linux 登记为 NONE（没有这个概念）。"""
+
+    def test_macos_sets_the_dock_icon(self, qapp, tmp_path):
+        if sys.platform != "darwin":
+            pytest.skip("macOS 专属分支")
+
+        from AppKit import NSApplication
+
+        app = NSApplication.sharedApplication()
+        original = app.applicationIconImage()
+        try:
+            assert window_ops.set_application_icon(str(_write_png(tmp_path / "logo.png"))) is True
+            assert app.applicationIconImage() is not None
+        finally:
+            app.setApplicationIconImage_(original)
+
+    def test_unavailable_platform_returns_false_and_logs(self, monkeypatch, tmp_path):
+        logged = _captured_logs(monkeypatch)
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: False)
+
+        assert window_ops.set_application_icon(str(_write_png(tmp_path / "logo.png"))) is False
+        assert any("应用图标" in message for message in logged), f"没有降级日志: {logged}"
+
+    def test_missing_file_is_a_noop(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: True)
+
+        assert window_ops.set_application_icon(str(tmp_path / "nope.png")) is False
+
+    def test_unreadable_image_is_reported(self, qapp, tmp_path, monkeypatch):
+        """文件在、但不是图片：不能抛异常，如实返回 False。"""
+        if sys.platform != "darwin":
+            pytest.skip("macOS 专属分支")
+
+        fake = tmp_path / "logo.png"
+        fake.write_text("这不是图片", encoding="utf-8")
+
+        assert window_ops.set_application_icon(str(fake)) is False
 
 
 class TestRetiredModules:
@@ -343,3 +410,159 @@ class TestHandleAcquisition:
         icon = tmp_path / "i.svg"
         icon.write_text("<svg/>", encoding="utf-8")
         assert window_ops.set_taskbar_icon(None, str(icon)) is False
+
+
+class TestAcrylicBackground:
+    """窗口毛玻璃/亚克力背景：把「背后的内容模糊」交给系统原生实现。
+
+    macOS 分支在真机上直接驱动（断言原生视图真的挂上了）；Windows 分支用假 dwmapi /
+    假 user32 断言「确实发出了什么原生调用」（本机无法真机验证 Windows）；不可用平台
+    必须返回 False 且不抛异常。
+    """
+
+    @staticmethod
+    def _captured_logs(monkeypatch) -> list:
+        return _captured_logs(monkeypatch)
+
+    def _window(self):
+        return SimpleNamespace(winId=lambda: 4242, isWindow=lambda: True)
+
+    def test_unavailable_platform_logs_and_returns_false(self, monkeypatch):
+        """能力不可用不是静默失败：要有一条降级日志。"""
+        from core.platform import window_ops
+
+        logged = self._captured_logs(monkeypatch)
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: False)
+
+        assert window_ops.apply_acrylic_background(self._window()) is False
+        assert any("亚克力" in message for message in logged), f"没有降级日志: {logged}"
+
+    def test_child_widget_is_skipped_with_a_log(self, monkeypatch):
+        """子部件没有独立原生窗口：挂上去等于给整个父窗口加背景，必须跳过并记日志。"""
+        from core.platform import window_ops
+
+        logged = self._captured_logs(monkeypatch)
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: True)
+        child = SimpleNamespace(winId=lambda: 1, isWindow=lambda: False)
+
+        assert window_ops.apply_acrylic_background(child) is False
+        assert any("子部件" in message for message in logged), logged
+
+    def test_macos_attaches_a_visual_effect_view(self, monkeypatch, qapp):
+        """macOS 真机路径：驱动真实实现，断言 NSVisualEffectView 挂在内容视图之下。"""
+        from core.platform import window_ops
+
+        if sys.platform != "darwin":
+            pytest.skip("macOS 专属分支")
+
+        widget = _FloatingProbe()
+        try:
+            assert widget.show_and_apply() is True
+            effect = getattr(widget, "_acrylic_effect_view", None)
+            assert effect is not None
+            assert type(effect).__name__ == "NSVisualEffectView"
+            # 必须在内容视图的父视图里（放成 contentView 的子视图会盖住 Qt 的绘制）
+            import objc
+
+            ns_window = objc.objc_object(c_void_p=int(widget.winId())).window()
+            assert effect.superview() is ns_window.contentView().superview()
+            frame = effect.frame()
+            assert frame.size.width > 0 and frame.size.height > 0
+            # 幂等：再应用一次不重复挂
+            assert window_ops.apply_acrylic_background(widget) is True
+            assert widget._acrylic_effect_view is effect
+        finally:
+            widget.close()
+            qapp.processEvents()
+
+    @pytest.mark.parametrize("dwm_result", [0, -2147024891])
+    def test_windows_uses_dwm_system_backdrop(self, monkeypatch, dwm_result):
+        """Windows 优先用 Win11 的系统背景材质；成功即返回 True。"""
+        from core.platform import window_ops
+
+        calls = []
+
+        class _DwmApi:
+            @staticmethod
+            def DwmSetWindowAttribute(hwnd, attribute, value, size):
+                calls.append((hwnd, attribute, size))
+                return dwm_result
+
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: True)
+        monkeypatch.setattr(window_ops, "IS_MACOS", False)
+        monkeypatch.setattr(window_ops, "IS_WINDOWS", True)
+        monkeypatch.setattr(window_ops, "_dwmapi", lambda: _DwmApi)
+        monkeypatch.setattr(window_ops, "_user32", lambda: SimpleNamespace(
+            SetWindowCompositionAttribute=lambda *a: 1))
+
+        result = window_ops.apply_acrylic_background(self._window())
+
+        if dwm_result == 0:
+            assert result is True
+            assert calls and calls[0][0] == 4242
+            assert calls[0][1] == window_ops.DWMWA_SYSTEMBACKDROP_TYPE
+        else:
+            # 系统材质不可用 → 退回 Win10 的 accent 路径，同样算成功
+            assert result is True
+            assert calls
+
+    def test_windows_falls_back_to_accent_policy(self, monkeypatch):
+        """Win11 材质失败时走 SetWindowCompositionAttribute（亚克力 accent）。"""
+        from core.platform import window_ops
+
+        accent_calls = []
+
+        class _DwmApi:
+            @staticmethod
+            def DwmSetWindowAttribute(hwnd, attribute, value, size):
+                raise OSError("老系统没有这个属性")
+
+        class _User32:
+            @staticmethod
+            def SetWindowCompositionAttribute(hwnd, data_ptr):
+                accent_calls.append((hwnd, data_ptr))
+                return 1
+
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: True)
+        monkeypatch.setattr(window_ops, "IS_MACOS", False)
+        monkeypatch.setattr(window_ops, "IS_WINDOWS", True)
+        monkeypatch.setattr(window_ops, "_dwmapi", lambda: _DwmApi)
+        monkeypatch.setattr(window_ops, "_user32", lambda: _User32)
+
+        assert window_ops.apply_acrylic_background(self._window()) is True
+        assert accent_calls and accent_calls[0][0] == 4242
+
+    def test_windows_native_failure_is_reported(self, monkeypatch):
+        """两条原生路都不通：返回 False（调用方退回不透明外观），且不抛异常、有降级日志。"""
+        from core.platform import window_ops
+
+        logged = self._captured_logs(monkeypatch)
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: True)
+        monkeypatch.setattr(window_ops, "IS_MACOS", False)
+        monkeypatch.setattr(window_ops, "IS_WINDOWS", True)
+        monkeypatch.setattr(window_ops, "_dwmapi", lambda: SimpleNamespace(
+            DwmSetWindowAttribute=lambda *a: -1))
+        monkeypatch.setattr(window_ops, "_user32", lambda: SimpleNamespace(
+            SetWindowCompositionAttribute=lambda *a: 0))
+
+        assert window_ops.apply_acrylic_background(self._window()) is False
+        assert any("两条路都不通" in message for message in logged), f"没有降级日志: {logged}"
+
+
+class _FloatingProbe(QWidget):
+    """真机上用的最小置顶工具窗：与工具栏同样的窗口属性（无父、半透明、Tool）。"""
+
+    def __init__(self):
+        super().__init__(None)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool
+                            | Qt.WindowType.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.resize(320, 64)
+        self.move(400, 400)
+        self.show()
+
+    def show_and_apply(self) -> bool:
+        from core.platform import window_ops
+
+        QApplication.processEvents()
+        return window_ops.apply_acrylic_background(self)

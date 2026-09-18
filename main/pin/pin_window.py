@@ -15,7 +15,7 @@
 from PySide6.QtWidgets import QWidget, QLabel
 from PySide6.QtCore import Qt, QPoint, QTimer, Signal, QRectF, QEvent
 from PySide6.QtGui import (
-    QPixmap, QImage, QPainter, QMouseEvent, QWheelEvent, QKeyEvent,
+    QColor, QPixmap, QImage, QPainter, QMouseEvent, QWheelEvent, QKeyEvent,
     QTransform,
 )
 from .pin_canvas_view import PinCanvasView
@@ -30,6 +30,39 @@ from core import log_debug, log_info, log_warning, log_error, safe_event
 from core.theme import get_theme
 from core.logger import log_exception, T
 from core.clipboard_utils import deliver_image_async
+from core.platform import window_ops
+from ui.fluent_lite.theme import ACCENT
+from settings.tool_settings import PIN_OPACITY_RANGE
+from . import pin_actions
+
+
+def pin_config_value(config_manager, getter_name: str, default):
+    """读一项贴图配置。
+
+    配置管理器缺失（窗口在测试里被裸建）或读过一次失败时用默认值：贴图的交互参数
+    读不出来不该让窗口建不起来。
+    """
+    getter = getattr(config_manager, getter_name, None) if config_manager else None
+    if getter is None:
+        return default
+    try:
+        return getter()
+    except Exception as e:
+        log_exception(e, T("读取贴图配置"))
+        return default
+
+
+def pin_config_bool(config_manager, getter_name: str, default: bool) -> bool:
+    return bool(pin_config_value(config_manager, getter_name, default))
+
+
+def pin_config_float(config_manager, getter_name: str, default: float, limits) -> float:
+    """读一项浮点配置并夹到 ``limits`` 内。"""
+    try:
+        value = float(pin_config_value(config_manager, getter_name, default))
+    except (TypeError, ValueError):
+        value = float(default)
+    return max(limits[0], min(limits[1], value))
 
 
 class PinWindow(QWidget):
@@ -66,7 +99,8 @@ class PinWindow(QWidget):
         self.selection_offset = selection_offset or QPoint(0, 0)
 
         # ====== 光晕/阴影样式参数 ======
-        self.halo_enabled = True
+        # 「阴影/描边」与透明度都可以在「贴图设置」页里改默认值（以前是写死的）
+        self.halo_enabled = pin_config_bool(config_manager, "get_pin_shadow_enabled", True)
         self.corner = 0
         self.border_width = 2
         tc = get_theme().theme_color
@@ -110,7 +144,9 @@ class PinWindow(QWidget):
         self._is_scaling = False
 
         # ====== 窗口透明度 ======
-        self._win_opacity = 1.0   # 范围 [0.15, 1.0]
+        self._win_opacity = pin_config_float(
+            config_manager, "get_pin_default_opacity", 1.0, PIN_OPACITY_RANGE)
+        self.setWindowOpacity(self._win_opacity)
 
         # ====== 缩放百分比提示 ======
         self._zoom_label = QLabel(self)
@@ -181,20 +217,28 @@ class PinWindow(QWidget):
 
         # ====== 显示 ======
         self.show()
+        # macOS 上 Qt 的 Tool 窗口（NSPanel）默认「失焦即隐藏」：贴图要长期留在屏幕上，
+        # 必须关掉这条，否则用户切到别的应用时贴图会凭空消失。
+        window_ops.keep_visible_when_inactive(self)
         self.update_button_positions()
 
         # ====== 注册到全局快捷键控制器 ======
         from .pin_shortcut import PinShortcutController
         PinShortcutController.instance().register(self)
 
+        # 多选集合变化 → 刷新选中外观（窗口销毁时 Qt 会自动断开）
+        self._selection_manager().selection_changed.connect(self.refresh_selection_look)
+
         # 延迟 300ms 初始化 OCR（等钉图窗口完全显示后再启动，识别在子线程中运行，不阻塞主线程）
         QTimer.singleShot(300, self._ocr_mgr.init_now)
 
         log_info(
             T(
-                "创建成功: {width}x{height}, 位置: ({x}, {y})",
+                "创建成功: {width}x{height}, 位置: ({x}, {y}), 透明度: {opacity:.2f}, 阴影: {shadow}",
                 width=image.width(), height=image.height(),
                 x=position.x(), y=position.y(),
+                opacity=self._win_opacity,
+                shadow=self.tr("开") if self.halo_enabled else self.tr("关"),
             ),
             "PinWindow",
         )
@@ -312,9 +356,13 @@ class PinWindow(QWidget):
         if not self._is_dragging:
             return
         delta = global_pos - self._drag_start_pos
+        moved = (self._drag_start_window_pos + delta) - self.pos()
         self.move(self._drag_start_window_pos + delta)
         if self.toolbar and self.toolbar.isVisible():
             self.toolbar.sync_with_pin_window()
+        # 拖着选中的一张时，整组一起动（多选的用途就在这里）
+        if moved and self.is_selected():
+            self._selection_manager().move_selected(self, moved)
 
     def end_window_drag(self):
         if self._is_dragging:
@@ -449,8 +497,28 @@ class PinWindow(QWidget):
     @safe_event
     def mousePressEvent(self, event: QMouseEvent):
         self._set_hover_state(True)
+        # Ctrl/Cmd + 左键：加入/移出多选集合（不进拖动，避免选的时候把图挪走）
+        if (event.button() == Qt.MouseButton.LeftButton
+                and event.modifiers() & (Qt.KeyboardModifier.ControlModifier
+                                         | Qt.KeyboardModifier.MetaModifier)):
+            self.toggle_selection()
+            event.accept()
+            return
         if event.button() == Qt.MouseButton.LeftButton and not (self.canvas and self.canvas.is_editing):
+            # 普通点击一张没被选中的贴图：先清掉旧的选择（点哪张就是只操作它）
+            if not self.is_selected():
+                self._selection_manager().clear_selection()
+            if self.is_locked():
+                # 锁定期间不拖动：位置就是用户要固定的东西
+                log_debug(T("贴图已锁定，忽略拖动"), "PinWindow")
+                event.accept()
+                return
             self.start_window_drag(event.globalPosition().toPoint())
+            event.accept()
+            return
+        if event.button() == Qt.MouseButton.MiddleButton and self.run_gesture(
+            pin_actions.GESTURE_MIDDLE_CLICK
+        ):
             event.accept()
             return
         super().mousePressEvent(event)
@@ -471,10 +539,62 @@ class PinWindow(QWidget):
             event.accept()
             return
         elif event.button() == Qt.MouseButton.RightButton:
-            self.show_context_menu(event.globalPosition().toPoint())
-            event.accept()
+            self._context_menu_pos = event.globalPosition().toPoint()
+            if self.run_gesture(pin_actions.GESTURE_RIGHT_CLICK):
+                event.accept()
+                return
+            super().mouseReleaseEvent(event)
             return
         super().mouseReleaseEvent(event)
+
+    # ── 多选 ──────────────────────────────────────────
+
+    def _selection_manager(self):
+        from pin.pin_manager import PinManager
+
+        return PinManager.instance()
+
+    def is_selected(self) -> bool:
+        """这张贴图是否在多选集合里。"""
+        return self._selection_manager().is_selected(self)
+
+    def toggle_selection(self) -> bool:
+        """加入/移出多选集合；返回切换后的状态。"""
+        selected = self._selection_manager().toggle_selection(self)
+        log_debug(T("贴图多选: {selected}", selected=selected), "PinWindow")
+        return selected
+
+    def close_selected_pins(self) -> int:
+        """关闭所有选中的贴图（右键菜单与贴图动作共用）。"""
+        return self._selection_manager().close_selected()
+
+    def refresh_selection_look(self) -> None:
+        """按选中状态给出可见反馈。
+
+        有描边时把描边换成主题强调色；用户把「阴影与描边」关掉时没有可换色的东西，
+        就退回左上角的小提示——不然多选会变成「选了但看不出来」。
+        """
+        selected = self.is_selected()
+        if self.border_overlay:
+            color = QColor(self.border_color)
+            if selected:
+                color = QColor(ACCENT)
+                color.setAlpha(255)
+            self.border_overlay.set_border_color(color)
+            return
+        if selected:
+            self._show_hint_label(self.tr("Selected"))
+
+    def gesture(self, kind: str) -> str:
+        """取某个手势当前绑定的动作 id（未绑定返回 ``none``）。"""
+        return pin_actions.resolve(self.config_manager).get(kind, pin_actions.ACTION_NONE)
+
+    def run_gesture(self, kind: str) -> bool:
+        """执行一个手势绑定的动作；返回是否真的做了事。
+
+        手势表可以在「贴图设置」页里改（默认等于改造前的写死行为）。
+        """
+        return pin_actions.run_pin_action(self.gesture(kind), self)
 
     @safe_event
     def wheelEvent(self, event: QWheelEvent):
@@ -482,42 +602,71 @@ class PinWindow(QWidget):
             event.ignore()
             return
         delta = event.angleDelta().y()
-        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            # Ctrl + 滚轮：调整窗口透明度，每格 ±5%
-            step = 0.05 if delta > 0 else -0.05
-            self._win_opacity = max(0.15, min(1.0, self._win_opacity + step))
-            self.setWindowOpacity(self._win_opacity)
-            self._show_hint_label(f"α {int(self._win_opacity * 100)}%")
+        if delta == 0:
+            return
+        up = delta > 0
+        with_ctrl = bool(event.modifiers() & Qt.KeyboardModifier.ControlModifier)
+        if with_ctrl:
+            kind = pin_actions.GESTURE_CTRL_WHEEL_UP if up else pin_actions.GESTURE_CTRL_WHEEL_DOWN
         else:
-            # 普通滚轮：调整窗口大小
-            self._is_scaling = True
-            # 缩小必须使用放大倍率的倒数，否则放大后再缩小会产生累计误差。
-            step = 1.05
-            sf = step if delta > 0 else 1.0 / step
+            kind = pin_actions.GESTURE_WHEEL_UP if up else pin_actions.GESTURE_WHEEL_DOWN
+        if self.run_gesture(kind):
+            event.accept()
 
-            if hasattr(self, '_image_transform'):
-                base_size = self._image_transform.display_size(self._orig_size)
-            else:
-                base_size = self._orig_size
+    def apply_zoom(self, direction: int, *, fine: bool = False) -> bool:
+        """按方向缩放窗口（``direction`` > 0 放大，< 0 缩小）。返回是否真的改了大小。
 
-            min_scale = max(50.0 / base_size.width(),
-                            50.0 / base_size.height())
-            new_scale = max(min_scale, min(self.scale_factor * sf, 4.0))
-            # 消除互逆浮点运算在 100% 附近可能留下的极小误差。
-            if abs(new_scale - 1.0) < 1e-6:
-                new_scale = 1.0
-            self.scale_factor = new_scale
+        缩放倍率来自「贴图设置」页；``fine`` 用精细步长（贴图手势里的「精细缩放」）。
+        缩小必须用放大倍率的倒数，否则放大再缩小会累计误差。
+        """
+        if direction == 0 or self._thumbnail_mode:
+            return False
+        if getattr(self, "_locked", False):
+            log_debug(T("贴图已锁定，忽略缩放"), "PinWindow")
+            return False
 
-            # 始终从原图逻辑尺寸计算，避免按当前整数窗口尺寸反复取整。
-            nw = max(1, int(round(base_size.width() * new_scale)))
-            nh = max(1, int(round(base_size.height() * new_scale)))
+        step = pin_config_float(self.config_manager, "get_pin_zoom_step", 1.05, (1.01, 4.0))
+        if fine:
+            step = 1.0 + (step - 1.0) / 5.0 if step > 1.0 else pin_actions.FINE_ZOOM_STEP
+        sf = step if direction > 0 else 1.0 / step
 
-            self.setGeometry(self.x(), self.y(), nw, nh)
-            if self.canvas:
-                self.canvas.invalidate_cache()
-            self.update()
-            self._scale_timer.start()
-            self._show_zoom_percent()
+        self._is_scaling = True
+        if hasattr(self, '_image_transform'):
+            base_size = self._image_transform.display_size(self._orig_size)
+        else:
+            base_size = self._orig_size
+
+        min_scale = max(50.0 / base_size.width(), 50.0 / base_size.height())
+        new_scale = max(min_scale, min(self.scale_factor * sf, 4.0))
+        # 消除互逆浮点运算在 100% 附近可能留下的极小误差。
+        if abs(new_scale - 1.0) < 1e-6:
+            new_scale = 1.0
+        self.scale_factor = new_scale
+
+        # 始终从原图逻辑尺寸计算，避免按当前整数窗口尺寸反复取整。
+        nw = max(1, int(round(base_size.width() * new_scale)))
+        nh = max(1, int(round(base_size.height() * new_scale)))
+
+        self.setGeometry(self.x(), self.y(), nw, nh)
+        if self.canvas:
+            self.canvas.invalidate_cache()
+        self.update()
+        self._scale_timer.start()
+        self._show_zoom_percent()
+        return True
+
+    def adjust_opacity(self, direction: int) -> bool:
+        """按方向调窗口不透明度（> 0 更不透明）。步长来自设置页。"""
+        if direction == 0:
+            return False
+        step = pin_config_float(self.config_manager, "get_pin_opacity_step", 0.05, (0.0, 1.0))
+        step = step if direction > 0 else -step
+        self._win_opacity = max(
+            PIN_OPACITY_RANGE[0], min(PIN_OPACITY_RANGE[1], self._win_opacity + step)
+        )
+        self.setWindowOpacity(self._win_opacity)
+        self._show_hint_label(f"α {int(self._win_opacity * 100)}%")
+        return True
 
     def _apply_smooth_scaling(self):
         if self._is_closed:
@@ -564,6 +713,12 @@ class PinWindow(QWidget):
                 self._set_hover_state(True)
             elif event.type() in (QEvent.Type.Leave, QEvent.Type.HoverLeave):
                 self._set_hover_state(False)
+            elif event.type() == QEvent.Type.MouseButtonDblClick:
+                # 贴图内容区是子控件（画布视图），双击会被它先吃掉；这里在事件过滤器里
+                # 先看一眼，只有用户真的给「双击」绑了动作才吞掉，否则放行给画布
+                # （那边要用双击做控制点连点）。
+                if self.run_gesture(pin_actions.GESTURE_DOUBLE_CLICK):
+                    return True
         return super().eventFilter(obj, event)
 
     # ==================================================================
@@ -614,7 +769,8 @@ class PinWindow(QWidget):
     # 翻译
     # ==================================================================
 
-    def _on_translate_clicked(self):
+    def request_translation(self):
+        """翻译这张贴图（没有现成的 OCR 结果时先按需识别）。"""
         if not hasattr(self, '_translation_helper'):
             return
         if self._ocr_has_result:
@@ -647,6 +803,14 @@ class PinWindow(QWidget):
     # 右键菜单
     # ==================================================================
 
+    def show_context_menu_at_cursor(self) -> bool:
+        """在鼠标位置弹出右键菜单（手势表里的「显示菜单」用）。"""
+        from PySide6.QtGui import QCursor
+
+        pos = getattr(self, "_context_menu_pos", None) or QCursor.pos()
+        self.show_context_menu(pos)
+        return True
+
     def show_context_menu(self, global_pos: QPoint):
         if hasattr(self, '_context_menu'):
             state = {
@@ -655,8 +819,20 @@ class PinWindow(QWidget):
                 'shadow_enabled': self.halo_enabled,
                 'text_selection_enabled': self._text_selection_enabled,
                 'thumbnail_mode': self._thumbnail_mode,
+                'locked': self.is_locked(),
+                'selected_count': len(self._selection_manager().selected_pins()),
             }
             self._context_menu.show(global_pos, state)
+
+    def is_locked(self) -> bool:
+        """贴图是否被锁定（锁定期间不能拖动、缩放，避免挪位置时被误改）。"""
+        return bool(getattr(self, "_locked", False))
+
+    def toggle_lock(self):
+        """锁定/解锁贴图的位置与大小。"""
+        self._locked = not self.is_locked()
+        log_debug(T("贴图锁定状态: {locked}", locked=self._locked), "PinWindow")
+        self._show_hint_label(self.tr("Locked") if self._locked else self.tr("Unlocked"))
 
     def toggle_stay_on_top(self):
         flags = self.windowFlags()
@@ -812,18 +988,69 @@ class PinWindow(QWidget):
             deliver_image_async(image)
         self._with_edit_paused(_do_copy)
 
+    def copy_and_close(self):
+        """复制内容并关闭（贴图手势里最常用的组合）。"""
+        self.copy_to_clipboard()
+        self.close_window()
+
+    def copy_recognized_text(self) -> bool:
+        """把 OCR 识别出的文字复制到剪贴板；还没识别出文字时返回 False。
+
+        OCR 是贴图显示后异步跑的（约 300ms），刚贴出来就触发这个动作时可能还没有结果，
+        这时只记一条日志——总比往剪贴板里塞上一次的内容好。
+        """
+        layer = self.ocr_text_layer
+        if layer is None:
+            log_warning(T("还没有 OCR 结果，无法复制文字"), "PinWindow")
+            return False
+        text = ""
+        try:
+            text = layer.get_all_text(separator="\n") or ""
+        except Exception as e:
+            log_exception(e, T("读取识别文字"))
+            return False
+        if not text.strip():
+            log_warning(T("没有识别到文字"), "PinWindow")
+            return False
+        from PySide6.QtWidgets import QApplication
+
+        clipboard = QApplication.clipboard()
+        if clipboard is None:
+            return False
+        clipboard.setText(text)
+        log_info(T("已复制识别出的文字（{count} 字）", count=len(text)), "PinWindow")
+        return True
+
     # ==================================================================
     # 窗口关闭 / 资源清理
     # ==================================================================
 
-    def close_window(self):
+    def close_window(self, *, confirm: bool = True):
+        """关闭这张贴图。
+
+        ``confirm=False`` 给批量关闭（「关闭所有钉图窗口」与应用退出）用：那是用户
+        一次性的决定，挨个弹确认比不确认更烦。
+        """
         if self._is_closed:
+            return
+        if confirm and not self._confirm_close():
             return
         log_debug(T("开始关闭"), "PinWindow")
         self._is_closed = True
         self.cleanup()
         self.closed.emit()
         self.close()
+
+    def _confirm_close(self) -> bool:
+        """按设置询问「确定关闭这张贴图吗」；没开二次确认就直接放行。"""
+        if not pin_config_bool(self.config_manager, "get_pin_close_confirm", False):
+            return True
+        from ui.dialogs import show_confirm_dialog
+
+        log_debug(T("关闭贴图前二次确认"), "PinWindow")
+        return show_confirm_dialog(
+            self, self.tr("Close pin"), self.tr("Close this pinned image?")
+        )
 
     def cleanup(self):
         log_debug(T("清理资源..."), "PinWindow")
@@ -911,6 +1138,13 @@ class PinWindow(QWidget):
     def closeEvent(self, event):
         try:
             if not self._is_closed:
+                # 自发（来自窗口系统，比如用户点了关闭）还是代码里 close() 的：
+                # 排查「贴图为什么自己关了」时这两者要分得清
+                log_debug(
+                    T("贴图窗口收到关闭事件（自发={spontaneous}）",
+                      spontaneous=bool(event.spontaneous())),
+                    "PinWindow",
+                )
                 self._is_closed = True
                 try:
                     self.cleanup()

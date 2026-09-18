@@ -239,7 +239,8 @@ def get_ocr_memory_status() -> str:
     return _ocr_manager.get_memory_status()
 
 
-def format_ocr_result_text(result: dict, separator: str = "\n") -> str:
+def format_ocr_result_text(result: dict, separator: str = "\n", layout: str = "auto",
+                           punctuation: str = "none") -> str:
     """
     格式化 OCR 结果为阅读顺序文本
     
@@ -251,6 +252,10 @@ def format_ocr_result_text(result: dict, separator: str = "\n") -> str:
     Args:
         result: OCR 识别结果（dict 格式，包含 code 和 data 字段）
         separator: 行之间的分隔符，默认换行
+        layout: 文本布局（``core.settings`` 的 OCR_TEXT_LAYOUTS）：
+                auto 智能分行（默认）/ lines 每个文字块一行 / single 全部并成一行
+        punctuation: 标点处理（OCR_PUNCTUATIONS）：
+                     none 原样 / strip_trailing 去掉行尾标点 / to_halfwidth 全角转半角
         
     Returns:
         格式化后的文本字符串
@@ -259,64 +264,70 @@ def format_ocr_result_text(result: dict, separator: str = "\n") -> str:
         result = recognize_text(pixmap, return_format="dict")
         text = format_ocr_result_text(result)
     """
+    rows = _ocr_result_rows(result)
+    if not rows:
+        return ""
+
+    if layout == "lines":
+        # 每个文字块单独一行：表格/表单一类「每格独立」的图，合并同行反而读不清
+        blocks = [block['text'] for row in rows for block in row]
+        text = separator.join(blocks)
+    elif layout == "single":
+        # 全部并成一行：喂给需要单行输入的场合（搜索框、命令行）
+        blocks = [block['text'] for row in rows for block in row]
+        text = " ".join(blocks)
+    else:
+        text = separator.join(" ".join(block['text'] for block in row) for row in rows)
+
+    return apply_ocr_punctuation(text, punctuation)
+
+
+def _ocr_result_rows(result: dict) -> List[List[dict]]:
+    """把 OCR 结果按「阅读顺序」聚成行：行内按 x 排序，行间按 y 排序。
+
+    返回 ``[[{'text', 'left_x', 'center_y'}, ...], ...]``；结果不可用时返回空列表。
+    """
     if not result or not isinstance(result, dict):
-        return ""
-    
+        return []
     if result.get('code') != 100:
-        return ""
-    
-    data = result.get('data', [])
-    if not data:
-        return ""
-    
-    if len(data) == 1:
-        return data[0].get('text', '')
-    
-    # 收集每个文字块的位置信息
+        return []
+
     items_with_pos = []
-    for item in data:
+    for item in result.get('data', []) or []:
+        if not isinstance(item, dict):
+            continue
         box = item.get('box', [])
         text = item.get('text', '')
         if not box or not text:
             continue
-        
-        # box 格式: [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
-        # 计算中心Y和高度
+
         y_coords = [pt[1] for pt in box if len(pt) >= 2]
-        if not y_coords:
-            continue
-        
-        min_y = min(y_coords)
-        max_y = max(y_coords)
-        center_y = (min_y + max_y) / 2
-        height = max_y - min_y
-        
-        # 计算左边X（用于同行内排序）
         x_coords = [pt[0] for pt in box if len(pt) >= 2]
-        left_x = min(x_coords) if x_coords else 0
-        
+        if not y_coords or not x_coords:
+            continue
+
+        min_y, max_y = min(y_coords), max(y_coords)
         items_with_pos.append({
             'text': text,
-            'center_y': center_y,
-            'height': height,
-            'left_x': left_x
+            'center_y': (min_y + max_y) / 2,
+            'height': max_y - min_y,
+            'left_x': min(x_coords),
         })
-    
+
     if not items_with_pos:
-        return ""
-    
+        return []
+
     # 计算行高容差
     avg_height = sum(b['height'] for b in items_with_pos) / len(items_with_pos)
     line_tolerance = avg_height * 0.8
-    
-    # 按Y坐标分行
-    lines = []
-    current_line = []
+
+    rows: List[List[dict]] = []
+    current_line: List[dict] = []
     current_line_y = None
-    
+
     # 先按Y排序（从上到下）
     items_with_pos.sort(key=lambda x: x['center_y'])
-    
+
     for block in items_with_pos:
         if current_line_y is None:
             current_line = [block]
@@ -327,13 +338,179 @@ def format_ocr_result_text(result: dict, separator: str = "\n") -> str:
         else:
             # 新的一行：先将当前行按X排序后输出
             current_line.sort(key=lambda x: x['left_x'])
-            lines.append(" ".join(b['text'] for b in current_line))
+            rows.append(current_line)
             current_line = [block]
             current_line_y = block['center_y']
-    
+
     # 别忘了最后一行
     if current_line:
         current_line.sort(key=lambda x: x['left_x'])
-        lines.append(" ".join(b['text'] for b in current_line))
-    
-    return separator.join(lines)
+        rows.append(current_line)
+
+    return rows
+
+
+#: 全角 → 半角：全角区间（FF01-FF5E）与 ASCII 相差 0xFEE0
+_HALFWIDTH_TABLE = str.maketrans(
+    {chr(code): chr(code - 0xFEE0) for code in range(0xFF01, 0xFF5F)}
+)
+
+#: 「行尾标点」——找的是一行末尾的标点，中英文都要认
+_TRAILING_PUNCTUATION = "，。、；：？！,.;:?!"
+
+
+def apply_ocr_punctuation(text: str, punctuation: str) -> str:
+    """按设置处理识别结果里的标点。
+
+    - ``none``：原样
+    - ``strip_trailing``：去掉每行末尾的标点（OCR 常把图片边缘的噪点认成句号逗号）
+    - ``to_halfwidth``：全角转半角（中英混排时喂给其它程序更省事）
+    """
+    if not text or punctuation == "none":
+        return text
+    if punctuation == "to_halfwidth":
+        return text.translate(_HALFWIDTH_TABLE)
+    if punctuation == "strip_trailing":
+        return "\n".join(
+            line.rstrip().rstrip(_TRAILING_PUNCTUATION).rstrip()
+            for line in text.split("\n")
+        )
+    return text
+
+
+def resolve_ocr_language(configured: str, app_language: str = "") -> str:
+    """把「识别语言」设置换成引擎认的语言名。
+
+    ``follow_app``（缺省）跟随界面语言；界面语言也不认识时用日语——发行版的识别模型
+    是按中日英混排调的，日语档最接近。
+    """
+    mapping = {"zh": "简体中文", "en": "English", "ja": "日本語", "ko": "한국어"}
+    key = (configured or "").strip().lower()
+    if key in mapping:
+        return mapping[key]
+    return mapping.get((app_language or "").strip().lower(), "日本語")
+
+
+# ── 表格 → Markdown ──────────────────────────────────────────────
+#: 表格判定的阈值，全部按「字高的比例」给，避免写死像素值：
+#: 同一行的 y 容差沿用行聚类那一档；行内间隔超过这个倍数就当作换了一列。
+TABLE_LINE_TOLERANCE = 0.8
+TABLE_COLUMN_GAP = 0.8
+TABLE_MIN_ROWS = 2          # 表头 + 至少一行数据
+TABLE_MIN_COLS = 2
+
+
+def _ocr_boxes(result: dict) -> List[dict]:
+    """把 OCR 结果里的文字块连同几何信息取出来（保持引擎给的顺序）。
+
+    box 是四点坐标 ``[[x1,y1], …]``；没有坐标或没有文字的块直接跳过——没有几何就
+    没法判列，硬凑只会把普通段落拆错。
+    """
+    data = result.get('data', []) if isinstance(result, dict) else []
+    boxes = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        points = [pt for pt in (item.get('box') or [])
+                  if isinstance(pt, (list, tuple)) and len(pt) >= 2]
+        text = str(item.get('text') or '').strip()
+        if not points or not text:
+            continue
+        xs = [float(pt[0]) for pt in points]
+        ys = [float(pt[1]) for pt in points]
+        boxes.append({
+            'text': text,
+            'left': min(xs),
+            'right': max(xs),
+            'center_y': (min(ys) + max(ys)) / 2.0,
+            'height': max(ys) - min(ys),
+        })
+    return boxes
+
+
+def _group_ocr_rows(boxes: List[dict]) -> List[List[dict]]:
+    """按 y 聚类成行；行内按 x 从左到右。"""
+    if not boxes:
+        return []
+
+    avg_height = sum(b['height'] for b in boxes) / len(boxes)
+    tolerance = avg_height * TABLE_LINE_TOLERANCE
+
+    rows: List[List[dict]] = []
+    current: List[dict] = []
+    current_y = None
+    for box in sorted(boxes, key=lambda b: b['center_y']):
+        if current_y is None:
+            current, current_y = [box], box['center_y']
+        elif abs(box['center_y'] - current_y) <= tolerance:
+            current.append(box)
+        else:
+            rows.append(sorted(current, key=lambda b: b['left']))
+            current, current_y = [box], box['center_y']
+    if current:
+        rows.append(sorted(current, key=lambda b: b['left']))
+    return rows
+
+
+def _split_ocr_columns(row: List[dict], avg_height: float) -> List[str]:
+    """把一行里的文字块按 x 间隙切成单元格（间隙小的当同一格，用空格连接）。"""
+    gap_limit = max(avg_height * TABLE_COLUMN_GAP, 1.0)
+    cells = [row[0]['text']]
+    for previous, box in zip(row, row[1:]):
+        if box['left'] - previous['right'] > gap_limit:
+            cells.append(box['text'])
+        else:
+            cells[-1] = f"{cells[-1]} {box['text']}"
+    return cells
+
+
+def _markdown_cell(text: str) -> str:
+    """单元格文本：竖线要转义、换行折成空格，否则表格结构就断了。"""
+    return " ".join(str(text).split()).replace("|", "\\|")
+
+
+def _pad_cells(cells: List[str], width: int) -> List[str]:
+    return list(cells[:width]) + [""] * (width - len(cells))
+
+
+def format_ocr_result_markdown(result: dict, layout: str = "auto",
+                               punctuation: str = "none") -> str:
+    """把带坐标的 OCR 结果渲染成 Markdown 表格；没有表格特征时退回纯文本。
+
+    判定完全靠几何：先按 y 聚类成行、行内按 x 间隙切列，然后要求「至少 2 行、其中
+    至少 2 行是多列」才认成表格。只满足一半（例如普通段落里的缩进、两行各一个词）
+    时宁可退回 ``format_ocr_result_text`` 的纯文本，也不硬造一张表——这时
+    ``layout`` / ``punctuation`` 会原样传给那条纯文本路径，设置里的选项照样生效。
+    """
+    plain = format_ocr_result_text(result, layout=layout, punctuation=punctuation)
+    boxes = _ocr_boxes(result)
+    if len(boxes) < TABLE_MIN_ROWS:
+        return plain
+
+    rows = _group_ocr_rows(boxes)
+    if len(rows) < TABLE_MIN_ROWS:
+        return plain
+
+    avg_height = sum(b['height'] for b in boxes) / len(boxes)
+    cells_per_row = [_split_ocr_columns(row, avg_height) for row in rows]
+    widths = [len(cells) for cells in cells_per_row]
+
+    if sum(1 for width in widths if width >= TABLE_MIN_COLS) < TABLE_MIN_ROWS:
+        return plain
+
+    # 表宽取众数，并列时取更宽的：OCR 少认一格时补空，多认一格时截掉，
+    # 都比整张表退回纯文本更接近用户想要的
+    table_width = max(set(widths), key=lambda width: (widths.count(width), width))
+    if table_width < TABLE_MIN_COLS:
+        return plain
+
+    header, body = cells_per_row[0], cells_per_row[1:]
+    lines = [
+        "| " + " | ".join(_markdown_cell(c) for c in _pad_cells(header, table_width)) + " |",
+        "| " + " | ".join("---" for _ in range(table_width)) + " |",
+    ]
+    lines += [
+        "| " + " | ".join(_markdown_cell(c) for c in _pad_cells(row, table_width)) + " |"
+        for row in body
+    ]
+    return "\n".join(lines)

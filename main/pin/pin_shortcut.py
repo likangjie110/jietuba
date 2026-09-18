@@ -20,7 +20,37 @@ class _PinHandlerBase(ShortcutHandler):
     """钉图快捷键处理器的共用基类"""
 
     # 需要从配置读取的钉图快捷键列表
-    _PIN_KEYS = ["inapp_copy_pin", "inapp_thumbnail", "inapp_toggle_toolbar", "inapp_delete"]
+    _PIN_KEYS = [
+        "inapp_copy_pin", "inapp_thumbnail", "inapp_toggle_toolbar", "inapp_delete",
+        "inapp_pin_save", "inapp_pin_rotate", "inapp_pin_lock", "inapp_pin_on_top",
+        "inapp_pin_shadow", "inapp_pin_opacity_up", "inapp_pin_opacity_down",
+        "inapp_pin_copy_all_text", "inapp_pin_copy_and_close",
+    ]
+
+    #: 配置键 → 贴图动作 id（``pin/pin_actions.py``）。
+    #: 「复制」「切换工具栏」「缩略图」有各自的旧逻辑（OCR 选区优先、编辑模式兼容），
+    #: 保留在原处；下表这些动作与鼠标手势共用同一份实现，避免两套行为。
+    _ACTION_KEYS = {
+        "inapp_pin_save": "save",
+        "inapp_pin_rotate": "rotate_cw",
+        "inapp_pin_lock": "toggle_lock",
+        "inapp_pin_on_top": "toggle_stay_on_top",
+        "inapp_pin_shadow": "toggle_border",
+        "inapp_pin_opacity_up": "opacity_up",
+        "inapp_pin_opacity_down": "opacity_down",
+        "inapp_pin_copy_all_text": "copy_text",
+        "inapp_pin_copy_and_close": "copy_and_close",
+    }
+
+    def _run_action_key(self, event, pin) -> bool:
+        """按键命中「动作类」快捷键时，走贴图动作表执行。"""
+        for cfg_key, action_id in self._ACTION_KEYS.items():
+            if self._match(event, cfg_key):
+                from pin import pin_actions
+
+                pin_actions.run_pin_action(action_id, pin)
+                return True
+        return False
 
     def __init__(self, controller: 'PinShortcutController'):
         self._controller = controller
@@ -157,6 +187,10 @@ class PinEditShortcutHandler(_PinHandlerBase):
                 pin.toolbar.current_tool = None
             return True
 
+        # 动作类快捷键（保存/旋转/锁定/置顶/阴影/不透明度/复制文字/复制并关闭）
+        if self._run_action_key(event, pin):
+            return True
+
         # 删除选中图元
         if self._match(event, "inapp_delete"):
             view = getattr(pin, 'view', None)
@@ -220,6 +254,10 @@ class PinNormalShortcutHandler(_PinHandlerBase):
         # 切换工具栏
         if self._match(event, "inapp_toggle_toolbar"):
             pin.toggle_toolbar()
+            return True
+
+        # 动作类快捷键（保存/旋转/锁定/置顶/阴影/不透明度/复制文字/复制并关闭）
+        if self._run_action_key(event, pin):
             return True
 
         # ESC：关闭钉图

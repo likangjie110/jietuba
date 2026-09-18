@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""指针与输入：光标位置、鼠标键状态、全局滚轮监听、横向滚动与复制快捷键注入。
+"""指针与输入：光标位置、鼠标键状态、全局滚轮/键盘监听、横向滚动与复制快捷键注入。
 
 迁移前这些能力散在四个文件里，各自判断平台，而且有几处是硬编码 Windows 调用：
 
@@ -97,32 +97,197 @@ def is_button_pressed(button: int) -> bool:
 # 全局滚轮监听
 # ──────────────────────────────────────────────
 
-def create_scroll_listener(on_scroll, on_error=None):
-    """创建并启动全局滚轮监听器；pynput 不可用时返回 None。
+def pressed_modifiers() -> frozenset[str]:
+    """当前按下的修饰键集合（``ctrl`` / ``alt`` / ``shift`` / ``cmd``）。
 
-    返回的对象只保证有 ``stop()``（pynput 的 Listener 接口），调用方不需要知道
-    底层是什么。``on_scroll`` 的签名是 ``(x, y, dx, dy)``，与 pynput 一致：
-    dy>0 向上、dy<0 向下。
+    全局鼠标动作要在「按键那一刻」知道修饰键状态，而 pynput 的鼠标回调不带这个信息：
+    现读一次系统状态比另起一个键盘监听去追状态更可靠（漏一个事件就永久错位）。
 
-    监听是全局的，与窗口焦点无关——长截图与 GIF 录制都依赖这一点。
+    查不到的平台上返回空集合——调用方按「没有修饰键」处理，而不是让动作静默失效。
+    """
+    if IS_MACOS:
+        return _pressed_modifiers_macos()
+    if IS_WINDOWS:
+        return _pressed_modifiers_windows()
+    return frozenset()
+
+
+def _pressed_modifiers_macos() -> frozenset[str]:
+    """macOS：读当前事件源的修饰键标志位（Quartz 的 CGEventSourceFlagsState）。"""
+    from core.logger import log_debug
+
+    try:
+        from Quartz import (
+            CGEventSourceFlagsState,
+            kCGEventFlagMaskAlternate,
+            kCGEventFlagMaskCommand,
+            kCGEventFlagMaskControl,
+            kCGEventFlagMaskShift,
+            kCGEventSourceStateCombinedSessionState,
+        )
+
+        flags = CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState)
+    except Exception as e:
+        log_debug(f"读取修饰键状态失败: {e}", "Pointer")
+        return frozenset()
+
+    pressed = set()
+    if flags & kCGEventFlagMaskControl:
+        pressed.add("ctrl")
+    if flags & kCGEventFlagMaskAlternate:
+        pressed.add("alt")
+    if flags & kCGEventFlagMaskShift:
+        pressed.add("shift")
+    if flags & kCGEventFlagMaskCommand:
+        pressed.add("cmd")
+    return frozenset(pressed)
+
+
+def _pressed_modifiers_windows() -> frozenset[str]:
+    """Windows：GetAsyncKeyState 的高位表示当前按下。"""
+    from core.logger import log_debug
+
+    virtual_keys = {
+        "ctrl": (0x11,),
+        "alt": (0x12,),
+        "shift": (0x10,),
+        "cmd": (0x5B, 0x5C),      # 左右 Win 键
+    }
+    try:
+        user32 = ctypes.windll.user32
+    except Exception as e:
+        log_debug(f"读取修饰键状态失败: {e}", "Pointer")
+        return frozenset()
+
+    pressed = set()
+    for name, codes in virtual_keys.items():
+        if any(user32.GetAsyncKeyState(code) & 0x8000 for code in codes):
+            pressed.add(name)
+    return frozenset(pressed)
+
+
+# ── 全局鼠标手势的词汇表 ─────────────────────────────
+# 「修饰键 + 鼠标动作」里的鼠标动作。只收不会抢走正常操作的：滚轮与中键/侧键。
+# 不做左键双击、右键拖动这类——全局绑定会把普通操作也吃掉。
+GESTURE_WHEEL_UP = "wheel_up"
+GESTURE_WHEEL_DOWN = "wheel_down"
+GESTURE_MIDDLE_CLICK = "middle_click"
+GESTURE_BACK_CLICK = "back_click"
+GESTURE_FORWARD_CLICK = "forward_click"
+MOUSE_GESTURES = (
+    GESTURE_WHEEL_UP,
+    GESTURE_WHEEL_DOWN,
+    GESTURE_MIDDLE_CLICK,
+    GESTURE_BACK_CLICK,
+    GESTURE_FORWARD_CLICK,
+)
+
+# pynput 的 Button 名字 → 手势名（侧键在 pynput 里叫 x1/x2）
+BUTTON_NAME_TO_GESTURE = {
+    "middle": GESTURE_MIDDLE_CLICK,
+    "x1": GESTURE_BACK_CLICK,
+    "x2": GESTURE_FORWARD_CLICK,
+}
+
+# 修饰键：空字符串表示「不要求修饰键」
+MODIFIER_NONE = ""
+MOUSE_MODIFIERS = (MODIFIER_NONE, "ctrl", "alt", "shift", "cmd")
+
+
+def gesture_of_scroll(dx: int, dy: int) -> str | None:
+    """滚轮事件 → 手势名；横向滚动不参与（留给长截图那种场景）。"""
+    if dy > 0:
+        return GESTURE_WHEEL_UP
+    if dy < 0:
+        return GESTURE_WHEEL_DOWN
+    return None
+
+
+def gesture_of_button(button_name: str) -> str | None:
+    """鼠标按键名（pynput 的 ``Button.name``）→ 手势名；不参与全局手势的返回 None。"""
+    return BUTTON_NAME_TO_GESTURE.get((button_name or "").lower())
+
+
+def matches_modifiers(required: str, pressed) -> bool:
+    """当前按下的修饰键是否满足绑定要求。
+
+    要求「无修饰键」时必须真的没有修饰键：否则 Ctrl+滚轮既能触发绑定在「无」上的动作，
+    又会顺带触发绑在 Ctrl 上的动作。
+    """
+    pressed = frozenset(pressed or ())
+    if not required:
+        return not pressed
+    return required in pressed
+
+
+def create_mouse_listener(on_click=None, on_scroll=None, on_error=None):
+    """创建并启动全局鼠标监听器（按键 + 滚轮 + 移动）；pynput 不可用时返回 None。
+
+    返回的对象只保证有 ``stop()``。回调都在 pynput 的监听线程里执行，调用方负责把
+    结果排队回主线程。``on_click`` 的签名与 pynput 一致：``(x, y, button, pressed)``；
+    ``on_scroll`` 是 ``(x, y, dx, dy)``（dy>0 向上、dy<0 向下）。
+
+    监听是全局的、与窗口焦点无关——长截图与 GIF 录制只订阅滚轮（用
+    ``create_scroll_listener``），「全局鼠标动作」还会订阅按键。
     """
     from core.logger import log_error, T
 
     if not available(Capability.SCROLL_LISTEN):
-        log_error(T("当前平台无法监听全局滚轮事件"), "Pointer")
+        log_error(T("当前平台无法监听全局鼠标事件"), "Pointer")
         return None
 
     try:
         from pynput import mouse
 
-        listener = mouse.Listener(on_scroll=on_scroll)
+        listener = mouse.Listener(on_click=on_click, on_scroll=on_scroll)
         listener.start()
         return listener
     except Exception as e:
         if on_error is not None:
             on_error(e)
         else:
-            log_error(T("启动滚轮监听失败: {e}", e=e), "Pointer")
+            log_error(T("启动鼠标监听失败: {e}", e=e), "Pointer")
+        return None
+
+
+def create_scroll_listener(on_scroll, on_error=None):
+    """只订阅滚轮的便捷入口（长截图 / GIF 录制用）。
+
+    ``on_scroll`` 的签名是 ``(x, y, dx, dy)``，与 pynput 一致。实现与全局鼠标监听
+    共用一份，免得两个入口各自维护 pynput 的启动与降级。
+    """
+    return create_mouse_listener(on_scroll=on_scroll, on_error=on_error)
+
+
+def create_key_listener(on_press=None, on_release=None, on_error=None):
+    """创建并启动全局键盘监听器；pynput 不可用时返回 None。
+
+    只把按键原样交给回调，不做组合键匹配：热键匹配用 ``hotkey.start_keyboard_listener``，
+    这里给的是「按下某个键就做点什么」这类用法（长截图横向模式要在按 Shift 时滚一屏）。
+    返回的对象只保证有 ``stop()``；回调运行在 pynput 的监听线程里。
+
+    键盘监听三平台都有实现，因此不查能力矩阵——pynput 是必需依赖，装不上属于环境问题，
+    按导入失败记日志。
+    """
+    from core.logger import log_error, T
+
+    try:
+        # macOS：pynput 的监听线程一启动就读键盘布局，那一步在非主线程上会崩进程
+        # （见 core/platform/pynput_macos.py）
+        from core.platform.pynput_macos import install as install_macos_keyboard_fix
+
+        install_macos_keyboard_fix()
+
+        from pynput import keyboard
+
+        listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+        listener.start()
+        return listener
+    except Exception as e:
+        if on_error is not None:
+            on_error(e)
+        else:
+            log_error(T("启动键盘监听失败: {e}", e=e), "Pointer")
         return None
 
 
@@ -225,6 +390,11 @@ def _inject_windows(modifier_vk: int, key_vk: int) -> bool:
 
 def _inject_pynput(letter: str) -> bool:
     """非 Windows：用 pynput 合成 Cmd/Ctrl + 字母。需要辅助功能权限。"""
+    # macOS：Controller 构造时会读键盘布局，非主线程上同样会崩进程
+    from core.platform.pynput_macos import install as install_macos_keyboard_fix
+
+    install_macos_keyboard_fix()
+
     from pynput.keyboard import Controller, Key
 
     modifier = Key.cmd if IS_MACOS else Key.ctrl

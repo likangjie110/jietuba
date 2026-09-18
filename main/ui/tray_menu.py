@@ -30,17 +30,7 @@ def create_tray_menu(app) -> QMenu:
     menu = CustomTrayMenu()
     menu.setStyleSheet(_menu_style())
 
-    action_screenshot = QAction(_tr("Screenshot"), app)
-    action_screenshot.triggered.connect(app.start_screenshot)
-    menu.addAction(action_screenshot)
-
-    action_clipboard = QAction(_tr("Clipboard"), app)
-    action_clipboard.triggered.connect(app.open_clipboard_window)
-    menu.addAction(action_clipboard)
-
-    action_translate = QAction(_tr("Translation"), app)
-    action_translate.triggered.connect(app.open_translator)
-    menu.addAction(action_translate)
+    _add_action_items(menu, app)
 
     menu.addSeparator()
 
@@ -68,6 +58,25 @@ def create_tray_menu(app) -> QMenu:
     menu.addAction(action_quit)
 
     return menu
+
+
+def _add_action_items(menu: QMenu, app):
+    """把动作注册表里「显示在托盘」的动作加成菜单项。
+
+    托盘菜单以前硬编码三项（截图/剪贴板/翻译），和动作注册表各说各话：注册表里加了动作，
+    托盘却看不到。现在这一块完全由 ``core.actions`` 与 ``app/action_tray`` 决定——
+    「快捷键/动作」页里的托盘开关就是改这两个来源里的后者。
+    """
+    from core import actions
+
+    for action in actions.ACTIONS:
+        if not app.config_manager.get_action_tray_flags().get(action.id, action.tray):
+            continue
+        item = QAction(_tr(action.label), app)
+        item.triggered.connect(
+            lambda _checked=False, action_id=action.id: actions.run_action(action_id, app)
+        )
+        menu.addAction(item)
 
 
 def _menu_style() -> str:

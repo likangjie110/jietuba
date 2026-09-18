@@ -779,6 +779,1014 @@ Replace it?</source>
         <source>Keep original text formatting</source>
         <translation>原文の書式を保持する</translation>
     </message>
+    <message>
+        <source>UI Detection</source>
+        <translation>UI 検出</translation>
+    </message>
+    <message>
+        <source>Automatically frames the window or control under the mouse cursor.</source>
+        <translation>マウスカーソル下のウィンドウまたはコントロールを自動で枠選択します。</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>検出しない</translation>
+    </message>
+    <message>
+        <source>Window only</source>
+        <translation>ウィンドウのみ</translation>
+    </message>
+    <message>
+        <source>Elements</source>
+        <translation>要素を検出</translation>
+    </message>
+    <message>
+        <source>Element Margin</source>
+        <translation>要素検出の余白</translation>
+    </message>
+    <message>
+        <source>Expands the detected element by this many pixels.</source>
+        <translation>検出した要素を指定ピクセル分だけ外側に広げます。</translation>
+    </message>
+    <message>
+        <source>Global Mouse</source>
+        <translation>グローバルマウス</translation>
+    </message>
+    <message>
+        <source>Global Mouse Settings</source>
+        <translation>グローバルマウス設定</translation>
+    </message>
+    <message>
+        <source>Global Mouse Actions</source>
+        <translation>グローバルマウス操作</translation>
+    </message>
+    <message>
+        <source>No global mouse actions yet. Add one to trigger actions with the mouse.</source>
+        <translation>グローバルマウス操作はまだありません。追加するとマウスで操作を実行できます。</translation>
+    </message>
+    <message>
+        <source>Add Action</source>
+        <translation>操作を追加</translation>
+    </message>
+    <message>
+        <source>Bind another modifier + mouse gesture to an action.</source>
+        <translation>別の「修飾キー + マウス操作」を操作に割り当てます。</translation>
+    </message>
+    <message>
+        <source>Clear All</source>
+        <translation>すべてクリア</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>削除</translation>
+    </message>
+    <message>
+        <source>Scroll Up</source>
+        <translation>上スクロール</translation>
+    </message>
+    <message>
+        <source>Scroll Down</source>
+        <translation>下スクロール</translation>
+    </message>
+    <message>
+        <source>Middle Click</source>
+        <translation>中クリック</translation>
+    </message>
+    <message>
+        <source>Back Button</source>
+        <translation>戻るボタン</translation>
+    </message>
+    <message>
+        <source>Forward Button</source>
+        <translation>進むボタン</translation>
+    </message>
+    <message>
+        <source>No Modifier</source>
+        <translation>修飾キーなし</translation>
+    </message>
+    <message>
+        <source>Cmd / Win</source>
+        <translation>Cmd / Win</translation>
+    </message>
+    <message>
+        <source>Global Mouse Capture</source>
+        <translation>グローバルマウス撮影</translation>
+    </message>
+    <message>
+        <source>Show Mask While Capturing</source>
+        <translation>撮影時にマスクを表示</translation>
+    </message>
+    <message>
+        <source>Briefly dims the screen and highlights the captured area after a global mouse screenshot, so you can see what was grabbed.</source>
+        <translation>グローバルマウス撮影の直後に画面を一瞬暗くし、撮影範囲を強調表示します。</translation>
+    </message>
+    <message>
+        <source>Ignored Applications</source>
+        <translation>除外アプリ</translation>
+    </message>
+    <message>
+        <source>Global mouse actions do nothing while one of these applications is in front. Names are matched ignoring case, and .app / .exe suffixes.</source>
+        <translation>これらのアプリが前面にあるとき、グローバルマウス操作は実行されません。名前は大文字小文字および .app / .exe を無視して比較します。</translation>
+    </message>
+    <message>
+        <source>Application name</source>
+        <translation>アプリ名</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>追加</translation>
+    </message>
+    <message>
+        <source>No ignored applications.</source>
+        <translation>除外アプリはありません。</translation>
+    </message>
+    <message>
+        <source>💡 Modifier keys are read live: a binding without a modifier fires only when no modifier is held. On Windows the hotkey module and global mouse actions can fight over side buttons.</source>
+        <translation>💡 修飾キーは現在の状態をそのまま読みます。修飾キーなしの割り当ては、修飾キーを押していないときだけ反応します。Windows ではホットキー機能とグローバルマウス操作がサイドボタンを奪い合うことがあります。</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy</source>
+        <translation>撮影してコピー</translation>
+    </message>
+    <message>
+        <source>Screenshot and Pin</source>
+        <translation>撮影してピン留め</translation>
+    </message>
+    <message>
+        <source>Screenshot and Save</source>
+        <translation>撮影して保存</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy Text</source>
+        <translation>撮影してテキストをコピー</translation>
+    </message>
+    <message>
+        <source>Screenshot and Translate</source>
+        <translation>撮影して翻訳</translation>
+    </message>
+    <message>
+        <source>GIF Capture</source>
+        <translation>GIF 撮影</translation>
+    </message>
+    <message>
+        <source>Global Actions</source>
+        <translation>グローバル操作</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation>操作</translation>
+    </message>
+    <message>
+        <source>Hotkey</source>
+        <translation>ショートカット</translation>
+    </message>
+    <message>
+        <source>Backup Hotkey</source>
+        <translation>予備ショートカット</translation>
+    </message>
+    <message>
+        <source>Tray</source>
+        <translation>トレイ</translation>
+    </message>
+    <message>
+        <source>Bind another action to a global hotkey.</source>
+        <translation>別の操作にグローバルショートカットを割り当てます。</translation>
+    </message>
+    <message>
+        <source>Clear All Hotkeys</source>
+        <translation>すべてのショートカットをクリア</translation>
+    </message>
+    <message>
+        <source>No global actions yet. Add one to bind a hotkey.</source>
+        <translation>グローバル操作はまだありません。追加するとショートカットを割り当てられます。</translation>
+    </message>
+    <message>
+        <source>Show in the tray menu</source>
+        <translation>トレイメニューに表示</translation>
+    </message>
+    <message>
+        <source>Pin Settings</source>
+        <translation>ピン設定</translation>
+    </message>
+    <message>
+        <source>Pin Interaction</source>
+        <translation>ピン操作</translation>
+    </message>
+    <message>
+        <source>Wheel Zoom Step</source>
+        <translation>ホイールの拡大ステップ</translation>
+    </message>
+    <message>
+        <source>How much one wheel notch scales the pinned image (1.05 means +5%).</source>
+        <translation>ホイール 1 ノッチでピン画像をどれだけ拡大縮小するか（1.05 は +5%）。</translation>
+    </message>
+    <message>
+        <source>Opacity Step</source>
+        <translation>透明度のステップ</translation>
+    </message>
+    <message>
+        <source>How much Ctrl + wheel changes the window opacity.</source>
+        <translation>Ctrl+ホイールで一度にどれだけ透明度を変えるか。</translation>
+    </message>
+    <message>
+        <source>Default Opacity</source>
+        <translation>既定の透明度</translation>
+    </message>
+    <message>
+        <source>Opacity of a newly pinned image.</source>
+        <translation>新しくピンした画像の透明度。</translation>
+    </message>
+    <message>
+        <source>Shadow and Border</source>
+        <translation>影と枠線</translation>
+    </message>
+    <message>
+        <source>Draw a border (and shadow) around new pinned images.</source>
+        <translation>新しいピン画像に枠線（と影）を付けます。</translation>
+    </message>
+    <message>
+        <source>Show Toolbar on Hover</source>
+        <translation>マウスが入ったらツールバーを表示</translation>
+    </message>
+    <message>
+        <source>On: shows the toolbar when the mouse enters a pinned window.</source>
+        <translation>オン：マウスがピンウィンドウに入るとツールバーを表示します。</translation>
+    </message>
+    <message>
+        <source>New Pinned Image</source>
+        <translation>新しいピン</translation>
+    </message>
+    <message>
+        <source>Appearance Position</source>
+        <translation>表示位置</translation>
+    </message>
+    <message>
+        <source>Where a new pinned image shows up.</source>
+        <translation>新しいピン画像をどこに表示するか。</translation>
+    </message>
+    <message>
+        <source>At the captured area</source>
+        <translation>選択範囲の位置</translation>
+    </message>
+    <message>
+        <source>At the mouse position</source>
+        <translation>マウス位置</translation>
+    </message>
+    <message>
+        <source>Center of the screen</source>
+        <translation>画面中央</translation>
+    </message>
+    <message>
+        <source>Stacking Order</source>
+        <translation>重なり順</translation>
+    </message>
+    <message>
+        <source>Whether a new pinned image goes above or below the existing ones.</source>
+        <translation>新しいピンを既存のピンの上に置くか下に置くか。</translation>
+    </message>
+    <message>
+        <source>Above existing pins</source>
+        <translation>既存のピンの上</translation>
+    </message>
+    <message>
+        <source>Below existing pins</source>
+        <translation>既存のピンの下</translation>
+    </message>
+    <message>
+        <source>Confirm Before Closing</source>
+        <translation>閉じる前に確認</translation>
+    </message>
+    <message>
+        <source>Ask before closing a pinned image. Closing all pins at once and quitting never ask.</source>
+        <translation>ピンを閉じる前に確認します。「すべてのピンを閉じる」と終了時は確認しません。</translation>
+    </message>
+    <message>
+        <source>💡 Values apply to pinned windows created from now on; changes to wheel steps apply immediately.</source>
+        <translation>💡 設定はこれ以降に作成するピンに適用されます。ホイールのステップはすぐに反映されます。</translation>
+    </message>
+    <message>
+        <source>Pin Mouse Actions</source>
+        <translation>ピンのマウス操作</translation>
+    </message>
+    <message>
+        <source>Wheel Up</source>
+        <translation>ホイール上</translation>
+    </message>
+    <message>
+        <source>Wheel Down</source>
+        <translation>ホイール下</translation>
+    </message>
+    <message>
+        <source>Ctrl + Wheel Up</source>
+        <translation>Ctrl + ホイール上</translation>
+    </message>
+    <message>
+        <source>Ctrl + Wheel Down</source>
+        <translation>Ctrl + ホイール下</translation>
+    </message>
+    <message>
+        <source>Double Click</source>
+        <translation>ダブルクリック</translation>
+    </message>
+    <message>
+        <source>Right Click</source>
+        <translation>右クリック</translation>
+    </message>
+    <message>
+        <source>Rolling the wheel up on a pinned image.</source>
+        <translation>ピンの上でホイールを上に回す。</translation>
+    </message>
+    <message>
+        <source>Rolling the wheel down on a pinned image.</source>
+        <translation>ピンの上でホイールを下に回す。</translation>
+    </message>
+    <message>
+        <source>Ctrl + wheel up; adjusts opacity by default.</source>
+        <translation>Ctrl + ホイール上。既定では透明度を調整します。</translation>
+    </message>
+    <message>
+        <source>Ctrl + wheel down; adjusts opacity by default.</source>
+        <translation>Ctrl + ホイール下。既定では透明度を調整します。</translation>
+    </message>
+    <message>
+        <source>Pressing the middle button on a pinned image.</source>
+        <translation>ピンの上で中ボタンを押す。</translation>
+    </message>
+    <message>
+        <source>Double-clicking a pinned image.</source>
+        <translation>ピンをダブルクリックする。</translation>
+    </message>
+    <message>
+        <source>Right-clicking a pinned image; opens the menu by default.</source>
+        <translation>ピンを右クリックする。既定ではメニューを開きます。</translation>
+    </message>
+    <message>
+        <source>Do nothing</source>
+        <translation>何もしない</translation>
+    </message>
+    <message>
+        <source>Zoom In</source>
+        <translation>拡大</translation>
+    </message>
+    <message>
+        <source>Zoom Out</source>
+        <translation>縮小</translation>
+    </message>
+    <message>
+        <source>Fine Zoom In</source>
+        <translation>細かく拡大</translation>
+    </message>
+    <message>
+        <source>Fine Zoom Out</source>
+        <translation>細かく縮小</translation>
+    </message>
+    <message>
+        <source>Increase Opacity</source>
+        <translation>不透明度を上げる</translation>
+    </message>
+    <message>
+        <source>Decrease Opacity</source>
+        <translation>不透明度を下げる</translation>
+    </message>
+    <message>
+        <source>Reset Size</source>
+        <translation>元のサイズに戻す</translation>
+    </message>
+    <message>
+        <source>Copy Content</source>
+        <translation>内容をコピー</translation>
+    </message>
+    <message>
+        <source>Copy Recognized Text</source>
+        <translation>認識した文字をコピー</translation>
+    </message>
+    <message>
+        <source>Translate</source>
+        <translation>翻訳</translation>
+    </message>
+    <message>
+        <source>Thumbnail Mode</source>
+        <translation>サムネイルモード</translation>
+    </message>
+    <message>
+        <source>Lock Position and Size</source>
+        <translation>位置とサイズを固定</translation>
+    </message>
+    <message>
+        <source>Show Context Menu</source>
+        <translation>コンテキストメニュー</translation>
+    </message>
+    <message>
+        <source>Copy and Close</source>
+        <translation>コピーして閉じる</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>閉じる</translation>
+    </message>
+    <message>
+        <source>Saved Pins</source>
+        <translation>保存するピンの数</translation>
+    </message>
+    <message>
+        <source>How many pinned images are remembered when restoring on startup.</source>
+        <translation>起動時に復元するピンの最大数。</translation>
+    </message>
+    <message>
+        <source>Restore Pins on Startup</source>
+        <translation>起動時にピンを復元</translation>
+    </message>
+    <message>
+        <source>Save the pinned images you leave open, and bring them back the next time jietuba starts.</source>
+        <translation>終了時に開いていたピンを保存し、次に jietuba を起動したときに復元します。</translation>
+    </message>
+    <message>
+        <source>Text Pin Font Size</source>
+        <translation>文字ピンのフォントサイズ</translation>
+    </message>
+    <message>
+        <source>Font size used when turning clipboard text into a pinned image.</source>
+        <translation>クリップボードの文字をピンにするときのフォントサイズ。</translation>
+    </message>
+    <message>
+        <source>Text Pin Max Width</source>
+        <translation>文字ピンの最大幅</translation>
+    </message>
+    <message>
+        <source>Content width limit; longer text wraps like a note card.</source>
+        <translation>幅の上限。長い文字はメモのように折り返します。</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Text</source>
+        <translation>クリップボードの文字をピン</translation>
+    </message>
+    <message>
+        <source>Close Selected Pins</source>
+        <translation>選択したピンを閉じる</translation>
+    </message>
+    <message>
+        <source>Annotation</source>
+        <translation>注釈</translation>
+    </message>
+    <message>
+        <source>Annotation Settings</source>
+        <translation>注釈設定</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation>色</translation>
+    </message>
+    <message>
+        <source>Default color</source>
+        <translation>このツールの既定の色。</translation>
+    </message>
+    <message>
+        <source>Default value</source>
+        <translation>このツールの既定値。</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>太さ</translation>
+    </message>
+    <message>
+        <source>Pick a color</source>
+        <translation>色を選択</translation>
+    </message>
+    <message>
+        <source>Mosaic Style</source>
+        <translation>モザイクの種類</translation>
+    </message>
+    <message>
+        <source>Pixelate for hard blocks, blur for soft ones.</source>
+        <translation>モザイクは硬いブロック、ぼかしは柔らかい仕上がり。</translation>
+    </message>
+    <message>
+        <source>Pixelate</source>
+        <translation>モザイク</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>ぼかし</translation>
+    </message>
+    <message>
+        <source>Mosaic Brush</source>
+        <translation>モザイクのブラシ</translation>
+    </message>
+    <message>
+        <source>How coarse the mosaic brush is.</source>
+        <translation>モザイクブラシの粗さ。</translation>
+    </message>
+    <message>
+        <source>Coarse</source>
+        <translation>粗い</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>中</translation>
+    </message>
+    <message>
+        <source>Fine</source>
+        <translation>細かい</translation>
+    </message>
+    <message>
+        <source>Restore Defaults</source>
+        <translation>既定のスタイルに戻す</translation>
+    </message>
+    <message>
+        <source>Reset every tool on this page to its factory style.</source>
+        <translation>このページの各ツールを工場出荷時のスタイルに戻します。</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>復元</translation>
+    </message>
+    <message>
+        <source>💡 These are the defaults each tool starts with; the toolbar keeps remembering whatever you last used.</source>
+        <translation>💡 ここは各ツールの初期スタイルです。ツールバーは前回使ったスタイルを引き続き記憶します。</translation>
+    </message>
+    <message>
+        <source>Screenshot Appearance</source>
+        <translation>スクリーンショットの見た目</translation>
+    </message>
+    <message>
+        <source>Rounded Corners</source>
+        <translation>角丸</translation>
+    </message>
+    <message>
+        <source>Rounds the corners of the captured image.</source>
+        <translation>撮影した画像の角を丸くします。</translation>
+    </message>
+    <message>
+        <source>Corner Radius</source>
+        <translation>角丸の半径</translation>
+    </message>
+    <message>
+        <source>How round the corners are (0-100).</source>
+        <translation>角丸の大きさ（0-100）。</translation>
+    </message>
+    <message>
+        <source>Border or Shadow</source>
+        <translation>枠線・影</translation>
+    </message>
+    <message>
+        <source>Draws a border or a drop shadow around the captured image.</source>
+        <translation>撮影した画像に枠線またはドロップシャドウを付けます。</translation>
+    </message>
+    <message>
+        <source>Border Style</source>
+        <translation>スタイル</translation>
+    </message>
+    <message>
+        <source>Border draws a solid frame; shadow softens the edges.</source>
+        <translation>枠線は実線のフレーム、影は縁を柔らかくします。</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>影</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>枠線</translation>
+    </message>
+    <message>
+        <source>Border or Shadow Size</source>
+        <translation>枠線・影の大きさ</translation>
+    </message>
+    <message>
+        <source>Thickness of the border, or how far the shadow spreads (1-50).</source>
+        <translation>枠線の太さ、または影の広がり（1-50）。</translation>
+    </message>
+    <message>
+        <source>Border Color</source>
+        <translation>枠線の色</translation>
+    </message>
+    <message>
+        <source>Color used when the style is Border.</source>
+        <translation>スタイルが枠線のときに使う色。</translation>
+    </message>
+    <message>
+        <source>Shadow Color</source>
+        <translation>影の色</translation>
+    </message>
+    <message>
+        <source>Color used when the style is Shadow.</source>
+        <translation>スタイルが影のときに使う色。</translation>
+    </message>
+    <message>
+        <source>Keep the Style On</source>
+        <translation>毎回スタイルを維持</translation>
+    </message>
+    <message>
+        <source>Keeps border/shadow enabled for every new capture.</source>
+        <translation>新しい撮影でも枠線・影を有効にします。</translation>
+    </message>
+    <message>
+        <source>Magnifier</source>
+        <translation>ルーペ</translation>
+    </message>
+    <message>
+        <source>Default Zoom</source>
+        <translation>既定の倍率</translation>
+    </message>
+    <message>
+        <source>Starting magnification of the magnifier (1-10).</source>
+        <translation>ルーペを開いたときの倍率（1-10）。</translation>
+    </message>
+    <message>
+        <source>Save Pinned Image</source>
+        <translation>ピンを保存</translation>
+    </message>
+    <message>
+        <source>Rotate Pinned Image</source>
+        <translation>ピンを回転</translation>
+    </message>
+    <message>
+        <source>Lock Pinned Image</source>
+        <translation>ピンの位置とサイズを固定</translation>
+    </message>
+    <message>
+        <source>Toggle Always on Top</source>
+        <translation>常に最前面の切替</translation>
+    </message>
+    <message>
+        <source>Toggle Shadow</source>
+        <translation>影の切替</translation>
+    </message>
+    <message>
+        <source>Increase Pin Opacity</source>
+        <translation>ピンの不透明度を上げる</translation>
+    </message>
+    <message>
+        <source>Decrease Pin Opacity</source>
+        <translation>ピンの不透明度を下げる</translation>
+    </message>
+    <message>
+        <source>Copy Pin and Close</source>
+        <translation>コピーして閉じる</translation>
+    </message>
+    <message>
+        <source>Save Image</source>
+        <translation>画像を保存</translation>
+    </message>
+    <message>
+        <source>Rotate Right</source>
+        <translation>右に回転</translation>
+    </message>
+    <message>
+        <source>Open Save Folder</source>
+        <translation>保存先を開く</translation>
+    </message>
+    <message>
+        <source>Translate Clipboard Image</source>
+        <translation>クリップボードの画像を翻訳</translation>
+    </message>
+    <message>
+        <source>Skin Colors</source>
+        <translation>スキン配色</translation>
+    </message>
+    <message>
+        <source>Override the window background, text and accent colors.</source>
+        <translation>標準テーマの上にウィンドウ背景・文字・アクセント色を上書きします。</translation>
+    </message>
+    <message>
+        <source>Window Background</source>
+        <translation>ウィンドウ背景</translation>
+    </message>
+    <message>
+        <source>Text Color</source>
+        <translation>文字色</translation>
+    </message>
+    <message>
+        <source>Accent Color</source>
+        <translation>アクセント色</translation>
+    </message>
+    <message>
+        <source>Follow Theme</source>
+        <translation>テーマに従う</translation>
+    </message>
+    <message>
+        <source>Customized</source>
+        <translation>カスタム済み</translation>
+    </message>
+    <message>
+        <source>Following the theme</source>
+        <translation>テーマに従っています</translation>
+    </message>
+    <message>
+        <source>Select Color</source>
+        <translation>色を選択</translation>
+    </message>
+    <message>
+        <source>Custom Logo</source>
+        <translation>カスタムロゴ</translation>
+    </message>
+    <message>
+        <source>Use your own image for the tray and window icons.</source>
+        <translation>トレイとウィンドウのアイコンに自分の画像を使います。</translation>
+    </message>
+    <message>
+        <source>Choose Image</source>
+        <translation>画像を選択</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>クリア</translation>
+    </message>
+    <message>
+        <source>Built-in icon</source>
+        <translation>内蔵アイコン</translation>
+    </message>
+    <message>
+        <source>Cannot read this image, using the built-in icon</source>
+        <translation>この画像を読み込めないため、内蔵アイコンを使います</translation>
+    </message>
+    <message>
+        <source>Choose Logo Image</source>
+        <translation>ロゴ画像を選択</translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.bmp *.gif *.svg *.ico)</source>
+        <translation>画像 (*.png *.jpg *.jpeg *.bmp *.gif *.svg *.ico)</translation>
+    </message>
+    <message>
+        <source>Copy Table as Markdown</source>
+        <translation>表を Markdown としてコピー</translation>
+    </message>
+    <message>
+        <source>Recognize Formula as LaTeX</source>
+        <translation>数式を認識（LaTeX）</translation>
+    </message>
+    <message>
+        <source>Desktop &amp; Tray</source>
+        <translation>デスクトップとトレイ</translation>
+    </message>
+    <message>
+        <source>Desktop Toolbar</source>
+        <translation>デスクトップツールバー</translation>
+    </message>
+    <message>
+        <source>A floating ball on the desktop: click to capture, right-click for the tray menu.</source>
+        <translation>デスクトップ上のフローティングボール。クリックで撮影、右クリックでトレイメニュー。</translation>
+    </message>
+    <message>
+        <source>Do Not Show</source>
+        <translation>表示しない</translation>
+    </message>
+    <message>
+        <source>Floating Ball</source>
+        <translation>フローティングボール</translation>
+    </message>
+    <message>
+        <source>Tray Click Action</source>
+        <translation>トレイのクリック動作</translation>
+    </message>
+    <message>
+        <source>What a single click on the tray icon does.</source>
+        <translation>トレイアイコンをクリックしたときの動作。</translation>
+    </message>
+    <message>
+        <source>Network Proxy</source>
+        <translation>ネットワークプロキシ</translation>
+    </message>
+    <message>
+        <source>Proxy Type</source>
+        <translation>プロキシの種類</translation>
+    </message>
+    <message>
+        <source>Used by translation and other network features.</source>
+        <translation>翻訳やその他のネットワーク機能で使われます。</translation>
+    </message>
+    <message>
+        <source>No Proxy</source>
+        <translation>プロキシなし</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>手動</translation>
+    </message>
+    <message>
+        <source>Host</source>
+        <translation>ホスト</translation>
+    </message>
+    <message>
+        <source>Verify</source>
+        <translation>確認</translation>
+    </message>
+    <message>
+        <source>Proxy</source>
+        <translation>プロキシ</translation>
+    </message>
+    <message>
+        <source>Connected to the proxy server.</source>
+        <translation>プロキシサーバーに接続できました。</translation>
+    </message>
+    <message>
+        <source>Cannot reach the proxy server: {reason}</source>
+        <translation>プロキシサーバーに接続できません: {reason}</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>更新</translation>
+    </message>
+    <message>
+        <source>Update Source</source>
+        <translation>更新元</translation>
+    </message>
+    <message>
+        <source>Releases page used by "Check for Updates".</source>
+        <translation>「更新を確認」で開くリリースページ。</translation>
+    </message>
+    <message>
+        <source>Default: GitHub releases page</source>
+        <translation>既定: GitHub リリースページ</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>更新を確認</translation>
+    </message>
+    <message>
+        <source>Usage Data</source>
+        <translation>使用データ</translation>
+    </message>
+    <message>
+        <source>Send Usage Statistics Automatically</source>
+        <translation>使用統計を自動送信</translation>
+    </message>
+    <message>
+        <source>Reserved: this version collects and uploads nothing.</source>
+        <translation>予約項目: このバージョンは収集も送信も行いません。</translation>
+    </message>
+    <message>
+        <source>Copy Images as Files</source>
+        <translation>画像をファイルとしてコピー</translation>
+    </message>
+    <message>
+        <source>Also offer a PNG file, for apps that only accept file pastes.</source>
+        <translation>ファイル貼り付けしか受け付けないアプリ向けに PNG ファイルも渡します。</translation>
+    </message>
+    <message>
+        <source>Automatic</source>
+        <translation>自動</translation>
+    </message>
+    <message>
+        <source>File Only</source>
+        <translation>ファイルのみ</translation>
+    </message>
+    <message>
+        <source>Image Only</source>
+        <translation>画像のみ</translation>
+    </message>
+    <message>
+        <source>Ignore Own Copy Key Macro</source>
+        <translation>自身のコピーキーマクロを無視</translation>
+    </message>
+    <message>
+        <source>Do not record the paste-back this app writes to the clipboard.</source>
+        <translation>貼り付け時にアプリが書き戻す内容を新しい履歴として記録しません。</translation>
+    </message>
+    <message>
+        <source>Text Layout</source>
+        <translation>テキストレイアウト</translation>
+    </message>
+    <message>
+        <source>How recognized lines are put together.</source>
+        <translation>認識した行をどう組み立てるか。</translation>
+    </message>
+    <message>
+        <source>One Line per Block</source>
+        <translation>ブロックごとに1行</translation>
+    </message>
+    <message>
+        <source>Single Line</source>
+        <translation>1行にまとめる</translation>
+    </message>
+    <message>
+        <source>Punctuation</source>
+        <translation>句読点の処理</translation>
+    </message>
+    <message>
+        <source>Clean up the punctuation OCR guessed from image noise.</source>
+        <translation>画像のノイズから推測された句読点を整理します。</translation>
+    </message>
+    <message>
+        <source>Do Nothing</source>
+        <translation>何もしない</translation>
+    </message>
+    <message>
+        <source>Strip Trailing</source>
+        <translation>行末の句読点を削除</translation>
+    </message>
+    <message>
+        <source>Full-width to Half-width</source>
+        <translation>全角を半角に</translation>
+    </message>
+    <message>
+        <source>Recognition Language</source>
+        <translation>認識言語</translation>
+    </message>
+    <message>
+        <source>Language passed to the OCR engine.</source>
+        <translation>OCR エンジンに渡す言語。</translation>
+    </message>
+    <message>
+        <source>Follow App</source>
+        <translation>アプリに従う</translation>
+    </message>
+    <message>
+        <source>Simplified Chinese</source>
+        <translation>簡体字中国語</translation>
+    </message>
+    <message>
+        <source>Japanese</source>
+        <translation>日本語</translation>
+    </message>
+    <message>
+        <source>Korean</source>
+        <translation>韓国語</translation>
+    </message>
+    <message>
+        <source>Show Result Dialog</source>
+        <translation>ダイアログを表示するタイミング</translation>
+    </message>
+    <message>
+        <source>When to pop up the recognized text (copying still happens either way).</source>
+        <translation>認識結果をいつ表示するか（コピーは常に行われます）。</translation>
+    </message>
+    <message>
+        <source>After Capture</source>
+        <translation>撮影後</translation>
+    </message>
+    <message>
+        <source>Copy Selection</source>
+        <translation>選択テキストをコピー</translation>
+    </message>
+    <message>
+        <source>Copy All Text</source>
+        <translation>すべてのテキストをコピー</translation>
+    </message>
+    <message>
+        <source>Formula Recognition Engine</source>
+        <translation>数式認識エンジン</translation>
+    </message>
+    <message>
+        <source>PP-FormulaNet runs locally through the Rust binding.</source>
+        <translation>PP-FormulaNet は Rust バインディングでローカル実行します。</translation>
+    </message>
+    <message>
+        <source>PP-FormulaNet (Local, Rust)</source>
+        <translation>PP-FormulaNet（ローカル Rust）</translation>
+    </message>
+    <message>
+        <source>External Service</source>
+        <translation>外部サービス</translation>
+    </message>
+    <message>
+        <source>Formula Service URL</source>
+        <translation>数式サービスの URL</translation>
+    </message>
+    <message>
+        <source>Only used by the external service engine.</source>
+        <translation>外部サービスエンジンを選んだときだけ使います。</translation>
+    </message>
+    <message>
+        <source>API Key</source>
+        <translation>API キー</translation>
+    </message>
+    <message>
+        <source>Formula Service</source>
+        <translation>数式サービス</translation>
+    </message>
+    <message>
+        <source>The service answered.</source>
+        <translation>サービスから応答がありました。</translation>
+    </message>
+    <message>
+        <source>Cannot use this service: {reason}</source>
+        <translation>このサービスは使えません: {reason}</translation>
+    </message>
+    <message>
+        <source>💡 Hint: the local engine needs a formula model in models/formula/; without it, use an external service.</source>
+        <translation>💡 ヒント: ローカルエンジンには models/formula/ にモデルが必要です。なければ外部サービスを使ってください。</translation>
+    </message>
+    <message>
+        <source>English</source>
+        <translation>英語</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to clear all clipboard history?
+This action cannot be undone.</source>
+        <translation>クリップボード履歴をすべて消去しますか？
+この操作は取り消せません。</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully, but the old files are still in the previous folder and can be deleted manually.</source>
+        <translation>クリップボードデータの場所を変更しました。古いファイルは元のフォルダに残っているので手動で削除できます。</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully, but the old files are still in use and could not be deleted. You can remove them after restarting the app.
+{error}</source>
+        <translation>クリップボードデータの場所を変更しましたが、古いファイルが使用中で削除できませんでした。アプリの再起動後に削除できます。
+{error}</translation>
+    </message>
 </context>
 
 <context>
@@ -1099,6 +2107,34 @@ Replace it?</source>
         <source>Save Pin Image</source>
         <translation>ピン画像を保存</translation>
     </message>
+    <message>
+        <source>Close pin</source>
+        <translation>ピンを閉じる</translation>
+    </message>
+    <message>
+        <source>Close this pinned image?</source>
+        <translation>このピン画像を閉じますか？</translation>
+    </message>
+    <message>
+        <source>Lock</source>
+        <translation>固定</translation>
+    </message>
+    <message>
+        <source>Locked</source>
+        <translation>固定しました</translation>
+    </message>
+    <message>
+        <source>Unlocked</source>
+        <translation>固定を解除しました</translation>
+    </message>
+    <message>
+        <source>Selected</source>
+        <translation>選択中</translation>
+    </message>
+    <message>
+        <source>Close Selected Pins</source>
+        <translation>選択したピンを閉じる</translation>
+    </message>
 </context>
 
 <!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
@@ -1207,6 +2243,62 @@ Replace it?</source>
     <message><source>Choose folder to save pinned images</source><translation>ピン留め画像の保存先フォルダーを選択</translation></message>
     <message><source>Save Failed</source><translation>保存に失敗しました</translation></message>
     <message><source>Saved {saved} pinned images, failed {failed}.</source><translation>{saved} 個のピン留め画像を保存し、{failed} 個失敗しました。</translation></message>
+    <message>
+        <source>Screenshot and Copy</source>
+        <translation>撮影してコピー</translation>
+    </message>
+    <message>
+        <source>Screenshot and Pin</source>
+        <translation>撮影してピン留め</translation>
+    </message>
+    <message>
+        <source>Screenshot and Save</source>
+        <translation>撮影して保存</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy Text</source>
+        <translation>撮影してテキストをコピー</translation>
+    </message>
+    <message>
+        <source>Screenshot and Translate</source>
+        <translation>撮影して翻訳</translation>
+    </message>
+    <message>
+        <source>Long Screenshot</source>
+        <translation>長スクリーンショット</translation>
+    </message>
+    <message>
+        <source>GIF Capture</source>
+        <translation>GIF 撮影</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Text</source>
+        <translation>クリップボードの文字をピン</translation>
+    </message>
+    <message>
+        <source>Open Save Folder</source>
+        <translation>保存先を開く</translation>
+    </message>
+    <message>
+        <source>Translate Clipboard Image</source>
+        <translation>クリップボードの画像を翻訳</translation>
+    </message>
+    <message>
+        <source>Copy Table as Markdown</source>
+        <translation>表を Markdown としてコピー</translation>
+    </message>
+    <message>
+        <source>Recognize Formula as LaTeX</source>
+        <translation>数式を認識（LaTeX）</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>更新を確認</translation>
+    </message>
+    <message>
+        <source>Video Recording</source>
+        <translation>動画録画</translation>
+    </message>
 </context>
 
 <!-- ========== Main App (Tray Menu) ========== -->
@@ -1237,18 +2329,6 @@ Replace it?</source>
         <translation>終了</translation>
     </message>
     <message>
-        <source>Screenshot (2)</source>
-        <translation>スクリーンショット (2)</translation>
-    </message>
-    <message>
-        <source>Translation (2)</source>
-        <translation>翻訳 (2)</translation>
-    </message>
-    <message>
-        <source>Clipboard (2)</source>
-        <translation>クリップボード (2)</translation>
-    </message>
-    <message>
         <source>Hotkey Registration Failed</source>
         <translation>ホットキーの登録に失敗しました</translation>
     </message>
@@ -1259,6 +2339,62 @@ Replace it?</source>
     <message>
         <source>The hotkey may be occupied by other programs. Please try a different combination.</source>
         <translation>ホットキーが他のプログラムで使用されている可能性があります。別の組み合わせをお試しください。</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy</source>
+        <translation>撮影してコピー</translation>
+    </message>
+    <message>
+        <source>Screenshot and Pin</source>
+        <translation>撮影してピン留め</translation>
+    </message>
+    <message>
+        <source>Screenshot and Save</source>
+        <translation>撮影して保存</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy Text</source>
+        <translation>撮影してテキストをコピー</translation>
+    </message>
+    <message>
+        <source>Screenshot and Translate</source>
+        <translation>撮影して翻訳</translation>
+    </message>
+    <message>
+        <source>Long Screenshot</source>
+        <translation>長スクリーンショット</translation>
+    </message>
+    <message>
+        <source>GIF Capture</source>
+        <translation>GIF 撮影</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Text</source>
+        <translation>クリップボードの文字をピン</translation>
+    </message>
+    <message>
+        <source>Open Save Folder</source>
+        <translation>保存先を開く</translation>
+    </message>
+    <message>
+        <source>Translate Clipboard Image</source>
+        <translation>クリップボードの画像を翻訳</translation>
+    </message>
+    <message>
+        <source>Copy Table as Markdown</source>
+        <translation>表を Markdown としてコピー</translation>
+    </message>
+    <message>
+        <source>Recognize Formula as LaTeX</source>
+        <translation>数式を認識（LaTeX）</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>更新を確認</translation>
+    </message>
+    <message>
+        <source>Video Recording</source>
+        <translation>動画録画</translation>
     </message>
 </context>
 
@@ -2957,6 +4093,14 @@ Replace it?</source>
         <source>当前按下</source>
         <translation>押下中</translation>
     </message>
+    <message>
+        <source>UI 检测</source>
+        <translation>UI 検出</translation>
+    </message>
+    <message>
+        <source>悬停时自动框出窗口或控件，单击即可精准截取。</source>
+        <translation>カーソル下のウィンドウやコントロールを自動で枠選択し、ワンクリックで切り取れます。</translation>
+    </message>
 </context>
 
 <!-- ========== GIF Record Toolbar ========== -->
@@ -3408,6 +4552,422 @@ SOFTWARE.</translation></message>
     <message>
         <source>Open link</source>
         <translation>リンクを開く</translation>
+    </message>
+</context>
+<!-- ========== 权限页（SettingsDialog） ========== -->
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Permissions</source>
+        <translation>権限</translation>
+    </message>
+    <message>
+        <source>System Permissions</source>
+        <translation>システム権限</translation>
+    </message>
+    <message>
+        <source>jietuba needs these system permissions. Grant them here; the status refreshes by itself once granted.</source>
+        <translation>jietuba は以下のシステム権限を必要とします。ここで許可してください。許可すると状態は自動で更新されます。</translation>
+    </message>
+    <message>
+        <source>Accessibility Permission</source>
+        <translation>アクセシビリティ権限</translation>
+    </message>
+    <message>
+        <source>Global hotkeys only work with this permission, and smart selection uses it to detect the element under the cursor.</source>
+        <translation>グローバルホットキーはこの権限がないと動作しません。スマート選択もカーソル下の要素の検出に使用します。</translation>
+    </message>
+    <message>
+        <source>Screen Recording Permission</source>
+        <translation>画面収録権限</translation>
+    </message>
+    <message>
+        <source>Screenshots contain window contents only with this permission; without it they show the desktop wallpaper only.</source>
+        <translation>この権限がないと、スクリーンショットにウインドウの内容が含まれず、デスクトップの壁紙だけが写ります。</translation>
+    </message>
+    <message>
+        <source>Granted</source>
+        <translation>許可済み</translation>
+    </message>
+    <message>
+        <source>Not Granted</source>
+        <translation>未許可</translation>
+    </message>
+    <message>
+        <source>Granted. Restart jietuba for it to take effect.</source>
+        <translation>許可済み。jietuba を再起動すると有効になります。</translation>
+    </message>
+    <message>
+        <source>Authorize</source>
+        <translation>許可する</translation>
+    </message>
+    <message>
+        <source>Open System Settings</source>
+        <translation>システム設定を開く</translation>
+    </message>
+</context>
+<!-- ========== 权限页：重启本程序（SettingsDialog） ========== -->
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Restart jietuba</source>
+        <translation>jietuba を再起動</translation>
+    </message>
+    <message>
+        <source>jietuba will close and reopen so the newly granted permission takes effect.</source>
+        <translation>jietuba を終了して再起動すると、許可した権限が有効になります。</translation>
+    </message>
+</context>
+<!-- ========== 权限缺失提示（PermissionPrompt） ========== -->
+<context>
+    <name>PermissionPrompt</name>
+    <message>
+        <source>Screen Recording Permission Missing</source>
+        <translation>画面収録権限がありません</translation>
+    </message>
+    <message>
+        <source>Screenshots will contain the desktop only, because jietuba has no Screen Recording permission.</source>
+        <translation>jietuba に画面収録権限がないため、スクリーンショットにはデスクトップだけが写ります。</translation>
+    </message>
+    <message>
+        <source>Accessibility Permission Missing</source>
+        <translation>アクセシビリティ権限がありません</translation>
+    </message>
+    <message>
+        <source>Global hotkeys do nothing while jietuba has no Accessibility permission.</source>
+        <translation>jietuba にアクセシビリティ権限がない間、グローバルホットキーは動作しません。</translation>
+    </message>
+    <message>
+        <source>System Permission Missing</source>
+        <translation>システム権限がありません</translation>
+    </message>
+    <message>
+        <source>jietuba is missing a system permission it needs to work.</source>
+        <translation>jietuba に必要なシステム権限がありません。</translation>
+    </message>
+    <message>
+        <source>Open Permission Settings</source>
+        <translation>権限設定を開く</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>後で</translation>
+    </message>
+</context>
+<!-- ========== 向导权限步骤（WelcomeWizard） ========== -->
+<context>
+    <name>WelcomeWizard</name>
+    <message>
+        <source>权限</source>
+        <translation>権限</translation>
+    </message>
+    <message>
+        <source>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</source>
+        <translation>この2つはシステム権限です。ないとホットキーが反応せず、スクリーンショットにはデスクトップの壁紙しか写りません。</translation>
+    </message>
+    <message>
+        <source>权限只对本机生效，随时可以在设置里复查。</source>
+        <translation>権限はこの Mac にのみ適用されます。設定からいつでも確認できます。</translation>
+    </message>
+</context>
+<!-- ========== Formula Result ========== -->
+<context>
+    <name>FormulaResult</name>
+    <message>
+        <source>Formula Result</source>
+        <translation>数式の認識結果</translation>
+    </message>
+    <message>
+        <source>Formula Recognition Unavailable</source>
+        <translation>数式認識を利用できません</translation>
+    </message>
+    <message>
+        <source>No formula engine is available on this machine: jietuba does not ship a formula model. Install a formula engine plugin and try again.</source>
+        <translation>この環境で使える数式エンジンがありません。jietuba は数式モデルを同梱していないため、数式エンジンのプラグインを入れてから再試行してください。</translation>
+    </message>
+</context>
+
+<!-- ========== OcrResultDialog ========== -->
+<context>
+    <name>OcrResultDialog</name>
+    <message>
+        <source>Recognition Result</source>
+        <translation>認識結果</translation>
+    </message>
+</context>
+
+
+<!-- ========== 视频录制 ========== -->
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Video Recording</source>
+        <translation>動画録画</translation>
+    </message>
+    <message>
+        <source>Video Container</source>
+        <translation>動画コンテナ</translation>
+    </message>
+    <message>
+        <source>File format of the recorded video.</source>
+        <translation>録画した動画のファイル形式。</translation>
+    </message>
+    <message>
+        <source>Video Codec</source>
+        <translation>動画コーデック</translation>
+    </message>
+    <message>
+        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
+        <translation>H.264 は互換性が最も高く、H.265 はファイルが小さくなります。</translation>
+    </message>
+    <message>
+        <source>Video Quality</source>
+        <translation>画質</translation>
+    </message>
+    <message>
+        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
+        <translation>選択範囲に合わせるか、1080p/720p/480p に制限します。</translation>
+    </message>
+    <message>
+        <source>Follow Selection</source>
+        <translation>選択範囲に合わせる</translation>
+    </message>
+    <message>
+        <source>Video Frame Rate</source>
+        <translation>フレームレート</translation>
+    </message>
+    <message>
+        <source>Higher frame rates make smoother videos and larger files.</source>
+        <translation>フレームレートが高いほど滑らかになりますが、ファイルは大きくなります。</translation>
+    </message>
+    <message>
+        <source>Bitrate Limit</source>
+        <translation>ビットレート上限</translation>
+    </message>
+    <message>
+        <source>0 lets the encoder decide from the quality preset.</source>
+        <translation>0 の場合は画質設定に応じてエンコーダーが決定します。</translation>
+    </message>
+    <message>
+        <source>Record Audio</source>
+        <translation>音声を録音</translation>
+    </message>
+    <message>
+        <source>Record the microphone together with the screen.</source>
+        <translation>画面と一緒にマイクを録音します。</translation>
+    </message>
+    <message>
+        <source>No Audio</source>
+        <translation>音声なし</translation>
+    </message>
+    <message>
+        <source>Microphone</source>
+        <translation>マイク</translation>
+    </message>
+    <message>
+        <source>Microphone Device</source>
+        <translation>マイクデバイス</translation>
+    </message>
+    <message>
+        <source>Device used when recording audio (empty = system default).</source>
+        <translation>録音時に使用するデバイス（空欄はシステム既定）。</translation>
+    </message>
+    <message>
+        <source>System Default</source>
+        <translation>システム既定</translation>
+    </message>
+    <message>
+        <source>Maximum Duration</source>
+        <translation>最大録画時間</translation>
+    </message>
+    <message>
+        <source>Automatically stop after this many seconds (0 = no limit).</source>
+        <translation>この秒数を超えると自動停止します（0 = 無制限）。</translation>
+    </message>
+    <message>
+        <source> seconds</source>
+        <translation> 秒</translation>
+    </message>
+    <message>
+        <source>Video Save Folder</source>
+        <translation>動画の保存先</translation>
+    </message>
+    <message>
+        <source>Empty = follow the screenshot save folder.</source>
+        <translation>空欄の場合はスクリーンショットの保存先に従います。</translation>
+    </message>
+    <message>
+        <source>Video recording is unavailable: no encoding backend.</source>
+        <translation>動画録画は利用できません：使用可能なエンコードバックエンドがありません。</translation>
+    </message>
+    <message>
+        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
+        <translation>💡 録画ファイルの保存先を入力します。空欄にするとスクリーンショットの保存先に従います。</translation>
+    </message>
+
+    <message>
+        <source>Video Recording</source>
+        <translation>動画録画</translation>
+    </message>
+    <message>
+        <source>Video Container</source>
+        <translation>動画コンテナ</translation>
+    </message>
+    <message>
+        <source>File format of the recorded video.</source>
+        <translation>録画した動画のファイル形式。</translation>
+    </message>
+    <message>
+        <source>Video Codec</source>
+        <translation>動画コーデック</translation>
+    </message>
+    <message>
+        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
+        <translation>H.264 は互換性が最も高く、H.265 はファイルが小さくなります。</translation>
+    </message>
+    <message>
+        <source>Video Quality</source>
+        <translation>画質</translation>
+    </message>
+    <message>
+        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
+        <translation>選択範囲に合わせるか、1080p/720p/480p に制限します。</translation>
+    </message>
+    <message>
+        <source>Follow Selection</source>
+        <translation>選択範囲に合わせる</translation>
+    </message>
+    <message>
+        <source>Video Frame Rate</source>
+        <translation>フレームレート</translation>
+    </message>
+    <message>
+        <source>Higher frame rates make smoother videos and larger files.</source>
+        <translation>フレームレートが高いほど滑らかになりますが、ファイルは大きくなります。</translation>
+    </message>
+    <message>
+        <source>Bitrate Limit</source>
+        <translation>ビットレート上限</translation>
+    </message>
+    <message>
+        <source>0 lets the encoder decide from the quality preset.</source>
+        <translation>0 の場合は画質設定に応じてエンコーダーが決定します。</translation>
+    </message>
+    <message>
+        <source>Record Audio</source>
+        <translation>音声を録音</translation>
+    </message>
+    <message>
+        <source>Record the microphone together with the screen.</source>
+        <translation>画面と一緒にマイクを録音します。</translation>
+    </message>
+    <message>
+        <source>No Audio</source>
+        <translation>音声なし</translation>
+    </message>
+    <message>
+        <source>Microphone</source>
+        <translation>マイク</translation>
+    </message>
+    <message>
+        <source>Microphone Device</source>
+        <translation>マイクデバイス</translation>
+    </message>
+    <message>
+        <source>Device used when recording audio (empty = system default).</source>
+        <translation>録音時に使用するデバイス（空欄はシステム既定）。</translation>
+    </message>
+    <message>
+        <source>System Default</source>
+        <translation>システム既定</translation>
+    </message>
+    <message>
+        <source>Maximum Duration</source>
+        <translation>最大録画時間</translation>
+    </message>
+    <message>
+        <source>Automatically stop after this many seconds (0 = no limit).</source>
+        <translation>この秒数を超えると自動停止します（0 = 無制限）。</translation>
+    </message>
+    <message>
+        <source> seconds</source>
+        <translation> 秒</translation>
+    </message>
+    <message>
+        <source>Video Save Folder</source>
+        <translation>動画の保存先</translation>
+    </message>
+    <message>
+        <source>Empty = follow the screenshot save folder.</source>
+        <translation>空欄の場合はスクリーンショットの保存先に従います。</translation>
+    </message>
+    <message>
+        <source>Video recording is unavailable: no encoding backend.</source>
+        <translation>動画録画は利用できません：使用可能なエンコードバックエンドがありません。</translation>
+    </message>
+    <message>
+        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
+        <translation>💡 録画ファイルの保存先を入力します。空欄にするとスクリーンショットの保存先に従います。</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>参照</translation>
+    </message>
+</context>
+<context>
+    <name>VideoRecordToolbar</name>
+    <message>
+        <source>开始录制</source>
+        <translation>録画開始</translation>
+    </message>
+    <message>
+        <source>停止录制</source>
+        <translation>録画停止</translation>
+    </message>
+    <message>
+        <source>暂停录制</source>
+        <translation>録画一時停止</translation>
+    </message>
+    <message>
+        <source>恢复录制</source>
+        <translation>録画再開</translation>
+    </message>
+    <message>
+        <source>拖动工具栏</source>
+        <translation>ツールバーをドラッグ</translation>
+    </message>
+    <message>
+        <source>关闭</source>
+        <translation>閉じる</translation>
+    </message>
+    <message>
+        <source>跟随区域</source>
+        <translation>選択範囲に合わせる</translation>
+    </message>
+</context>
+<context>
+    <name>VideoRecordWindow</name>
+    <message>
+        <source>视频录制</source>
+        <translation>動画録画</translation>
+    </message>
+    <message>
+        <source>视频已保存到:
+{path}</source>
+        <translation>動画を保存しました:
+{path}</translation>
+    </message>
+    <message>
+        <source>打开文件夹</source>
+        <translation>フォルダを開く</translation>
+    </message>
+    <message>
+        <source>复制路径</source>
+        <translation>パスをコピー</translation>
+    </message>
+    <message>
+        <source>确定</source>
+        <translation>OK</translation>
     </message>
 </context>
 </TS>

@@ -37,4 +37,26 @@ TRANSLATIONS: dict[str, str] = {
     "ppocr_rust 识别失败: {e}\n{tb}": "ppocr_rust recognition failed: {e}\n{tb}",
     "高精度引擎识别失败: {e}\n{tb}": "High-precision engine recognition failed: {e}\n{tb}",
     "windows_media_ocr 识别失败: {e}\n{tb}": "windows_media_ocr recognition failed: {e}\n{tb}",
+
+    # -- ocr/formula.py（公式识别）--
+    "公式引擎未注册: {name}": "Formula engine is not registered: {name}",
+    "公式引擎不可用: {name}": "Formula engine is unavailable: {name}",
+    "公式识别不可用：没有可用的公式引擎":
+        "Formula recognition is unavailable: no formula engine available",
+    "公式识别异常: {e}": "Formula recognition raised: {e}",
+    "公式引擎没识别到内容: {name}": "Formula engine recognized nothing: {name}",
+
+    # -- ocr/formula_engines.py（内建公式引擎）--
+    "解析 PP-FormulaNet 模型路径失败: {e}": "Failed to resolve PP-FormulaNet model path: {e}",
+    "PP-FormulaNet 引擎不可用: {reason}": "PP-FormulaNet engine unavailable: {reason}",
+    "ppocr_rust 公式引擎可用 (PP-FormulaNet)": "ppocr_rust formula engine available (PP-FormulaNet)",
+    "正在初始化 PP-FormulaNet 引擎 (Rust + ort)...":
+        "Initializing PP-FormulaNet engine (Rust + ort)...",
+    "PP-FormulaNet 引擎初始化成功": "PP-FormulaNet engine initialized successfully",
+    "PP-FormulaNet 初始化失败: {e}\n{tb}": "PP-FormulaNet initialization failed: {e}\n{tb}",
+    "PP-FormulaNet 识别失败: {e}\n{tb}": "PP-FormulaNet recognition failed: {e}\n{tb}",
+    "外部公式服务未配置 URL": "External formula service URL is not configured",
+    "外部公式服务没有返回 LaTeX": "External formula service returned no LaTeX",
+    "外部公式服务请求失败: {e}\n{tb}": "External formula service request failed: {e}\n{tb}",
+    "外部公式服务连接失败: {e}": "External formula service connection failed: {e}",
 }

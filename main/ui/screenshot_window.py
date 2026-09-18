@@ -19,7 +19,9 @@ from ui.selection_info import SelectionInfoPanel, SelectionInfoController
 from tools.action import ActionTools
 from settings import get_tool_settings_manager
 from stitch.scroll_window import ScrollCaptureWindow
-from core.logger import log_debug, log_info, log_exception, T
+from core.actions import EDITOR_MODE_GIF, EDITOR_MODE_LONG, EDITOR_MODE_TRANSLATE, EDITOR_MODE_VIDEO
+from core.logger import log_debug, log_info, log_exception, log_warning, T
+from core.platform.window import UI_DETECTION_NONE
 from core import safe_event
 from core.shortcut_manager import ShortcutManager, ShortcutHandler
 
@@ -178,6 +180,25 @@ class ScreenshotShortcutHandler(ShortcutHandler):
         return False
 
 
+def gesture_selection_rect(rect):
+    """把「UI 检测」给出的区域转成选区矩形。
+
+    平台层的 ``find_rect_at_point`` 返回 ``[左, 上, 右, 下]``（屏幕坐标），不是
+    ``QRectF``：直接 ``QRectF([...])`` 会抛 TypeError（而且这条路径只在真机上才会走到）。
+    """
+    from PySide6.QtCore import QRectF
+
+    if rect is None:
+        return QRectF()
+    if isinstance(rect, QRectF):
+        return QRectF(rect)
+    values = list(rect)
+    if len(values) != 4:
+        return QRectF()
+    left, top, right, bottom = (float(value) for value in values)
+    return QRectF(left, top, right - left, bottom - top)
+
+
 class ScreenshotWindow(QWidget):
     def __init__(self, config_manager=None, prefetched_image=None, prefetched_rect=None):
         super().__init__()
@@ -231,8 +252,10 @@ class ScreenshotWindow(QWidget):
         _timings['Scene+View'] = (_t2 - _t1) * 1000
         
         # 启用智能选区（从配置读取）
-        self.smart_selection_enabled = self.config_manager.get_smart_selection()
-        self.view.enable_smart_selection(self.smart_selection_enabled)
+        self.ui_detection_mode = self.config_manager.get_ui_detection()
+        self.view.enable_ui_detection(
+            self.ui_detection_mode, self.config_manager.get_ui_detection_margin()
+        )
         
         # 4. 初始化工具栏（一次性创建，后续复用）
         self.toolbar = Toolbar(self)
@@ -353,8 +376,10 @@ class ScreenshotWindow(QWidget):
         self.view.setGeometry(0, 0, int(self.virtual_width), int(self.virtual_height))
         self.view.lower()  # 确保 view 在最底层，overlay 在上方
         
-        self.smart_selection_enabled = self.config_manager.get_smart_selection()
-        self.view.enable_smart_selection(self.smart_selection_enabled)
+        self.ui_detection_mode = self.config_manager.get_ui_detection()
+        self.view.enable_ui_detection(
+            self.ui_detection_mode, self.config_manager.get_ui_detection_margin()
+        )
         
         # 创建新的 ActionHandler（引用新 scene）
         self.action_handler = ActionTools(
@@ -589,6 +614,7 @@ class ScreenshotWindow(QWidget):
         self.toolbar.screenshot_translate_clicked.connect(self._handle_screenshot_translate)
         self.toolbar.scan_code_clicked.connect(self._handle_scan_code)
         self.toolbar.gif_record_clicked.connect(self.start_gif_record_mode)
+        self.toolbar.video_record_clicked.connect(self.start_video_record_mode)
 
     def _connect_session_signals(self):
         """连接每次会话的信号（scene→self + toolbar→view.smart_edit_controller）。"""
@@ -697,28 +723,64 @@ class ScreenshotWindow(QWidget):
         if self._is_closing:
             return
         
-        # 智能选区：根据当前鼠标位置立即显示选区预览
-        if self.smart_selection_enabled:
-            self._init_smart_selection_at_cursor()
+        # UI 检测：根据当前鼠标位置立即显示选区预览
+        if self.ui_detection_mode != UI_DETECTION_NONE:
+            self._init_ui_detection_at_cursor()
         
         # 放大镜：在当前鼠标位置初始化
         self._init_magnifier_at_cursor()
 
-    def _init_smart_selection_at_cursor(self):
-        """根据当前鼠标位置初始化智能选区预览，在窗口显示后立即调用"""
+    def _init_ui_detection_at_cursor(self):
+        """根据当前鼠标位置初始化UI 检测预览，在窗口显示后立即调用"""
         from PySide6.QtGui import QCursor
         from PySide6.QtCore import QPointF
         
         cursor_pos = QCursor.pos()
         scene_pos = QPointF(cursor_pos.x(), cursor_pos.y())
         
-        if hasattr(self.view, '_get_smart_selection_rect'):
-            smart_rect = self.view._get_smart_selection_rect(scene_pos)
-            if not smart_rect.isEmpty():
+        if hasattr(self.view, '_get_ui_detection_rect'):
+            detected_rect = self.view._get_ui_detection_rect(scene_pos)
+            if not detected_rect.isEmpty():
                 self.scene.selection_model.activate()
-                self.scene.selection_model.set_rect(smart_rect)
-                log_debug(T("智能选区初始化: 鼠标位置({x}, {y}) -> 选区{rect}",
-                             x=cursor_pos.x(), y=cursor_pos.y(), rect=smart_rect), "ScreenshotWindow")
+                self.scene.selection_model.set_rect(detected_rect)
+                log_debug(T("UI 检测初始化: 鼠标位置({x}, {y}) -> 选区{rect}",
+                             x=cursor_pos.x(), y=cursor_pos.y(), rect=detected_rect), "ScreenshotWindow")
+
+    def apply_editor_mode(self, mode: str, rect=None) -> bool:
+        """全局鼠标动作：把检测到的区域设成选区，并直接进入指定模式。
+
+        必须在窗口 ``show()`` 之后调用——确认选区会顺手把工具栏摆到选区旁边，窗口还没
+        布局时那次位置计算没有意义。进入模式走的是用户手动点工具栏的同一批入口，所以
+        「鼠标动作进来的」和「点进来的」行为一致。
+        """
+        if self._is_closing:
+            return False
+
+        if rect is not None:
+            detected = gesture_selection_rect(rect)
+            if not detected.isEmpty():
+                self.scene.selection_model.activate()
+                self.scene.selection_model.set_rect(detected)
+                log_debug(T("全局鼠标动作选区: {rect}", rect=detected), "ScreenshotWindow")
+
+        if not self.scene.selection_model.is_confirmed:
+            self.scene.confirm_selection()
+
+        if mode == EDITOR_MODE_TRANSLATE:
+            self._handle_screenshot_translate()
+            return True
+        if mode == EDITOR_MODE_LONG:
+            self.start_long_screenshot_mode()
+            return True
+        if mode == EDITOR_MODE_GIF:
+            self.start_gif_record_mode()
+            return True
+        if mode == EDITOR_MODE_VIDEO:
+            self.start_video_record_mode()
+            return True
+
+        log_warning(T("不认识的截图模式: {mode}", mode=mode), "ScreenshotWindow")
+        return False
 
     def _init_magnifier_at_cursor(self):
         """在当前鼠标位置初始化放大镜，在窗口显示后立即调用"""
@@ -1036,6 +1098,27 @@ class ScreenshotWindow(QWidget):
             self.cleanup_and_close()
         else:
             show_modeless_warning_dialog(self, "警告", "请先选择一个有效的截图区域！")
+
+    def start_video_record_mode(self):
+        """启动视频录制模式（与 GIF 录制同一套入口：选区 → 录制窗口 → 关掉截图窗口）"""
+        log_info(T("启动视频录制模式"), "ScreenshotWindow")
+
+        if not self.scene.selection_model.is_confirmed:
+            show_modeless_warning_dialog(self, "警告", "请先选择一个有效的截图区域！")
+            return
+
+        selection_rect = self.scene.selection_model.rect()
+        capture_rect = QRect(int(selection_rect.x()), int(selection_rect.y()),
+                             int(selection_rect.width()), int(selection_rect.height()))
+        log_debug(T("视频录制区域: x={x}, y={y}, w={w}, h={h}",
+                    x=capture_rect.x(), y=capture_rect.y(),
+                    w=capture_rect.width(), h=capture_rect.height()), "ScreenshotWindow")
+
+        from video import start_video_record_window
+
+        start_video_record_window(capture_rect)
+        log_info(T("视频录制窗口已启动"), "ScreenshotWindow")
+        self.cleanup_and_close()
 
     def start_long_screenshot_mode(self):
         """启动长截图模式"""

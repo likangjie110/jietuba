@@ -33,7 +33,11 @@ class Capability(str, Enum):
 
     # 窗口
     WINDOW_ENUMERATION = "window_enumeration"
+    UI_ELEMENT_DETECTION = "ui_element_detection"
     WINDOW_TOPMOST = "window_topmost"
+    WINDOW_KEEP_VISIBLE_WHEN_INACTIVE = "window_keep_visible_when_inactive"
+    WINDOW_ACRYLIC = "window_acrylic"
+    APPLICATION_ICON = "application_icon"
     WINDOW_CLICK_THROUGH = "window_click_through"
     WINDOW_EXCLUDE_FROM_CAPTURE = "window_exclude_from_capture"
 
@@ -44,6 +48,7 @@ class Capability(str, Enum):
     # 指针与输入注入
     POINTER_POSITION = "pointer_position"
     POINTER_BUTTON_STATE = "pointer_button_state"
+    MODIFIER_STATE = "modifier_state"
     SCROLL_LISTEN = "scroll_listen"
     SCROLL_INJECT = "scroll_inject"
     KEY_INJECT = "key_inject"
@@ -55,12 +60,16 @@ class Capability(str, Enum):
     # GIF 录制
     FRAME_CAPTURE = "frame_capture"
 
+    # 视频录制
+    VIDEO_RECORDING = "video_recording"
+
     # 桌面集成
     AUTOSTART = "autostart"
     DESKTOP_SHORTCUT = "desktop_shortcut"
 
     # 进程
     PROCESS_CONTROL = "process_control"
+    FOREGROUND_APP = "foreground_app"
 
 
 _W = "windows"
@@ -76,6 +85,11 @@ _SUPPORT_TABLE: dict[Capability, dict[str, Support]] = {
         _M: Support.FULL,
         _L: Support.NONE,          # 没有窗口枚举后端
     },
+    Capability.UI_ELEMENT_DETECTION: {
+        _W: Support.NONE,          # UIA 后端未实现（Windows 实机上才能验证），会回退到窗口级
+        _M: Support.FULL,          # AXUIElementCopyElementAtPosition（需要辅助功能权限）
+        _L: Support.NONE,          # 没有等价接口
+    },
     Capability.WINDOW_TOPMOST: {
         _W: Support.FULL,          # SetWindowPos 切置顶不会重绘、不激活窗口
         _M: Support.DEGRADED,      # 只能改 Qt 窗口标志，切一次会隐藏再显示
@@ -89,6 +103,26 @@ _SUPPORT_TABLE: dict[Capability, dict[str, Support]] = {
     Capability.WINDOW_EXCLUDE_FROM_CAPTURE: {
         _W: Support.FULL,          # SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)
         _M: Support.NONE,          # 没有等价 API，只能靠抓屏后自行裁掉
+        _L: Support.NONE,
+    },
+    Capability.WINDOW_ACRYLIC: {
+        # 窗口的毛玻璃/亚克力背景：把「背后的内容模糊」交给系统原生实现
+        _W: Support.FULL,          # Win11 DwmSetWindowAttribute；退回 Win10 的 accent 路径
+        _M: Support.FULL,          # NSVisualEffectView 插到内容视图之下
+        _L: Support.NONE,          # 合成器模糊各桌面环境差异太大，不做
+    },
+    Capability.WINDOW_KEEP_VISIBLE_WHEN_INACTIVE: {
+        # macOS 的 Qt Tool 窗口是 NSPanel，默认 hidesOnDeactivate=True：应用失去前台就被
+        # 系统藏起来（贴图会「消失」）
+        _W: Support.NONE,          # Windows 的窗口不因失焦隐藏，无需处理
+        _M: Support.FULL,          # 关掉 NSWindow.hidesOnDeactivate
+        _L: Support.NONE,
+    },
+    Capability.APPLICATION_ICON: {
+        # 整个应用的图标（macOS 的 Dock）：Windows 侧没有这个概念——那边「应用图标」就是
+        # 各窗口的任务栏图标与托盘那一枚，分别由 set_taskbar_icon / get_app_icon 负责
+        _W: Support.NONE,
+        _M: Support.FULL,          # NSApplication.setApplicationIconImage
         _L: Support.NONE,
     },
     Capability.HOTKEY_KEYBOARD: {
@@ -110,6 +144,11 @@ _SUPPORT_TABLE: dict[Capability, dict[str, Support]] = {
         _W: Support.FULL,          # GetAsyncKeyState
         _M: Support.FULL,          # Quartz CGEventSourceButtonState
         _L: Support.NONE,          # 没有实现，键态恒为「未按下」
+    },
+    Capability.MODIFIER_STATE: {
+        _W: Support.FULL,          # GetAsyncKeyState 读 Ctrl/Alt/Shift/Win
+        _M: Support.FULL,          # Quartz CGEventSourceFlagsState
+        _L: Support.NONE,          # 没有实现，恒为空集合（全局鼠标动作会按「无修饰键」处理）
     },
     Capability.SCROLL_LISTEN: {
         _W: Support.FULL,          # pynput.mouse.Listener
@@ -144,6 +183,13 @@ _SUPPORT_TABLE: dict[Capability, dict[str, Support]] = {
         _M: Support.DEGRADED,
         _L: Support.DEGRADED,
     },
+    Capability.VIDEO_RECORDING: {
+        # 视频录制：编码走 Qt 多媒体自带的 FFmpeg 后端（PySide6 轮子里就有，不需要外部
+        # ffmpeg 可执行文件），抓帧用 mss，三平台是同一套代码。差异只在抓屏能否拿到画面。
+        _W: Support.FULL,          # 未在 Windows 实机验证（本机是 macOS）
+        _M: Support.FULL,          # 需要「屏幕录制」权限，缺失时抓到的是空桌面
+        _L: Support.DEGRADED,      # Wayland 下 Qt 的抓屏与编码可能拿不到画面
+    },
     Capability.AUTOSTART: {
         _W: Support.FULL,          # 注册表 HKCU\Run
         _M: Support.NONE,          # 需要 LaunchAgent plist，未实现
@@ -159,13 +205,23 @@ _SUPPORT_TABLE: dict[Capability, dict[str, Support]] = {
         _M: Support.NONE,          # 需要 libproc / kill 语义对齐，未实现
         _L: Support.NONE,
     },
+    Capability.FOREGROUND_APP: {
+        # 「当前前台是哪个程序」——全局鼠标动作的「忽略程序列表」用它判断该不该触发
+        _W: Support.FULL,          # GetForegroundWindow + QueryFullProcessImageNameW
+        _M: Support.FULL,          # NSWorkspace.frontmostApplication
+        _L: Support.NONE,          # 没有实现（需要 X11 _NET_ACTIVE_WINDOW + WM_CLASS）
+    },
 }
 
 # ── 各能力的后端名 ────────────────────────────────────
 # 用于日志（例如「GIF 抓帧后端: mss」这类既有的后端说明）。
 _BACKEND_NAMES: dict[Capability, dict[str, str]] = {
     Capability.WINDOW_ENUMERATION: {_W: "win32gui", _M: "quartz", _L: ""},
+    Capability.UI_ELEMENT_DETECTION: {_W: "", _M: "ax", _L: ""},
     Capability.WINDOW_TOPMOST: {_W: "win32", _M: "qt", _L: "qt"},
+    Capability.WINDOW_KEEP_VISIBLE_WHEN_INACTIVE: {_W: "", _M: "appkit", _L: ""},
+    Capability.WINDOW_ACRYLIC: {_W: "dwm", _M: "appkit", _L: ""},
+    Capability.APPLICATION_ICON: {_W: "", _M: "appkit", _L: ""},
     Capability.WINDOW_CLICK_THROUGH: {_W: "win32", _M: "objc", _L: ""},
     Capability.WINDOW_EXCLUDE_FROM_CAPTURE: {_W: "win32", _M: "", _L: ""},
     Capability.HOTKEY_KEYBOARD: {_W: "win32", _M: "pynput", _L: "pynput"},
@@ -173,14 +229,17 @@ _BACKEND_NAMES: dict[Capability, dict[str, str]] = {
     Capability.POINTER_POSITION: {_W: "win32", _M: "quartz", _L: "qt"},
     Capability.POINTER_BUTTON_STATE: {_W: "win32", _M: "quartz", _L: ""},
     Capability.SCROLL_LISTEN: {_W: "pynput", _M: "pynput", _L: "pynput"},
+    Capability.MODIFIER_STATE: {_W: "win32", _M: "quartz", _L: ""},
     Capability.SCROLL_INJECT: {_W: "win32", _M: "", _L: ""},
     Capability.KEY_INJECT: {_W: "win32", _M: "pynput", _L: "pynput"},
     Capability.CLIPBOARD_IMAGE: {_W: "win32", _M: "qt", _L: "qt"},
     Capability.PASTE_TO_APP: {_W: "win32", _M: "appkit+pynput", _L: ""},
     Capability.FRAME_CAPTURE: {_W: "gdi", _M: "mss", _L: "mss"},
+    Capability.VIDEO_RECORDING: {_W: "qtmultimedia", _M: "qtmultimedia", _L: "qtmultimedia"},
     Capability.AUTOSTART: {_W: "winreg", _M: "", _L: ""},
     Capability.DESKTOP_SHORTCUT: {_W: "powershell", _M: "", _L: ""},
     Capability.PROCESS_CONTROL: {_W: "win32", _M: "", _L: ""},
+    Capability.FOREGROUND_APP: {_W: "win32", _M: "appkit", _L: ""},
 }
 
 

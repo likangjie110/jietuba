@@ -14,5 +14,7 @@ crate-type = ["rlib", "cdylib"]
 pyo3 = { version = "0.22", features = ["extension-module", "abi3-py311"] }
 ort = { version = "=2.0.0-rc.12", features = ["ndarray"] }
 ndarray = "0.16"
-image = { version = "0.25", default-features = false }
+# 公式识别绑定要把 Python 传进来的 PNG 字节解码成像素，因此比文本引擎多开一个 png 特性
+# （与 gifrecorder 开 jpeg 特性同一个套路：按需开，默认特性仍然关着）
+image = { version = "0.25", default-features = false, features = ["png"] }
 imageproc = "0.25"

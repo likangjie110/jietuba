@@ -21,6 +21,21 @@ from PySide6.QtCore import QSettings, Signal, QObject
 from PySide6.QtGui import QColor
 
 from core.platform.paths import default_screenshot_dir, log_dir
+from core.platform.window import (
+    MAX_ELEMENT_MARGIN,
+    UI_DETECTION_ELEMENT,
+    normalize_ui_detection,
+)
+
+
+# ── 贴图的可调范围 ────────────────────────────────────
+# 设置页的控件范围与贴图窗口的夹取都读这里，避免两边各写一组数字。
+PIN_ZOOM_STEP_RANGE = (1.01, 1.30)      # 滚轮缩放步长（倍率）
+PIN_OPACITY_STEP_RANGE = (0.01, 0.25)   # Ctrl+滚轮透明度步长
+PIN_OPACITY_RANGE = (0.15, 1.0)         # 窗口透明度下限是 0.15，再低就看不见了
+PIN_NEW_POSITIONS = ("selection", "cursor", "center")
+PIN_ORDER_MODES = ("top", "bottom")
+PIN_HISTORY_RANGE = (1, 50)             # 「贴图历史数量」：最多记住多少张贴图
 
 
 ANNOTATION_TOOL_SHORTCUTS = (
@@ -176,6 +191,16 @@ class ToolSettingsManager(QObject):
         "inapp_copy_pin": "ctrl+c",            # 复制钉图内容
         "inapp_thumbnail": "r",                # 切换缩略图模式
         "inapp_toggle_toolbar": "space",       # 切换工具栏
+        # 贴图窗口的其它内置快捷键（键位映射到 pin/pin_actions.py 的动作 id）
+        "inapp_pin_save": "ctrl+s",            # 保存贴图
+        "inapp_pin_rotate": "ctrl+r",          # 顺时针旋转
+        "inapp_pin_lock": "ctrl+l",            # 锁定/解锁位置与大小
+        "inapp_pin_on_top": "ctrl+t",          # 置顶开关
+        "inapp_pin_shadow": "ctrl+h",          # 阴影/描边开关
+        "inapp_pin_opacity_up": "ctrl+up",     # 提高不透明度
+        "inapp_pin_opacity_down": "ctrl+down",  # 降低不透明度
+        "inapp_pin_copy_all_text": "",         # 复制识别到的文字（默认不绑）
+        "inapp_pin_copy_and_close": "",        # 复制并关闭（默认不绑）
         "inapp_zoom_in": "pageup",             # 放大镜放大
         "inapp_zoom_out": "pagedown",          # 放大镜缩小
         "inapp_translate": "shift+c",          # 截图翻译
@@ -188,8 +213,40 @@ class ToolSettingsManager(QObject):
         "text_always_on_top": True,           # 文字标注始终高于其他绘制标注
         "screenshot_toolbar_layout": "",      # 截图工具栏按钮排布（JSON，空 = 默认排布，见 ui/toolbar_layout.py）
 
-        # 智能选择
-        "smart_selection": True,              # 智能选区（窗口/控件识别）
+        # 全局鼠标动作：修饰键 + 鼠标手势 → 动作 id（空表 = 全部未绑定）
+        "mouse_gestures": {},
+        # 全局鼠标动作截图时显示遮罩（抓完再闪，见 core/actions.py 的说明）
+        "mouse_capture_overlay": False,
+        # 忽略程序列表：前台程序名命中时不触发全局鼠标动作
+        "mouse_ignored_apps": [],
+
+        # 全局动作的快捷键：{动作 id: [主热键, 备用热键]}（空串 = 不绑）。
+        # 这是「快捷键/动作页」的唯一出处；旧键 app/hotkey、app/hotkey_2、
+        # clipboard/hotkey(_2)、app/translation_hotkey(_2) 由 _LEGACY_HOTKEY_KEYS
+        # 一次性迁移过来，之后的读写都走这里。
+        "action_hotkeys": {
+            "screenshot": ["ctrl+1", ""],
+            "clipboard": ["ctrl+2", ""],
+            "open_translation": ["", ""],
+        },
+        # 托盘菜单里显示哪些动作：{动作 id: bool}（缺省看 core.actions 里各动作的默认值）
+        "action_tray": {
+            "screenshot": True,
+            "screenshot_copy": True,
+            "screenshot_quick_save": True,
+            "long_screenshot": True,
+            "gif_capture": True,
+            "video_capture": True,
+            "clipboard": True,
+            "open_translation": True,
+            "open_save_folder": True,
+            "pin_clipboard_text": True,
+            "translate_clipboard_image": True,
+        },
+
+        # UI 检测：截图时鼠标悬停要不要自动框出窗口/控件
+        "ui_detection": UI_DETECTION_ELEMENT,  # none 不检测 / window 仅窗口 / element 检测元素
+        "ui_detection_margin": 0,              # 元素检测边距（px，仅 element 档生效）
 
         # 截图保存
         "screenshot_save_enabled": True,       # 自动保存截图
@@ -212,12 +269,39 @@ class ToolSettingsManager(QObject):
         "gif_fps": 10,                         # GIF默认帧率
         "gif_fps_options": [5, 10, 16, 24],  # 帧率可选项（可在此调整选项）
 
+        # 视频录制（录屏 → MP4/MKV 等容器；编码走 Qt 多媒体的 FFmpeg 后端）
+        "video_container": "mp4",              # 容器: mp4 / mkv / mov / avi
+        "video_codec": "h264",                 # 视频编码: h264 / h265
+        "video_fps": 30,                       # 录制帧率
+        "video_quality": "source",             # 清晰度: source 跟随区域 / 1080p / 720p / 480p
+        "video_bitrate_mbps": 0,               # 码率上限（Mbps，0 = 交给编码器按清晰度决定）
+        "video_audio": "none",                 # 音频: none 不录声音 / microphone 录麦克风
+        "video_audio_device": "",              # 麦克风设备名（空 = 系统默认）
+        "video_max_duration_s": 0,             # 最长录制时长（秒，0 = 不限制）
+        "video_save_path": "",                 # 视频保存目录（空 = 跟随截图保存目录）
+
         # OCR
         "ocr_enabled": True,                   # 钉图后自动 OCR（保留旧键名以兼容已有配置）
         "ocr_engine": "ppocr_rust",            # OCR引擎类型 (ppocr_rust 推荐, windows_media_ocr 备用)
         "ocr_grayscale": False,                # OCR灰度转换（Windows OCR 不需要）
         "ocr_upscale": True,                   # OCR图像放大（提升小字识别率）
         "ocr_upscale_factor": 2.0,             # OCR放大倍数（1.0-3.0）
+        # 识别结果的文本布局：auto 智能分行（默认）/ lines 每个文字块一行 / single 全部并成一行
+        "ocr_text_layout": "auto",
+        # 标点处理：none 原样 / strip_trailing 去掉行尾标点 / to_halfwidth 全角转半角
+        "ocr_punctuation": "none",
+        # 识别语言：follow_app 跟随界面语言 / zh / en / ja / ko
+        "ocr_language": "follow_app",
+        # 什么时候额外弹出识别结果对话框（JSON 列表，见 get_ocr_dialog_triggers）：
+        # capture 截图后 / copy_all 复制所有文本 / copy_selection 复制选定文本。
+        # 默认空表：沿用「只有复制、不弹窗」的老行为
+        "ocr_dialog_triggers": [],
+        # 公式识别（第 9 项）：ppocr_formula 走 Rust 侧 PP-FormulaNet 绑定；
+        # external_service 走自建/第三方 HTTP 服务（要填 URL 与可选密钥）
+        "formula_engine": "ppocr_formula",
+        "formula_service_url": "",
+        "formula_service_api_key": "",
+        "formula_service_timeout": 15,         # 外部公式服务的超时（秒）
         
         # ==================== 3. 剪贴板 ====================
         "clipboard_enabled": True,             # 剪贴板监听启用
@@ -235,6 +319,12 @@ class ToolSettingsManager(QObject):
         "clipboard_line_height_padding": 8,   # 多行显示时的额外行高边距（像素，用于确保完整显示）
         "clipboard_display_lines": 1,          # 剪贴板项最大显示行数
         "clipboard_theme": "light",            # 剪贴板窗口主题（light/dark/blue/green/pink/purple/orange）
+        # 复制图片项时写进系统剪贴板的形态：auto=图片与 PNG 文件都给（谁认哪个用哪个）
+        # / image_only=只给图片 / file_only=只给 PNG 文件（给只认文件的程序用）
+        "clipboard_image_copy_mode": "auto",
+        # 忽略本程序自己写入剪贴板的内容：不做历史记录，也不触发"新内容"日志，
+        # 避免程序自己的复制动作又被打回来形成重复记录/循环
+        "clipboard_ignore_own_copy": True,
         "clipboard_group_bar_position": "top", # 分组栏位置（right/left/top）
         "clipboard_preserve_search": False,    # 关闭时保留搜索栏内容
         "clipboard_db_path": "",               # 剪贴板数据库自定义路径（空=默认位置）
@@ -246,6 +336,11 @@ class ToolSettingsManager(QObject):
         "mask_color_g": 0,                     # 遮罩色 G（0-255）
         "mask_color_b": 0,                     # 遮罩色 B（0-255）
         # 遮罩色 Alpha 固定为 120，不提供前端设置
+        # 皮肤覆盖层：空串表示该项跟随内置主题（见 core/ui_theme.py 的 SkinOverrides）
+        "skin_accent_color": "",               # 皮肤强调色
+        "skin_window_color": "",               # 皮肤窗口背景色
+        "skin_text_color": "",                 # 皮肤文字色
+        "custom_logo_path": "",                # 自定义 logo 图片（空=内置品牌图标）
 
         # ==================== 5. 翻译 ====================
         "translation_provider": "google",      # 当前翻译引擎
@@ -278,7 +373,31 @@ class ToolSettingsManager(QObject):
         "magnifier_zoom_min": 2.0,             # 放大镜最小倍率
         "magnifier_zoom_max": 10.0,            # 放大镜最大倍率
         "pin_auto_toolbar": False,             # 钉图自动显示工具栏
-        "pin_default_opacity": 1.0,            # 钉图默认透明度（0.1-1.0）
+        "pin_default_opacity": 1.0,            # 钉图默认透明度（见 PIN_OPACITY_RANGE）
+        "pin_zoom_step": 1.05,                 # 滚轮缩放步长（倍率，见 PIN_ZOOM_STEP_RANGE）
+        "pin_opacity_step": 0.05,              # Ctrl+滚轮透明度步长（见 PIN_OPACITY_STEP_RANGE）
+        "pin_shadow_enabled": True,            # 新贴图默认带阴影/描边
+        "pin_new_position": "selection",       # 新贴图位置：selection 跟随选区 / cursor 鼠标 / center 屏幕中央
+        "pin_order": "top",                    # 新贴图的叠放顺序：top 在最上 / bottom 放在已有贴图下面
+        "pin_close_confirm": False,            # 关闭贴图前二次确认（退出程序时不问）
+        # 贴图窗口的鼠标手势 → 动作（空表 = 用 pin/pin_actions.py 里的默认表；
+        # 这里不写死一份，否则手势词汇会有两个出处）
+        "pin_mouse_actions": {},
+        "pin_restore_on_startup": False,       # 退出时保存未关闭的贴图，下次启动恢复
+        "pin_history_limit": 10,               # 最多记住多少张贴图（1-50）
+        "pin_text_font_size": 14,              # 文字贴图字号（范围见 TEXT_FONT_SIZE_RANGE）
+        "pin_text_max_width": 480,             # 文字贴图内容区最大宽度（见 TEXT_MAX_WIDTH_RANGE）
+
+        # ==================== 7.1 系统与集成（2026-09-19 按截图清单补）====================
+        "desktop_toolbar_mode": "none",        # 桌面工具栏：none 不显示 / floating_ball 悬浮球
+        "desktop_toolbar_position": "",        # 悬浮球位置 "x,y"（空串 = 默认右下角）
+        "tray_click_action": "screenshot",     # 托盘单击执行的动作 id（取自 core.actions 注册表）
+        # 网络代理：none 直连 / manual 手动（翻译、公式识别等走网络的功能都用它）
+        "proxy_mode": "none",
+        "proxy_host": "",
+        "proxy_port": 0,
+        # 更新源：留空则用内置的 GitHub 地址（core/updates.py）
+        "update_source_url": "",
 
         # ==================== 8. 开发者 ====================
         # 长截图
@@ -597,61 +716,56 @@ class ToolSettingsManager(QObject):
     # 应用程序级别设置（整合自 ConfigManager）
     # ========================================================================
     
+    # 热键的读写统一走动作表（app/action_hotkeys）。下面这六个是给欢迎向导等旧入口
+    # 用的视图，不再单独存一份——两处各存一份的话，改了一边另一边就静默失效。
+
     def get_hotkey(self) -> str:
-        """获取全局热键"""
-        return self.qsettings.value("app/hotkey", self.APP_DEFAULT_SETTINGS["hotkey"], type=str)
-    
+        """获取全局热键（截图动作的主热键）"""
+        return self._action_hotkey_pair("screenshot")[0]
+
     def set_hotkey(self, value: str):
         """设置全局热键"""
-        self.qsettings.setValue("app/hotkey", value)
-    
+        self._set_action_hotkey("screenshot", 0, value)
+
     def get_hotkey_2(self) -> str:
         """获取全局截图备用热键"""
-        return self.qsettings.value("app/hotkey_2", self.APP_DEFAULT_SETTINGS["hotkey_2"], type=str)
-    
+        return self._action_hotkey_pair("screenshot")[1]
+
     def set_hotkey_2(self, value: str):
         """设置全局截图备用热键"""
-        self.qsettings.setValue("app/hotkey_2", value)
-    
+        self._set_action_hotkey("screenshot", 1, value)
+
     def get_clipboard_hotkey(self) -> str:
         """获取剪贴板管理器快捷键"""
-        return self.qsettings.value("clipboard/hotkey", self.APP_DEFAULT_SETTINGS["clipboard_hotkey"], type=str)
-    
+        return self._action_hotkey_pair("clipboard")[0]
+
     def set_clipboard_hotkey(self, value: str):
         """设置剪贴板管理器快捷键"""
-        self.qsettings.setValue("clipboard/hotkey", value)
-    
+        self._set_action_hotkey("clipboard", 0, value)
+
     def get_clipboard_hotkey_2(self) -> str:
         """获取剪贴板管理器备用快捷键"""
-        return self.qsettings.value("clipboard/hotkey_2", self.APP_DEFAULT_SETTINGS["clipboard_hotkey_2"], type=str)
-    
+        return self._action_hotkey_pair("clipboard")[1]
+
     def set_clipboard_hotkey_2(self, value: str):
         """设置剪贴板管理器备用快捷键"""
-        self.qsettings.setValue("clipboard/hotkey_2", value)
+        self._set_action_hotkey("clipboard", 1, value)
 
     def get_translation_hotkey(self) -> str:
         """获取智能翻译全局快捷键。"""
-        return self.qsettings.value(
-            "app/translation_hotkey",
-            self.APP_DEFAULT_SETTINGS["translation_hotkey"],
-            type=str,
-        )
+        return self._action_hotkey_pair("open_translation")[0]
 
     def set_translation_hotkey(self, value: str):
         """保存智能翻译全局快捷键。"""
-        self.qsettings.setValue("app/translation_hotkey", value)
+        self._set_action_hotkey("open_translation", 0, value)
 
     def get_translation_hotkey_2(self) -> str:
         """获取智能翻译备用全局快捷键。"""
-        return self.qsettings.value(
-            "app/translation_hotkey_2",
-            self.APP_DEFAULT_SETTINGS["translation_hotkey_2"],
-            type=str,
-        )
+        return self._action_hotkey_pair("open_translation")[1]
 
     def set_translation_hotkey_2(self, value: str):
         """保存智能翻译备用全局快捷键。"""
-        self.qsettings.setValue("app/translation_hotkey_2", value)
+        self._set_action_hotkey("open_translation", 1, value)
 
     # ---------- 应用内快捷键 ----------
     def get_inapp_shortcut(self, key: str) -> str:
@@ -675,13 +789,253 @@ class ToolSettingsManager(QObject):
         """设置鼠标微移模式"""
         self.qsettings.setValue("inapp/inapp_cursor_move_mode", value)
 
-    def get_smart_selection(self) -> bool:
-        """获取智能选区设置"""
-        return self.qsettings.value("app/smart_selection", self.APP_DEFAULT_SETTINGS["smart_selection"], type=bool)
-    
-    def set_smart_selection(self, value: bool):
-        """设置智能选区"""
-        self.qsettings.setValue("app/smart_selection", value)
+    def get_ui_detection(self) -> str:
+        """获取「UI 检测」档位：``none`` / ``window`` / ``element``。
+
+        兼容旧的 ``app/smart_selection``（Bool）：没有新键时 True 映射到默认档
+        （element，用户要的就是「把这功能做细」），False 映射到 none。
+        """
+        raw = self.qsettings.value("app/ui_detection", None)
+        mode = normalize_ui_detection(raw)
+        if mode is not None:
+            return mode
+
+        legacy = self._legacy_smart_selection()
+        if legacy is not None:
+            return normalize_ui_detection(legacy)
+        return self.APP_DEFAULT_SETTINGS["ui_detection"]
+
+    def _legacy_smart_selection(self) -> bool | None:
+        """旧的 ``smart_selection`` 原始值 → 是否开启；没设置过返回 None。
+
+        不能直接 `value(..., type=bool)`：QSettings 会把「键不存在」也当成 False，
+        迁移逻辑就会把全新安装的默认档吃掉。
+        """
+        raw = self.qsettings.value("app/smart_selection", None)
+        if raw is None:
+            return None
+        if isinstance(raw, bool):
+            return raw
+        return str(raw).strip().lower() in ("1", "true", "yes", "on")
+
+    def set_ui_detection(self, value: str):
+        """设置「UI 检测」档位（非法值回落到默认档）。"""
+        mode = normalize_ui_detection(value) or self.APP_DEFAULT_SETTINGS["ui_detection"]
+        self.qsettings.setValue("app/ui_detection", mode)
+
+    def get_ui_detection_margin(self) -> int:
+        """获取元素检测边距（px，仅 element 档生效）。"""
+        value = self.qsettings.value(
+            "app/ui_detection_margin", self.APP_DEFAULT_SETTINGS["ui_detection_margin"], type=int)
+        return max(0, min(int(value), MAX_ELEMENT_MARGIN))
+
+    def set_ui_detection_margin(self, value: int):
+        """设置元素检测边距（超范围会被夹到 0..MAX_ELEMENT_MARGIN）。"""
+        clamped = max(0, min(int(value), MAX_ELEMENT_MARGIN))
+        self.qsettings.setValue("app/ui_detection_margin", clamped)
+
+    def get_mouse_gestures(self) -> dict:
+        """读取全局鼠标手势绑定：``{action_id: {"modifier": str, "gesture": str}}``。
+
+        存成 JSON 字符串；坏数据（手工改坏、旧版本残留）当空表处理——设置窗口因此照常
+        打开，只是显示成「未绑定」，比抛异常把界面挡住好。
+        """
+        import json
+
+        raw = self.qsettings.value("app/mouse_gestures", "", type=str)
+        if not raw:
+            return {}
+        try:
+            loaded = json.loads(raw)
+        except Exception:
+            from core.logger import log_warning, T
+
+            log_warning(T("全局鼠标绑定配置无法解析，按未绑定处理"), "Settings")
+            return {}
+        if not isinstance(loaded, dict):
+            return {}
+        bindings = {}
+        for action_id, binding in loaded.items():
+            if isinstance(action_id, str) and isinstance(binding, dict):
+                bindings[action_id] = {
+                    "modifier": str(binding.get("modifier", "")),
+                    "gesture": str(binding.get("gesture", "")),
+                }
+        return bindings
+
+    def set_mouse_gestures(self, bindings: dict) -> None:
+        """写入全局鼠标手势绑定（整体替换）。"""
+        import json
+
+        self.qsettings.setValue(
+            "app/mouse_gestures", json.dumps(bindings or {}, ensure_ascii=False)
+        )
+
+    def set_mouse_gesture(self, action_id: str, modifier: str, gesture: str) -> None:
+        """绑定/解绑单个动作：``gesture`` 为空表示解绑。"""
+        bindings = self.get_mouse_gestures()
+        if not gesture:
+            bindings.pop(action_id, None)
+        else:
+            bindings[action_id] = {"modifier": modifier or "", "gesture": gesture}
+        self.set_mouse_gestures(bindings)
+
+    #: 旧热键键 → 新表里的位置。只用于一次性搬迁，搬完就不再读它们。
+    _LEGACY_HOTKEY_KEYS = (
+        ("screenshot", "app/hotkey", "app/hotkey_2"),
+        ("clipboard", "clipboard/hotkey", "clipboard/hotkey_2"),
+        ("open_translation", "app/translation_hotkey", "app/translation_hotkey_2"),
+    )
+
+    def get_action_hotkeys(self) -> dict:
+        """读取全局动作的快捷键表：``{动作 id: [主热键, 备用热键]}``。
+
+        表不存在时从旧键（app/hotkey 等六个）搬一次并写回；坏数据按未绑定处理——
+        和鼠标手势一样，宁可少一个绑定，也不要让设置页打不开。
+        """
+        import json
+
+        raw = self.qsettings.value("app/action_hotkeys", "", type=str)
+        if not raw:
+            table = self._migrate_legacy_hotkeys()
+            self.set_action_hotkeys(table)
+            return table
+        try:
+            loaded = json.loads(raw)
+        except Exception:
+            from core.logger import log_warning, T
+
+            log_warning(T("动作快捷键配置无法解析，按未绑定处理"), "Settings")
+            return {}
+        if not isinstance(loaded, dict):
+            return {}
+        return {
+            str(action_id): self._normalize_hotkey_pair(keys)
+            for action_id, keys in loaded.items()
+        }
+
+    @staticmethod
+    def _normalize_hotkey_pair(keys) -> list:
+        """把一对主/备热键收敛成 ``[str, str]``。"""
+        if isinstance(keys, str):
+            keys = [keys]
+        if not isinstance(keys, (list, tuple)):
+            keys = []
+        pair = [str(key) if key else "" for key in list(keys)[:2]]
+        while len(pair) < 2:
+            pair.append("")
+        return pair
+
+    def _migrate_legacy_hotkeys(self) -> dict:
+        """用旧的六个热键键拼出动作快捷键表（没设过的条目用默认表）。"""
+        defaults = self.APP_DEFAULT_SETTINGS["action_hotkeys"]
+        table = {action_id: list(pair) for action_id, pair in defaults.items()}
+        for action_id, primary_key, secondary_key in self._LEGACY_HOTKEY_KEYS:
+            fallback = defaults.get(action_id, ["", ""])
+            table[action_id] = [
+                self.qsettings.value(primary_key, fallback[0], type=str) or "",
+                self.qsettings.value(secondary_key, fallback[1], type=str) or "",
+            ]
+        return table
+
+    def set_action_hotkeys(self, table: dict) -> None:
+        """整体替换动作快捷键表。"""
+        import json
+
+        normalized = {
+            str(action_id): self._normalize_hotkey_pair(keys)
+            for action_id, keys in (table or {}).items()
+        }
+        self.qsettings.setValue(
+            "app/action_hotkeys", json.dumps(normalized, ensure_ascii=False)
+        )
+
+    def get_action_tray_flags(self) -> dict:
+        """读取「哪些动作显示在托盘菜单」：``{动作 id: bool}``。"""
+        import json
+
+        raw = self.qsettings.value("app/action_tray", "", type=str)
+        default = dict(self.APP_DEFAULT_SETTINGS["action_tray"])
+        if not raw:
+            return default
+        try:
+            loaded = json.loads(raw)
+        except Exception:
+            from core.logger import log_warning, T
+
+            log_warning(T("托盘动作配置无法解析，按默认处理"), "Settings")
+            return default
+        if not isinstance(loaded, dict):
+            return default
+        return {str(key): bool(value) for key, value in loaded.items()}
+
+    def set_action_tray_flags(self, flags: dict) -> None:
+        """整体替换托盘动作开关表。"""
+        import json
+
+        self.qsettings.setValue(
+            "app/action_tray",
+            json.dumps(
+                {str(key): bool(value) for key, value in (flags or {}).items()},
+                ensure_ascii=False,
+            ),
+        )
+
+    def _action_hotkey_pair(self, action_id: str) -> list:
+        """取某个动作的主/备热键（缺条目时补空串）。"""
+        pair = self.get_action_hotkeys().get(action_id)
+        return self._normalize_hotkey_pair(pair)
+
+    def _set_action_hotkey(self, action_id: str, index: int, value: str) -> None:
+        """改某个动作的第 index 个热键（0 主 / 1 备）。"""
+        table = self.get_action_hotkeys()
+        pair = self._normalize_hotkey_pair(table.get(action_id))
+        pair[index] = str(value or "")
+        table[action_id] = pair
+        self.set_action_hotkeys(table)
+
+    def get_mouse_capture_overlay_enabled(self) -> bool:
+        """全局鼠标动作截图时是否显示遮罩。"""
+        return self.qsettings.value(
+            "app/mouse_capture_overlay",
+            self.APP_DEFAULT_SETTINGS["mouse_capture_overlay"],
+            type=bool,
+        )
+
+    def set_mouse_capture_overlay_enabled(self, value: bool):
+        """设置全局鼠标动作截图时是否显示遮罩。"""
+        self.qsettings.setValue("app/mouse_capture_overlay", bool(value))
+
+    def get_mouse_ignored_apps(self) -> list:
+        """忽略程序列表（前台程序名）。
+
+        存成 JSON 字符串，坏数据当空表处理：列表内容直接来自用户可以手改的输入框，
+        解析失败时「不忽略任何程序」比让鼠标动作整体失效更合理。
+        """
+        import json
+
+        raw = self.qsettings.value("app/mouse_ignored_apps", "", type=str)
+        if not raw:
+            return []
+        try:
+            loaded = json.loads(raw)
+        except Exception:
+            from core.logger import log_warning, T
+
+            log_warning(T("忽略程序列表无法解析，按空列表处理"), "Settings")
+            return []
+        if not isinstance(loaded, list):
+            return []
+        return [str(name) for name in loaded if str(name).strip()]
+
+    def set_mouse_ignored_apps(self, names) -> None:
+        """写入忽略程序列表（整体替换，空白项会被丢掉）。"""
+        import json
+
+        cleaned = [str(name).strip() for name in (names or []) if str(name).strip()]
+        self.qsettings.setValue(
+            "app/mouse_ignored_apps", json.dumps(cleaned, ensure_ascii=False)
+        )
 
     def get_double_click_copy_close_enabled(self) -> bool:
         """获取双击选区后复制并关闭的启用状态。"""
@@ -849,7 +1203,10 @@ class ToolSettingsManager(QObject):
         return self.qsettings.value("app/ocr_grayscale", self.APP_DEFAULT_SETTINGS["ocr_grayscale"], type=bool)
     
     # ==================== 钉图设置 ====================
-    
+
+    # 值的可调范围只在这里定义：设置页的控件范围与贴图窗口的夹取用的是同一份，
+    # 两边各写一组数字迟早会不一致（界面上能选到、窗口里却被夹掉）。
+
     def get_pin_auto_toolbar(self) -> bool:
         """获取钉图是否自动显示工具栏"""
         return self.qsettings.value("pin/auto_toolbar", self.APP_DEFAULT_SETTINGS["pin_auto_toolbar"], type=bool)
@@ -859,12 +1216,150 @@ class ToolSettingsManager(QObject):
         self.qsettings.setValue("pin/auto_toolbar", enabled)
     
     def get_pin_default_opacity(self) -> float:
-        """获取钉图默认透明度 (0.0-1.0)"""
-        return self.qsettings.value("pin/default_opacity", self.APP_DEFAULT_SETTINGS["pin_default_opacity"], type=float)
-    
+        """获取钉图默认透明度（夹到 PIN_OPACITY_RANGE）"""
+        value = self.qsettings.value(
+            "pin/default_opacity", self.APP_DEFAULT_SETTINGS["pin_default_opacity"], type=float)
+        return max(PIN_OPACITY_RANGE[0], min(PIN_OPACITY_RANGE[1], float(value)))
+
     def set_pin_default_opacity(self, opacity: float):
         """设置钉图默认透明度"""
-        self.qsettings.setValue("pin/default_opacity", max(0.1, min(1.0, opacity)))
+        clamped = max(PIN_OPACITY_RANGE[0], min(PIN_OPACITY_RANGE[1], float(opacity)))
+        self.qsettings.setValue("pin/default_opacity", clamped)
+
+    def get_pin_zoom_step(self) -> float:
+        """滚轮缩放步长（倍率，夹到 PIN_ZOOM_STEP_RANGE）。"""
+        value = self.qsettings.value(
+            "pin/zoom_step", self.APP_DEFAULT_SETTINGS["pin_zoom_step"], type=float)
+        return max(PIN_ZOOM_STEP_RANGE[0], min(PIN_ZOOM_STEP_RANGE[1], float(value)))
+
+    def set_pin_zoom_step(self, step: float):
+        clamped = max(PIN_ZOOM_STEP_RANGE[0], min(PIN_ZOOM_STEP_RANGE[1], float(step)))
+        self.qsettings.setValue("pin/zoom_step", clamped)
+
+    def get_pin_opacity_step(self) -> float:
+        """Ctrl+滚轮调整透明度的步长（夹到 PIN_OPACITY_STEP_RANGE）。"""
+        value = self.qsettings.value(
+            "pin/opacity_step", self.APP_DEFAULT_SETTINGS["pin_opacity_step"], type=float)
+        return max(PIN_OPACITY_STEP_RANGE[0], min(PIN_OPACITY_STEP_RANGE[1], float(value)))
+
+    def set_pin_opacity_step(self, step: float):
+        clamped = max(PIN_OPACITY_STEP_RANGE[0], min(PIN_OPACITY_STEP_RANGE[1], float(step)))
+        self.qsettings.setValue("pin/opacity_step", clamped)
+
+    def get_pin_shadow_enabled(self) -> bool:
+        """新贴图是否默认带阴影/描边。"""
+        return self.qsettings.value(
+            "pin/shadow_enabled", self.APP_DEFAULT_SETTINGS["pin_shadow_enabled"], type=bool)
+
+    def set_pin_shadow_enabled(self, enabled: bool):
+        self.qsettings.setValue("pin/shadow_enabled", bool(enabled))
+
+    def get_pin_new_position(self) -> str:
+        """新贴图的位置策略：selection / cursor / center（非法值回落默认）。"""
+        raw = str(self.qsettings.value(
+            "pin/new_position", self.APP_DEFAULT_SETTINGS["pin_new_position"], type=str) or "")
+        return raw if raw in PIN_NEW_POSITIONS else self.APP_DEFAULT_SETTINGS["pin_new_position"]
+
+    def set_pin_new_position(self, mode: str):
+        self.qsettings.setValue(
+            "pin/new_position",
+            mode if mode in PIN_NEW_POSITIONS else self.APP_DEFAULT_SETTINGS["pin_new_position"],
+        )
+
+    def get_pin_order(self) -> str:
+        """新贴图的叠放顺序：top / bottom（非法值回落默认）。"""
+        raw = str(self.qsettings.value(
+            "pin/order", self.APP_DEFAULT_SETTINGS["pin_order"], type=str) or "")
+        return raw if raw in PIN_ORDER_MODES else self.APP_DEFAULT_SETTINGS["pin_order"]
+
+    def set_pin_order(self, mode: str):
+        self.qsettings.setValue(
+            "pin/order", mode if mode in PIN_ORDER_MODES else self.APP_DEFAULT_SETTINGS["pin_order"])
+
+    def get_pin_mouse_actions(self) -> dict:
+        """读取贴图窗口的手势绑定：``{手势: 动作 id}``。
+
+        这里只做「读」：手势词汇与默认表在 ``pin/pin_actions.py``（那边是唯一出处，
+        在这边再抄一份迟早会不一致）。坏数据同样交给那边收敛。
+        """
+        import json
+
+        raw = self.qsettings.value("pin/mouse_actions", "", type=str)
+        if not raw:
+            return {}
+        try:
+            loaded = json.loads(raw)
+        except Exception:
+            from core.logger import log_warning, T
+
+            log_warning(T("贴图手势配置无法解析，按默认处理"), "Settings")
+            return {}
+        return loaded if isinstance(loaded, dict) else {}
+
+    def set_pin_mouse_actions(self, bindings: dict) -> None:
+        """整体替换贴图手势绑定表。"""
+        import json
+
+        self.qsettings.setValue(
+            "pin/mouse_actions",
+            json.dumps({str(k): str(v) for k, v in (bindings or {}).items()},
+                       ensure_ascii=False),
+        )
+
+    def get_pin_restore_on_startup(self) -> bool:
+        """退出时是否保存未关闭的贴图，并在下次启动恢复。"""
+        return self.qsettings.value(
+            "pin/restore_on_startup", self.APP_DEFAULT_SETTINGS["pin_restore_on_startup"],
+            type=bool)
+
+    def set_pin_restore_on_startup(self, enabled: bool):
+        self.qsettings.setValue("pin/restore_on_startup", bool(enabled))
+
+    def get_pin_history_limit(self) -> int:
+        """最多记住多少张贴图（夹到 PIN_HISTORY_RANGE）。"""
+        value = self.qsettings.value(
+            "pin/history_limit", self.APP_DEFAULT_SETTINGS["pin_history_limit"], type=int)
+        return max(PIN_HISTORY_RANGE[0], min(PIN_HISTORY_RANGE[1], int(value)))
+
+    def set_pin_history_limit(self, limit: int):
+        clamped = max(PIN_HISTORY_RANGE[0], min(PIN_HISTORY_RANGE[1], int(limit)))
+        self.qsettings.setValue("pin/history_limit", clamped)
+
+    def get_pin_text_font_size(self) -> int:
+        """文字贴图的字号（夹到 TEXT_FONT_SIZE_RANGE）。"""
+        from pin.pin_text_pin import TEXT_FONT_SIZE_RANGE
+
+        value = self.qsettings.value(
+            "pin/text_font_size", self.APP_DEFAULT_SETTINGS["pin_text_font_size"], type=int)
+        return max(TEXT_FONT_SIZE_RANGE[0], min(TEXT_FONT_SIZE_RANGE[1], int(value)))
+
+    def set_pin_text_font_size(self, size: int):
+        from pin.pin_text_pin import TEXT_FONT_SIZE_RANGE
+
+        clamped = max(TEXT_FONT_SIZE_RANGE[0], min(TEXT_FONT_SIZE_RANGE[1], int(size)))
+        self.qsettings.setValue("pin/text_font_size", clamped)
+
+    def get_pin_text_max_width(self) -> int:
+        """文字贴图内容区最大宽度（夹到 TEXT_MAX_WIDTH_RANGE）。"""
+        from pin.pin_text_pin import TEXT_MAX_WIDTH_RANGE
+
+        value = self.qsettings.value(
+            "pin/text_max_width", self.APP_DEFAULT_SETTINGS["pin_text_max_width"], type=int)
+        return max(TEXT_MAX_WIDTH_RANGE[0], min(TEXT_MAX_WIDTH_RANGE[1], int(value)))
+
+    def set_pin_text_max_width(self, width: int):
+        from pin.pin_text_pin import TEXT_MAX_WIDTH_RANGE
+
+        clamped = max(TEXT_MAX_WIDTH_RANGE[0], min(TEXT_MAX_WIDTH_RANGE[1], int(width)))
+        self.qsettings.setValue("pin/text_max_width", clamped)
+
+    def get_pin_close_confirm(self) -> bool:
+        """关闭贴图前是否二次确认（退出程序时不问）。"""
+        return self.qsettings.value(
+            "pin/close_confirm", self.APP_DEFAULT_SETTINGS["pin_close_confirm"], type=bool)
+
+    def set_pin_close_confirm(self, enabled: bool):
+        self.qsettings.setValue("pin/close_confirm", bool(enabled))
     
     def set_ocr_grayscale_enabled(self, value: bool):
         """设置 OCR 灰度化"""
@@ -885,7 +1380,192 @@ class ToolSettingsManager(QObject):
     def set_ocr_upscale_factor(self, value: float):
         """设置 OCR 放大倍数"""
         self.qsettings.setValue("app/ocr_upscale_factor", value)
-    
+
+    # ==================== 识别结果 / 系统集成（2026-09-19 按参考清单补）====================
+    #
+    # 这一组都做「白名单 + 兜底」：取值只认列出的几个，读到别的（旧版本、手改配置、
+    # 损坏的值）一律退回默认。设置页读它们来填控件，行为侧读它们来做判断，两边不会
+    # 因为一个坏值各行其是。
+
+    #: 识别结果的文本布局
+    OCR_TEXT_LAYOUTS = ("auto", "lines", "single")
+    #: 标点处理
+    OCR_PUNCTUATIONS = ("none", "strip_trailing", "to_halfwidth")
+    #: 识别语言：跟随界面语言 / 具体语言
+    OCR_LANGUAGES = ("follow_app", "zh", "en", "ja", "ko")
+    #: 什么时候弹识别结果对话框
+    OCR_DIALOG_TRIGGERS = ("capture", "copy_all", "copy_selection")
+
+    def _choice(self, key: str, allowed: tuple, default: str) -> str:
+        """读一个「只能是这几个值」的设置；读到别的退回默认。"""
+        value = str(self.get_app_setting(key, default) or "").strip().lower()
+        return value if value in allowed else default
+
+    def get_ocr_text_layout(self) -> str:
+        """识别结果的文本布局（见 OCR_TEXT_LAYOUTS）。"""
+        return self._choice("ocr_text_layout", self.OCR_TEXT_LAYOUTS, "auto")
+
+    def set_ocr_text_layout(self, value: str):
+        self.set_app_setting("ocr_text_layout", value)
+
+    def get_ocr_punctuation(self) -> str:
+        """识别结果的标点处理（见 OCR_PUNCTUATIONS）。"""
+        return self._choice("ocr_punctuation", self.OCR_PUNCTUATIONS, "none")
+
+    def set_ocr_punctuation(self, value: str):
+        self.set_app_setting("ocr_punctuation", value)
+
+    def get_ocr_language(self) -> str:
+        """识别语言（见 OCR_LANGUAGES）。"""
+        return self._choice("ocr_language", self.OCR_LANGUAGES, "follow_app")
+
+    def set_ocr_language(self, value: str):
+        self.set_app_setting("ocr_language", value)
+
+    def get_ocr_dialog_triggers(self) -> list:
+        """什么时候额外弹出识别结果对话框；返回 OCR_DIALOG_TRIGGERS 的子集。"""
+        import json
+
+        raw = self.qsettings.value("app/ocr_dialog_triggers", "", type=str)
+        if not raw:
+            default = self.APP_DEFAULT_SETTINGS["ocr_dialog_triggers"]
+            return [item for item in default if item in self.OCR_DIALOG_TRIGGERS]
+        try:
+            loaded = json.loads(raw)
+        except Exception:
+            from core.logger import log_warning, T
+
+            log_warning(T("识别结果对话框配置无法解析，按不弹窗处理"), "Settings")
+            return []
+        if not isinstance(loaded, (list, tuple)):
+            return []
+        return [str(item) for item in loaded if str(item) in self.OCR_DIALOG_TRIGGERS]
+
+    def set_ocr_dialog_triggers(self, triggers) -> None:
+        """整体替换触发时机表；非白名单值直接丢掉。"""
+        import json
+
+        values = [str(item) for item in (triggers or [])
+                  if str(item) in self.OCR_DIALOG_TRIGGERS]
+        self.qsettings.setValue("app/ocr_dialog_triggers", json.dumps(values))
+
+    #: 复制图片项时的形态
+    CLIPBOARD_IMAGE_COPY_MODES = ("auto", "image_only", "file_only")
+
+    def get_clipboard_image_copy_mode(self) -> str:
+        """复制图片项时写进系统剪贴板的形态（见 CLIPBOARD_IMAGE_COPY_MODES）。"""
+        return self._choice("clipboard_image_copy_mode", self.CLIPBOARD_IMAGE_COPY_MODES, "auto")
+
+    def set_clipboard_image_copy_mode(self, value: str):
+        self.set_app_setting("clipboard_image_copy_mode", value)
+
+    def get_clipboard_ignore_own_copy(self) -> bool:
+        """是否忽略「本程序自己写入剪贴板」的内容（不记历史、不自动粘贴）。"""
+        return self.qsettings.value(
+            "app/clipboard_ignore_own_copy",
+            self.APP_DEFAULT_SETTINGS["clipboard_ignore_own_copy"],
+            type=bool,
+        )
+
+    def set_clipboard_ignore_own_copy(self, value: bool):
+        self.set_app_setting("clipboard_ignore_own_copy", bool(value))
+
+    #: 桌面工具栏形态
+    DESKTOP_TOOLBAR_MODES = ("none", "floating_ball")
+
+    def get_desktop_toolbar_mode(self) -> str:
+        """桌面工具栏：不显示 / 悬浮球（见 DESKTOP_TOOLBAR_MODES）。"""
+        return self._choice("desktop_toolbar_mode", self.DESKTOP_TOOLBAR_MODES, "none")
+
+    def set_desktop_toolbar_mode(self, value: str):
+        self.set_app_setting("desktop_toolbar_mode", value)
+
+    def get_desktop_toolbar_position(self) -> tuple | None:
+        """悬浮球的位置 ``(x, y)``；没设过或值坏了返回 None（调用方用默认位置）。"""
+        raw = str(self.get_app_setting("desktop_toolbar_position", "") or "").strip()
+        if not raw:
+            return None
+        parts = raw.split(",")
+        if len(parts) != 2:
+            return None
+        try:
+            return int(parts[0]), int(parts[1])
+        except ValueError:
+            return None
+
+    def set_desktop_toolbar_position(self, x: int, y: int) -> None:
+        self.set_app_setting("desktop_toolbar_position", f"{int(x)},{int(y)}")
+
+    def get_tray_click_action(self) -> str:
+        """托盘单击执行的动作 id；id 不在注册表里时退回截图。"""
+        from core import actions
+
+        action_id = str(self.get_app_setting("tray_click_action", "screenshot") or "").strip()
+        return action_id if action_id in actions.ACTIONS_BY_ID else "screenshot"
+
+    def set_tray_click_action(self, action_id: str):
+        self.set_app_setting("tray_click_action", action_id)
+
+    #: 网络代理
+    PROXY_MODES = ("none", "manual")
+
+    def get_proxy_config(self) -> dict:
+        """网络代理配置：``{"mode", "host", "port"}``。
+
+        manual 但主机为空 / 端口非法时按「直连」处理——一个填了一半的代理比直连更糟，
+        用户会看到所有网络功能都超时却说不出原因。
+        """
+        mode = self._choice("proxy_mode", self.PROXY_MODES, "none")
+        host = str(self.get_app_setting("proxy_host", "") or "").strip()
+        try:
+            port = int(self.get_app_setting("proxy_port", 0) or 0)
+        except (TypeError, ValueError):
+            port = 0
+        usable = mode == "manual" and bool(host) and 0 < port < 65536
+        return {"mode": "manual" if usable else "none", "host": host, "port": port}
+
+    def set_proxy_config(self, mode: str, host: str, port: int) -> None:
+        self.set_app_setting("proxy_mode", mode)
+        self.set_app_setting("proxy_host", host or "")
+        self.set_app_setting("proxy_port", int(port or 0))
+
+    #: 公式识别引擎
+    FORMULA_ENGINES = ("ppocr_formula", "external_service")
+
+    def get_formula_engine(self) -> str:
+        """公式识别用哪个引擎（见 FORMULA_ENGINES）。"""
+        return self._choice("formula_engine", self.FORMULA_ENGINES, "ppocr_formula")
+
+    def set_formula_engine(self, value: str):
+        self.set_app_setting("formula_engine", value)
+
+    def get_formula_service_config(self) -> dict:
+        """外部公式服务的配置：``{"url", "api_key", "timeout"}``。"""
+        try:
+            timeout = int(self.get_app_setting("formula_service_timeout", 15) or 15)
+        except (TypeError, ValueError):
+            timeout = 15
+        return {
+            "url": str(self.get_app_setting("formula_service_url", "") or "").strip(),
+            "api_key": str(self.get_app_setting("formula_service_api_key", "") or "").strip(),
+            "timeout": max(1, min(120, timeout)),
+        }
+
+    def set_formula_service_config(self, url: str, api_key: str, timeout: int = 15) -> None:
+        self.set_app_setting("formula_service_url", url or "")
+        self.set_app_setting("formula_service_api_key", api_key or "")
+        self.set_app_setting("formula_service_timeout", int(timeout or 15))
+
+    def get_update_source_url(self) -> str:
+        """更新源地址；留空则用内置的 GitHub 地址（core/updates.py）。"""
+        from core.updates import DEFAULT_UPDATE_SOURCE
+
+        return str(self.get_app_setting("update_source_url", "") or "").strip() or DEFAULT_UPDATE_SOURCE
+
+    def set_update_source_url(self, url: str):
+        self.set_app_setting("update_source_url", url or "")
+
+
     # ==================== 翻译设置 ====================
 
     def get_translation_provider(self) -> str:
@@ -1314,6 +1994,120 @@ class ToolSettingsManager(QObject):
     def get_gif_fps_options(self) -> list:
         """获取GIF帧率可选项列表"""
         return self.APP_DEFAULT_SETTINGS["gif_fps_options"]
+
+    # ==================== 视频录制 ====================
+
+    #: 视频容器（顺序即设置页里的选项顺序）
+    VIDEO_CONTAINERS = ("mp4", "mkv", "mov", "avi")
+    #: 视频编码
+    VIDEO_CODECS = ("h264", "h265")
+    #: 清晰度档位：跟随录制区域 / 按高度上限缩放
+    VIDEO_QUALITIES = ("source", "1080p", "720p", "480p")
+    #: 录制帧率可选项（可在此调整选项）
+    VIDEO_FPS_OPTIONS = (15, 24, 30, 60)
+    #: 音频来源
+    VIDEO_AUDIO_SOURCES = ("none", "microphone")
+    #: 码率上限（Mbps）
+    VIDEO_BITRATE_RANGE = (0, 200)
+    #: 最长录制时长（秒，0 = 不限制）
+    VIDEO_MAX_DURATION_RANGE = (0, 24 * 3600)
+
+    def _video_int(self, value, key: str) -> int:
+        """把写进来的值转成整数；转不了就落这个键的默认值（不该让界面传一次脏值就炸）。"""
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return int(self.APP_DEFAULT_SETTINGS[key])
+
+    def get_video_container(self) -> str:
+        """视频容器（见 VIDEO_CONTAINERS）。"""
+        return self._choice("video_container", self.VIDEO_CONTAINERS, "mp4")
+    def set_video_container(self, value: str):
+        self.set_app_setting("video_container", value)
+
+    def get_video_codec(self) -> str:
+        """视频编码（见 VIDEO_CODECS）。"""
+        return self._choice("video_codec", self.VIDEO_CODECS, "h264")
+
+    def set_video_codec(self, value: str):
+        self.set_app_setting("video_codec", value)
+
+    def get_video_fps(self) -> int:
+        """录制帧率；不在可选项里就退回默认值（30）。"""
+        default = int(self.APP_DEFAULT_SETTINGS["video_fps"])
+        value = self.get_app_setting("video_fps", default)
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            return default
+        return value if value in self.VIDEO_FPS_OPTIONS else default
+
+    def set_video_fps(self, value: int):
+        """写帧率；给进来一个不能当数字用的值时落默认值（读的时候本来也会被规范化）。"""
+        self.set_app_setting("video_fps", self._video_int(value, "video_fps"))
+
+    def get_video_fps_options(self) -> list:
+        """录制帧率可选项列表。"""
+        return list(self.VIDEO_FPS_OPTIONS)
+
+    def get_video_quality(self) -> str:
+        """清晰度档位（见 VIDEO_QUALITIES）。"""
+        return self._choice("video_quality", self.VIDEO_QUALITIES, "source")
+
+    def set_video_quality(self, value: str):
+        self.set_app_setting("video_quality", value)
+
+    def get_video_bitrate_mbps(self) -> int:
+        """码率上限（Mbps，0 = 交给编码器决定）。"""
+        low, high = self.VIDEO_BITRATE_RANGE
+        value = self.get_app_setting("video_bitrate_mbps", 0)
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            return 0
+        return max(low, min(high, value))
+
+    def set_video_bitrate_mbps(self, value: int):
+        low, high = self.VIDEO_BITRATE_RANGE
+        value = self._video_int(value, "video_bitrate_mbps")
+        self.set_app_setting("video_bitrate_mbps", max(low, min(high, value)))
+
+    def get_video_audio(self) -> str:
+        """音频来源（见 VIDEO_AUDIO_SOURCES）。"""
+        return self._choice("video_audio", self.VIDEO_AUDIO_SOURCES, "none")
+
+    def set_video_audio(self, value: str):
+        self.set_app_setting("video_audio", value)
+
+    def get_video_audio_device(self) -> str:
+        """麦克风设备名；空串表示系统默认设备。"""
+        return str(self.get_app_setting("video_audio_device", "") or "").strip()
+
+    def set_video_audio_device(self, value: str):
+        self.set_app_setting("video_audio_device", str(value or "").strip())
+
+    def get_video_max_duration_s(self) -> int:
+        """最长录制时长（秒，0 = 不限制）。"""
+        low, high = self.VIDEO_MAX_DURATION_RANGE
+        value = self.get_app_setting("video_max_duration_s", 0)
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            return 0
+        return max(low, min(high, value))
+
+    def set_video_max_duration_s(self, value: int):
+        low, high = self.VIDEO_MAX_DURATION_RANGE
+        value = self._video_int(value, "video_max_duration_s")
+        self.set_app_setting("video_max_duration_s", max(low, min(high, value)))
+
+    def get_video_save_path(self) -> str:
+        """视频保存目录；空串表示跟随截图保存目录（见 VideoRecordWindow._save_directory）。"""
+        return str(self.get_app_setting("video_save_path", "") or "").strip()
+
+    def set_video_save_path(self, value: str):
+        self.set_app_setting("video_save_path", str(value or "").strip())
+
 
     def is_first_run(self) -> bool:
         """

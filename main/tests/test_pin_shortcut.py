@@ -14,6 +14,8 @@ pin_shortcut.py 决定了鼠标悬停在钉图上时按键会发生什么，此�
 - 未识别的按键必须返回 False 向下传递，否则会吞掉别的模块的快捷键。
 - 鼠标下方钉图的查找：上层优先，且要跳过已销毁的窗口。
 """
+from types import SimpleNamespace
+
 import pytest
 from PySide6.QtCore import Qt, QRect, QPoint
 from PySide6.QtGui import QKeyEvent, QCursor
@@ -450,3 +452,110 @@ class TestTranslationHotkeyInterception:
     def test_plain_function_callback_is_not_intercepted(self, normal_handler):
         normal_handler._controller.pin = FakePin(ocr_layer=FakeOCRLayer(selected_text="x"))
         assert normal_handler.handle_hotkey(1, lambda: None) is False
+
+
+class TestActionShortcuts:
+    """第二批内置快捷键：键位映射到 pin/pin_actions.py 的动作 id。
+
+    这些动作和鼠标手势共用同一份实现，所以这里既验证「按键确实分发了」，
+    也验证「键位来自配置」——两处各写一套行为是这条需求要避免的事。
+    """
+
+    @pytest.fixture
+    def bound(self, monkeypatch):
+        """把钉图内置快捷键按默认值绑好（不依赖用户现有配置）。"""
+        from core.shortcut_manager import load_inapp_bindings
+
+        def _load(keys=None):
+            return load_inapp_bindings(keys)
+
+        monkeypatch.setattr("pin.pin_shortcut.load_inapp_bindings", _load)
+        return _load
+
+    def _handler(self, monkeypatch, pin, *, editing=False):
+        from pin.pin_shortcut import PinEditShortcutHandler, PinNormalShortcutHandler
+
+        controller = SimpleNamespace(_find_pin_under_cursor=lambda: pin)
+        handler_cls = PinEditShortcutHandler if editing else PinNormalShortcutHandler
+        handler = handler_cls(controller)
+        return handler
+
+    def _key_event(self, key, modifiers=Qt.KeyboardModifier.ControlModifier):
+        from PySide6.QtGui import QKeyEvent
+        from PySide6.QtCore import QEvent
+
+        return QKeyEvent(QEvent.Type.KeyPress, key, modifiers)
+
+    @pytest.mark.parametrize(
+        ("key", "method"),
+        [
+            (Qt.Key.Key_S, "save_image"),
+            (Qt.Key.Key_R, "rotate_image_cw"),
+            (Qt.Key.Key_L, "toggle_lock"),
+            (Qt.Key.Key_T, "toggle_stay_on_top"),
+            (Qt.Key.Key_H, "toggle_border_effect"),
+        ],
+    )
+    def test_ctrl_keys_dispatch_to_the_pin_action(self, monkeypatch, key, method):
+        calls = []
+        pin = SimpleNamespace(
+            canvas=SimpleNamespace(is_editing=False),
+            save_image=lambda: calls.append("save_image"),
+            rotate_image_cw=lambda: calls.append("rotate_image_cw"),
+            toggle_lock=lambda: calls.append("toggle_lock"),
+            toggle_stay_on_top=lambda: calls.append("toggle_stay_on_top"),
+            toggle_border_effect=lambda: calls.append("toggle_border_effect"),
+        )
+        monkeypatch.setattr("pin.pin_actions.log_debug", lambda *_a, **_k: None)
+        monkeypatch.setattr("pin.pin_actions.log_warning", lambda *_a, **_k: None)
+        handler = self._handler(monkeypatch, pin)
+
+        handled = handler.handle_key(self._key_event(key))
+
+        assert handled is True
+        assert calls == [method]
+
+    def test_opacity_keys_adjust_the_window_opacity(self, monkeypatch):
+        pin = _opacity_pin()
+        monkeypatch.setattr("pin.pin_actions.log_debug", lambda *_a, **_k: None)
+        handler = self._handler(monkeypatch, pin)
+
+        assert handler.handle_key(self._key_event(Qt.Key.Key_Up)) is True
+        assert pin._win_opacity > 0.5
+        assert handler.handle_key(self._key_event(Qt.Key.Key_Down)) is True
+        assert pin._win_opacity == pytest.approx(0.5)
+
+    def test_unbound_keys_are_left_alone(self, monkeypatch):
+        """默认不绑的两个键不该被吞掉。"""
+        pin = SimpleNamespace(canvas=SimpleNamespace(is_editing=False))
+        handler = self._handler(monkeypatch, pin)
+
+        # ctrl+b 没绑给任何贴图动作
+        assert handler.handle_key(self._key_event(Qt.Key.Key_B)) is False
+
+    def test_edit_mode_also_accepts_action_keys(self, monkeypatch):
+        calls = []
+        pin = SimpleNamespace(
+            canvas=SimpleNamespace(is_editing=True),
+            save_image=lambda: calls.append("save"),
+        )
+        monkeypatch.setattr("pin.pin_actions.log_debug", lambda *_a, **_k: None)
+        handler = self._handler(monkeypatch, pin, editing=True)
+
+        assert handler.handle_key(self._key_event(Qt.Key.Key_S)) is True
+        assert calls == ["save"]
+
+
+def _opacity_pin():
+    """带真实 adjust_opacity 的最小贴图替身（模拟可调透明度的窗口）。"""
+    from pin.pin_window import PinWindow
+
+    pin = SimpleNamespace(
+        canvas=SimpleNamespace(is_editing=False),
+        _win_opacity=0.5,
+        config_manager=None,
+        setWindowOpacity=lambda value: None,
+        _show_hint_label=lambda *_a, **_k: None,
+    )
+    pin.adjust_opacity = lambda direction: PinWindow.adjust_opacity(pin, direction)
+    return pin

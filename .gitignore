@@ -24,6 +24,9 @@ rust_libs/target/
 # ── 本地运行痕迹 ──────────────────────────────────────
 *.log
 
+# ── 公式模型：近 600MB，不入库；用 main/scripts/fetch_formula_model.py 现取 ──
+models/formula/
+
 # ── 插件目录：约定说明入库，用户放进去的插件不入库 ────
 plugins/*
 !plugins/README.md

@@ -6,10 +6,10 @@
 而不是在十几个业务模块里找平台分支。
 
 现状：本模块导出平台探测与能力矩阵；具体能力的门面在各自的模块里——窗口
-``window``、热键 ``hotkey``、剪贴板 ``clipboard``、指针与输入注入 ``pointer``、
-窗口原生操作 ``window_ops``、抓帧 ``capture``、外壳 ``shell``、自启 ``startup``、
-进程 ``process``、路径 ``paths``、字体 ``fonts``。业务模块从这些门面拿实现或问能力，
-不判断平台。
+``window``、热键 ``hotkey``、系统权限清单 ``permissions``、剪贴板 ``clipboard``、指针与
+输入注入 ``pointer``、窗口原生操作 ``window_ops``、抓帧 ``capture``、外壳 ``shell``、
+自启 ``startup``、进程 ``process``、路径 ``paths``、字体 ``fonts``。业务模块从这些门面拿
+实现或问能力，不判断平台。
 
 结构由 ``main/tests/test_platform_structure.py`` 强制，两条都卡：业务模块不许直接调
 平台 API（``ctypes.windll`` / 平台专有导入 / ``os.startfile``），也不许拿

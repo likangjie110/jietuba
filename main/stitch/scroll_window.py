@@ -814,6 +814,8 @@ class ScrollCaptureWindow(QWidget):
             return  # 已经启动
         
         try:
+            # pynput 只用来在回调里比对按键；创建与启动走平台层——macOS 上 pynput 的
+            # 键盘监听线程会去读键盘布局，平台层要先把它收口到主线程，否则崩进程
             from pynput import keyboard
             
             def on_press(key):
@@ -842,11 +844,13 @@ class ScrollCaptureWindow(QWidget):
                     log_exception(e, T("释放Shift键"))
             
             # 创建并启动键盘监听器
-            self.keyboard_listener = keyboard.Listener(
+            self.keyboard_listener = pointer.create_key_listener(
                 on_press=on_press,
                 on_release=on_release
             )
-            self.keyboard_listener.start()
+            if self.keyboard_listener is None:
+                _log_stitch(T("[ERROR] 键盘监听器不可用，横向模式请手动点「截图」按钮"), force=True)
+                return
             _log_stitch(T("[OK] 键盘监听器已启动（横向模式，按Shift触发）"))
 
         except Exception as e:

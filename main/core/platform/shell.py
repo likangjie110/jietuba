@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""桌面外壳集成：用系统默认程序打开文件/文件夹、在文件管理器里定位、创建桌面快捷方式。
+"""桌面外壳集成：用系统默认程序打开文件/文件夹/URL、在文件管理器里定位、创建桌面快捷方式。
 
 迁移前这几件事在 UI 里各写一份，而且有两处**只写了 Windows 分支、没有 else**：
 ``clipboard/ui/windows/clipboard_window.py`` 的「打开文件项」直接用 ``os.startfile``
@@ -39,6 +39,33 @@ def open_path(path: str) -> bool:
         return False
     except Exception as e:
         log_exception(e, T("用默认程序打开 {path}", path=path))
+        return False
+
+
+def open_url(url: str) -> bool:
+    """用系统默认处理程序打开 URL（目前用来跳进系统设置的某个面板）。
+
+    和 ``open_path`` 同样的约定：失败只记日志并返回 False，不把异常抛进 Qt 事件循环
+    ——调用方是「点了没反应」的按钮。
+    """
+    from core.logger import log_debug, log_exception, log_warning, T
+
+    if not url:
+        return False
+    try:
+        if IS_WINDOWS:
+            os.startfile(url)
+        elif IS_MACOS:
+            subprocess.Popen(["open", url])
+        else:
+            subprocess.Popen(["xdg-open", url])
+        return True
+    except FileNotFoundError as e:
+        log_warning(T("打开失败，系统没有可用的打开方式: {path}", path=url), "Shell")
+        log_debug(str(e), "Shell")
+        return False
+    except Exception as e:
+        log_exception(e, T("用默认程序打开 {path}", path=url))
         return False
 
 

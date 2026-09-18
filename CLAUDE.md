@@ -18,8 +18,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 窗口智能选区在 macOS 上走 Quartz（`core/platform/window_macos.py`）：
     `CGWindowListCopyWindowInfo` 天然按 Z 序返回、天然不含投影，命中逻辑与 Windows
     共用。读窗口标题需要屏幕录制权限，没授权时退化为应用名。
-  - 全局热键在非 Windows 上走 pynput 键盘监听，需要 macOS 的「辅助功能」权限，没授权
-    时监听器活着但收不到事件——启动时会检测并写日志。
+  - 截图时的「UI 检测」（设置项 `ui_detection`）分三档：`none` 不检测 / `window` 仅窗口 /
+    `element` 检测元素（默认）。元素档目前**只有 macOS**（`AXUIElementCopyElementAtPosition`，
+    需辅助功能权限；命中自身进程的元素时当作没元素、回退窗口档，否则框的是截图遮罩自己）；
+    Windows 的 UIA 后端还没写，能力表 `UI_ELEMENT_DETECTION` 里登记为 NONE，默认档在
+    Windows 上按窗口级工作并记一条日志。
+  - 全局热键在非 Windows 上走 pynput 键盘监听，需要 macOS 的「辅助功能」权限：没授权时
+    pynput 连事件 tap 都建不出来，监听器「启动成功」但一个事件都收不到——快捷键表现为
+    完全没反应（`core/platform/hotkey.py` 负责查/请求权限，`shortcut_manager` 检测到缺失
+    就弹系统对话框、记日志，并每 3 秒轮询，用户勾上后自动重建监听器，不用重启程序）。
+  - 设置对话框里有「权限」页（`ui/settings_ui/page_permission.py`，清单来自
+    `core/platform/permissions.py`）：页面可见时每秒重查一次状态，用户从系统设置勾完切回来
+    就能看到「已授权」；每行有「去授权」（弹系统对话框）与「打开系统设置」（深链直达对应
+    面板，系统对话框只在首次登记时弹一次）。屏幕录制那条若是**本次运行期间**才授权的，
+    会显示「已授权，重启本程序后生效」（`pending_restart`）并多出一个「重启 jietuba」按钮
+    ——这条权限是进程启动时读一次的，不把中间态说出来，用户只会觉得授权没用。
+  - 权限清单渲染收在 `PermissionList`（同上文件），欢迎向导第 2 步
+    （`ui/welcome/page_permission.py`）与设置页共用它；向导的步骤数按平台声明算，
+    Windows/Linux 上没有这一步（仍是 6 步）。
+  - 缺权限时不再只有日志：抓屏在 `MainApp._on_capture_ready`（主线程）、热键在
+    `ShortcutManager` 的权限轮询里经 `HotkeySystem.permission_missing` 信号，各自叫一次
+    `ui/permission_prompt.py`；每条权限每进程只提示一次（抓屏是高频动作），弹窗上
+    「打开权限设置」经 `ui/permission_actions.py` 打开设置并跳到权限页。
+  - 「重启 jietuba」不能用 `exec` 内层二进制：TCC 按 bundle 的代码签名认应用，那样起来的
+    副本对不上辅助功能/录屏里的授权条目。`relaunch_application()` 让一个脱离父进程的 shell
+    等本进程 pid 消失后 `open -a "<bundle>"`（等 pid 是因为新实例带单实例检查，本进程还
+    活着时它一启动就会自己退出）。源码运行则重开同一个解释器和 argv。
+  - macOS 的 TCC 是按**代码签名**认应用的，而 `dist/Jietuba.app` 是 ad-hoc 签名（本机没有
+    可用的签名身份）：每次 `build_macos_app.py` 重打包后 cdhash 都会变，辅助功能/录屏里
+    的旧条目就失效了——列表里看着是勾上的，实际不生效。改完重新打包后要把旧条目用「−」
+    移除再重新添加当前这份；`tccutil reset Accessibility com.jietuba.app` 可以清掉旧条目。
+  - pynput 的键盘监听线程一启动就用 ctypes 读一次当前键盘布局，那组 Carbon 输入源接口
+    在本进程是前台应用时要求在主线程调用；在监听线程上调用会被系统断言打死（崩溃报告是
+    `EXC_BREAKPOINT`/`SIGTRAP`，线程停在 ctypes 里，不是可捕获的异常）。因此所有键盘监听
+    与按键注入入口都先经 `core/platform/pynput_macos.install()` 把这一步收口到主线程。
   - 剪贴板历史的 Rust 实现（`pyclipboard`）**在 macOS 上可用**：底层 `clipboard-rs`
     跨平台，crate 里的 `cfg(not(windows))` 分支只少了 Windows 专有优化和「来源应用」
     名称（UI 里那一行会空着）。
@@ -103,6 +135,7 @@ python main/compile_translations.py                 # app_*.xml → app_*.qm（�
 - `clipboard/`：四层结构 `controllers/`（交互）→ `core/`（`ClipboardManager` 存储与监听，底层是 Rust `pyclipboard`）→ `services/`（文件 payload、分组、导入导出）→ `ui/`。
 - `gif/`：状态机（选区 → 录制 → 回放 → 导出）+ 三层窗口，编码走 `gifrecorder`，抓帧后端由 `core/platform/capture.py` 提供。
 - `stitch/` 长截图调 Rust `longstitch`；`ocr/` 用 `ppocr_rust`（单例、异步线程，模型在 `models/`）；`barcode/` 用 zxing-cpp。
+- `core/actions.py` 是「应用里能做哪些事」的唯一出处（动作 id / 名称 / 静默截图 / 编辑器模式 / 托盘默认值）：全局鼠标动作、快捷键/动作页、托盘菜单都读它。某个动作的全局热键与「是否显示在托盘」存在 `app/action_hotkeys`、`app/action_tray`（旧键 `app/hotkey`、`clipboard/hotkey`、`app/translation_hotkey` 等六个只在首次读表时迁移，之后 `get_hotkey()` 一类读写器都只是这张表的视图）。
 - `translation/` 是可插拔 provider 架构（`provider.py` 契约 + `registry.py` 注册 + `service.py` 编排，DeepL/Google/Azure/Amazon 四个实现）。
 - `ui/fluent_lite/` 是自研的 Fluent 风格组件库，`ui/settings_ui/` 是设置对话框的各页面；通用样式和配色走 `ui/fluent_lite/theme.py` 与 `core/theme.py`。
 
@@ -117,15 +150,16 @@ python main/compile_translations.py                 # app_*.xml → app_*.qm（�
 | `contracts.py` | 跨后端共用的数据模型（`WindowInfo`），单独放以免后端与门面互相导入成环 |
 | `paths.py` | 应用数据目录、日志目录、默认截图与桌面目录 |
 | `fonts.py` | QSS 字体栈与 QFont 字体族（按语言） |
-| `shell.py` | 用系统默认程序打开文件/文件夹、在文件管理器定位、桌面快捷方式 |
+| `shell.py` | 用系统默认程序打开文件/文件夹/URL（URL 用于跳系统设置面板）、在文件管理器定位、桌面快捷方式 |
 | `startup.py` | 开机自启（注册表 HKCU\Run） |
-| `process.py` | 工作集回收、进程身份/终止、DPI 感知、任务栏 AppUserModelID |
+| `process.py` | 工作集回收、进程身份/终止、DPI 感知、任务栏 AppUserModelID、重开本程序（macOS 打包版走 `open -a` 让 LaunchServices 重开 .app，见下） |
 | `pointer.py` | 光标位置、鼠标键状态、全局滚轮监听、横向滚动与复制快捷键注入 |
 | `window_ops.py` | 置顶、鼠标穿透、从截图排除、任务栏图标 |
-| `window.py`（+ `window_win32.py` / `window_macos.py`） | 窗口枚举与 Z 序命中：Windows 走 `EnumWindows` + DWM 去阴影，macOS 走 Quartz |
+| `window.py`（+ `window_win32.py` / `window_macos.py`） | 窗口枚举与 Z 序命中：Windows 走 `EnumWindows` + DWM 去阴影，macOS 走 Quartz；另有元素级命中（macOS 的 AX） |
 | `hotkey.py`（+ `hotkey_win32.py`） | 全局热键：Windows 用 `RegisterHotKey` + `WM_HOTKEY` 过滤器与侧键钩子，其它平台用 pynput 监听；热键字符串解析三平台共用 |
+| `permissions.py` | 系统权限清单：当前平台要哪些授权、怎么查/怎么要、跳到系统设置哪个面板（macOS 两条：辅助功能、屏幕录制）。清单为空即「这个平台没有系统门槛」，界面按空表不显示 |
 | `clipboard.py` | 剪贴板写图（Windows CF_DIBV5 + 注册 "PNG" 格式，其它平台退 Qt ）、预热 |
-| `focus.py` | 前台窗口/应用的记录与切回（「粘贴回原程序」用） |
+| `focus.py` | 前台窗口/应用的记录与切回（「粘贴回原程序」用），以及前台程序名（`foreground_app_name`，全局鼠标动作的「忽略程序列表」用；Linux 上无实现） |
 | `capture.py`（+ `capture_mss.py`） | GIF 录制的抓帧后端：Windows 是 Rust 的 GDI BitBlt，其它平台是 mss 抓帧线程 |
 
 约定：

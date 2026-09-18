@@ -18,28 +18,37 @@ def theme_color(light: str, dark: str) -> str:
     return dark if get_ui_theme().is_dark else light
 
 
+# 下面这几个「某处底色」都从当前 token 取，不写死。
+#
+# 为什么必须跟 token 走：token 现在是「内置主题 + 用户皮肤」的合成结果（见
+# core/ui_theme.py 的 resolve_skin）。这些地方原先按 light/dark 二选一写死颜色，
+# 用户在外观页把窗口底色改成深色后，内容区仍是原来的浅色，而同窗口的文字走
+# tokens.text —— 结果就是浅底上写浅字，肉眼读不出来。
+
 def theme_surface_color() -> str:
-    return theme_color("rgba(239, 244, 250, 0.91)", "#202124")
+    """设置窗口主内容面（右区）的底色 —— 就是窗口底色本身。"""
+    return get_ui_theme().tokens.window
 
 
 def theme_sidebar_color() -> str:
-    return theme_color("rgba(246, 249, 252, 0.54)", "#25272B")
+    """左侧导航区的底色：窗口底色上再压一层细微表面色。"""
+    return get_ui_theme().tokens.surface_subtle
 
 
 def theme_border_color() -> str:
-    return theme_color("rgba(255, 255, 255, 0.76)", "rgba(255, 255, 255, 0.08)")
+    return get_ui_theme().tokens.border
 
 
 def theme_input_background() -> str:
-    return theme_color("rgba(255, 255, 255, 0.78)", "#2B2D31")
+    return get_ui_theme().tokens.input_background
 
 
 def theme_popup_background() -> str:
-    return theme_color("#FFFFFF", "#2A2C30")
+    return get_ui_theme().tokens.popup_background
 
 
 def theme_popup_hover_background() -> str:
-    return theme_color("#EAF2FA", "#36393F")
+    return get_ui_theme().tokens.popup_hover
 
 
 def theme_text_style(font_size: int = 13, bold: bool = False, extra: str = "") -> str:
@@ -113,6 +122,22 @@ class SettingCardGroup(_SettingCardGroupBase):
         # 显示后 card.height() 才准确，重新算 minimumHeight
         h = self.cardLayout.heightForWidth(self.width()) + 46
         self.setMinimumHeight(h)
+
+# ── 「一行一个条目」的列表块 ──────────────────────────
+# 全局鼠标页（动作绑定）与快捷键/动作页（动作热键）共用同一套行高，两页都要自己算
+# 容器高度（WhiteCard 的高度由内容决定，不跟着布局走）。
+ROW_H = 46
+ROW_SPACING = 8
+CARD_PADDING = 24
+EMPTY_HINT_H = 28
+
+
+def rows_block_height(count: int) -> int:
+    """条目块的高度；空表时只留一行「暂无条目」提示的位置。"""
+    if count <= 0:
+        return EMPTY_HINT_H
+    return count * ROW_H + (count - 1) * ROW_SPACING
+
 
 def make_row(label, ctrl_widget: QWidget) -> QHBoxLayout:
     """创建统一的「标签 — 控件」行。"""

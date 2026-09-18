@@ -45,7 +45,32 @@ from .ocr_manager import (
     release_ocr_engine,
     get_ocr_memory_status,
     format_ocr_result_text,
+    format_ocr_result_markdown,
+    apply_ocr_punctuation,
+    resolve_ocr_language,
 )
+
+# 公式识别：契约在 formula.py，内建引擎在 formula_engines.py。
+# 这里把内建引擎登记进去（引擎各自探测可用性：本机没有公式模型时 ppocr_formula
+# 会报「不可用」，入口据此显式降级）。
+from . import formula
+from .engine import ocr_log
+from .formula import is_formula_available, recognize_formula
+from .formula_engines import builtin_formula_engines
+
+
+def _register_builtin_formula_engines() -> None:
+    """把内建公式引擎登记进注册表；某个引擎坏了也不能带塌整个 OCR 包。"""
+    try:
+        engines = builtin_formula_engines()
+    except Exception as e:
+        ocr_log(f"内建公式引擎加载失败: {e}", "WARN")
+        return
+    for engine in engines:
+        formula.register_formula_engine(engine)
+
+
+_register_builtin_formula_engines()
 
 __all__ = [
     'OcrEngine',
@@ -59,5 +84,11 @@ __all__ = [
     'release_ocr_engine',
     'get_ocr_memory_status',
     'format_ocr_result_text',
+    'format_ocr_result_markdown',
+    'apply_ocr_punctuation',
+    'resolve_ocr_language',
+    'formula',
+    'is_formula_available',
+    'recognize_formula',
 ]
  

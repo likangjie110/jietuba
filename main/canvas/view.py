@@ -80,7 +80,9 @@ class CanvasView(QGraphicsView):
         
         self.start_pos = QPointF()
         
-        # 智能选区相关
+        # UI 检测（原「智能选区」）相关
+        self.ui_detection_mode = "none"   # none / window / element，由 enable_ui_detection 设置
+        self.ui_detection_margin = 0      # 元素检测边距（px，仅 element 档生效）
         self.smart_selection_enabled = False
         self.window_finder = None  # WindowFinder 实例（按需创建）
         self._last_smart_selection_pos = None  # 上次智能选区触发的位置（防抖）
@@ -335,41 +337,56 @@ class CanvasView(QGraphicsView):
     # 智能选区功能
     # ========================================================================
     
-    def enable_smart_selection(self, enabled: bool):
+    def enable_ui_detection(self, mode: str, margin: int = 0):
         """
-        启用/禁用智能选区功能
+        设置「UI 检测」档位
         
         Args:
-            enabled: True=启用，False=禁用
+            mode: "none" 不检测 / "window" 仅窗口 / "element" 检测元素
+            margin: 元素检测边距（px，仅 element 档生效）
         """
-        self.smart_selection_enabled = enabled
-        
-        if enabled:
-            # 检查依赖
-            from core.platform.window import is_window_enumeration_available
-            if not is_window_enumeration_available():
-                log_warning(T("当前平台没有可用的窗口枚举接口，智能选区功能不可用"), "SmartSelect")
-                self.smart_selection_enabled = False
-                return
-            
-            # 创建 WindowFinder 实例
-            if not self.window_finder:
-                from core.platform.window import WindowFinder
-                # 新架构 CanvasScene 使用全局坐标系（与屏幕物理坐标一致）
-                # 因此不需要减去偏移量，直接使用全局坐标即可
-                self.window_finder = WindowFinder(0, 0)
-            
-            # 枚举窗口
-            self.window_finder.find_windows()
-            log_debug(T("已启用，找到 {window_count} 个窗口", window_count=len(self.window_finder.windows)), "SmartSelect")
-        else:
-            log_debug(T("已禁用"), "SmartSelect")
+        from core.platform.window import (
+            UI_DETECTION_ELEMENT, UI_DETECTION_NONE, normalize_ui_detection,
+        )
+
+        self.ui_detection_mode = normalize_ui_detection(mode) or UI_DETECTION_NONE
+        self.ui_detection_margin = max(0, int(margin))
+        self.smart_selection_enabled = self.ui_detection_mode != UI_DETECTION_NONE
+
+        if not self.smart_selection_enabled:
+            log_debug(T("UI 检测已关闭"), "SmartSelect")
             if self.window_finder:
                 self.window_finder.clear()
-    
-    def _get_smart_selection_rect(self, scene_pos: QPointF) -> QRectF:
+            return
+
+        # 检查依赖
+        from core.platform.window import is_element_detection_available, is_window_enumeration_available
+
+        if not is_window_enumeration_available():
+            log_warning(T("当前平台没有可用的窗口枚举接口，智能选区功能不可用"), "SmartSelect")
+            self.smart_selection_enabled = False
+            self.ui_detection_mode = UI_DETECTION_NONE
+            return
+
+        # 创建 WindowFinder 实例
+        if not self.window_finder:
+            from core.platform.window import WindowFinder
+            # 新架构 CanvasScene 使用全局坐标系（与屏幕物理坐标一致）
+            # 因此不需要减去偏移量，直接使用全局坐标即可
+            self.window_finder = WindowFinder(0, 0)
+
+        # 枚举窗口
+        self.window_finder.find_windows()
+        if self.ui_detection_mode == UI_DETECTION_ELEMENT and not is_element_detection_available():
+            # 默认档就是 element，缺后端时只能按窗口级工作——说清楚，别让用户以为框的是控件
+            log_warning(T("当前平台没有元素检测后端，UI 检测按「仅窗口」工作"), "SmartSelect")
+        log_debug(T("UI 检测已启用（{mode}），找到 {window_count} 个窗口",
+                    mode=self.ui_detection_mode, window_count=len(self.window_finder.windows)),
+                  "SmartSelect")
+
+    def _get_ui_detection_rect(self, scene_pos: QPointF) -> QRectF:
         """
-        获取智能选区矩形（鼠标位置的窗口边界）
+        获取 UI 检测矩形（鼠标位置的窗口或元素边界）
         
         优化策略：
         1. 防抖：只在鼠标移动超过阈值时才触发查找
@@ -379,19 +396,19 @@ class CanvasView(QGraphicsView):
             scene_pos: 鼠标在场景中的位置
         
         Returns:
-            窗口矩形（场景坐标）
+            检测到的矩形（场景坐标）
         """
         if not self.smart_selection_enabled or not self.window_finder:
             return QRectF()
         
         # 优化1：防抖 - 鼠标移动小于阈值不触发查找
-        # 智能选区结果是窗口矩形（通常几百像素宽），小幅移动结果不会变
+        # 检测结果是窗口/元素矩形（通常几百像素宽），小幅移动结果不会变
         if self._last_smart_selection_pos is not None:
             dist = (scene_pos - self._last_smart_selection_pos).manhattanLength()
             if dist < 8:  # 阈值：8px（约0.5mm物理距离，跨窗口边界延迟肉眼无感）
                 return self._last_smart_selection_rect
         
-        # 查找鼠标位置的窗口
+        # 查找鼠标位置的窗口/元素
         x = int(scene_pos.x())
         y = int(scene_pos.y())
         
@@ -404,15 +421,20 @@ class CanvasView(QGraphicsView):
             int(scene_rect.y() + scene_rect.height())
         ]
         
-        window_rect = self.window_finder.find_window_at_point(x, y, fallback_rect)
+        detected_rect = self.window_finder.find_rect_at_point(
+            x, y,
+            mode=self.ui_detection_mode,
+            margin=self.ui_detection_margin,
+            fallback_rect=fallback_rect,
+        )
         
         # 转换为 QRectF
-        if window_rect:
+        if detected_rect:
             result = QRectF(
-                float(window_rect[0]),
-                float(window_rect[1]),
-                float(window_rect[2] - window_rect[0]),
-                float(window_rect[3] - window_rect[1])
+                float(detected_rect[0]),
+                float(detected_rect[1]),
+                float(detected_rect[2] - detected_rect[0]),
+                float(detected_rect[3] - detected_rect[1])
             )
         else:
             result = QRectF()
@@ -784,7 +806,7 @@ class CanvasView(QGraphicsView):
             
             # 智能选区：点击时立即更新选区（防止 activate 清除选区）
             if self.smart_selection_enabled:
-                smart_rect = self._get_smart_selection_rect(scene_pos)
+                smart_rect = self._get_ui_detection_rect(scene_pos)
                 if not smart_rect.isEmpty():
                     self.canvas_scene.selection_model.set_rect(smart_rect)
         else:
@@ -1299,7 +1321,7 @@ class CanvasView(QGraphicsView):
         self._update_magnifier_overlay(scene_pos)
         
         if self.smart_selection_enabled:
-            smart_rect = self._get_smart_selection_rect(scene_pos)
+            smart_rect = self._get_ui_detection_rect(scene_pos)
             if not smart_rect.isEmpty():
                 self.canvas_scene.selection_model.activate()
                 if not self.canvas_scene.selection_model.is_dragging:

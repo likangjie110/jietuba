@@ -19,6 +19,32 @@ MIN_WINDOW_SIZE = 30
 OFFSCREEN_LIMIT = 1000
 OFFSCREEN_FAR = 10000
 
+# ── 「UI 检测」档位（设置键 ui_detection）────────────────────
+# 三档分别代表：不检测 / 只认窗口 / 认到窗口里的控件。业务模块只传这个字符串，
+# 「这一档在这个平台上做不做得到」由这里回答。
+UI_DETECTION_NONE = "none"
+UI_DETECTION_WINDOW = "window"
+UI_DETECTION_ELEMENT = "element"
+UI_DETECTION_MODES = (UI_DETECTION_NONE, UI_DETECTION_WINDOW, UI_DETECTION_ELEMENT)
+# 元素检测边距的上限：够把元素自带的描边/圆角框进来就行，再大不如直接选窗口
+MAX_ELEMENT_MARGIN = 64
+
+
+def normalize_ui_detection(mode) -> str | None:
+    """把设置里的值收敛成合法档位；不认识的值返回 None。
+
+    兼容旧键：``smart_selection`` 是 Bool（True = 打开智能选区）。打开就是「检测」
+    的默认档（element），关掉就是 none——用户开的还是同一个功能，只是档位更细了。
+    """
+    if mode is True:
+        return UI_DETECTION_ELEMENT
+    if mode is False:
+        return UI_DETECTION_NONE
+    if not isinstance(mode, str):
+        return None
+    normalized = mode.strip().lower()
+    return normalized if normalized in UI_DETECTION_MODES else None
+
 
 def _backend():
     """当前平台可用的枚举后端模块；没有就返回 None。
@@ -35,6 +61,47 @@ def _backend():
 
         return window_macos if window_macos.MACOS_API_AVAILABLE else None
     return None
+
+
+def is_element_detection_available() -> bool:
+    """能否做元素级（控件级）命中。
+
+    与 ``is_window_enumeration_available`` 同理：既要平台声明有后端，也要后端依赖
+    真的导入成功——macOS 上元素命中走无障碍接口，pyobjc 的 ApplicationServices 缺失
+    时窗口级还能用、元素级不能用。
+    """
+    return available(Capability.UI_ELEMENT_DETECTION) and _element_backend() is not None
+
+
+def _element_backend():
+    """当前平台的元素检测后端模块；没有就返回 None。
+
+    目前只有 macOS（``AXUIElementCopyElementAtPosition``）。Windows 该走 UIA，还没实现，
+    能力表里登记为 NONE，调用方会回退到窗口级（见 ``WindowFinder.find_rect_at_point``）。
+    """
+    if IS_MACOS:
+        from core.platform import window_macos
+
+        return window_macos if window_macos.ELEMENT_API_AVAILABLE else None
+    return None
+
+
+def find_element_at_point(x: int, y: int, *, margin: int = 0) -> list[int] | None:
+    """该点 UI 元素的矩形（屏幕坐标，含 ``margin`` 边距）；做不到或没命中返回 None。
+
+    ``margin`` 就是设置里的「元素检测边距」：向外扩这么多像素，把元素紧贴着的描边
+    一起框进来。
+    """
+    backend = _element_backend()
+    if backend is None:
+        return None
+
+    rect = backend.element_rect_at_point(x, y)
+    if rect is None:
+        return None
+    if not margin:
+        return rect
+    return [rect[0] - margin, rect[1] - margin, rect[2] + margin, rect[3] + margin]
 
 
 def preload() -> bool:
@@ -135,6 +202,21 @@ class WindowFinder:
         if fallback_rect:
             return fallback_rect
         return self._get_virtual_desktop_rect()
+
+    def find_rect_at_point(self, x: int, y: int,
+                           mode: str = UI_DETECTION_WINDOW,
+                           margin: int = 0,
+                           fallback_rect: list[int] | None = None) -> list[int] | None:
+        """按「UI 检测」档位给出该点的矩形。
+
+        ``element`` 档在「没有后端」或「这一点上没有更细的元素」时回退到窗口级——
+        否则默认档会在没有元素检测后端的平台上变成「什么都不检测」，比降级还糟。
+        """
+        if mode == UI_DETECTION_ELEMENT:
+            rect = find_element_at_point(x, y, margin=margin)
+            if rect is not None:
+                return rect
+        return self.find_window_at_point(x, y, fallback_rect)
 
     def _get_virtual_desktop_rect(self) -> list[int]:
         """虚拟桌面尺寸（包含所有显示器）。

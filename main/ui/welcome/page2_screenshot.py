@@ -32,6 +32,8 @@ else:
 
 _tr = make_tr("WelcomeWizard")
 
+from core.platform.window import UI_DETECTION_ELEMENT, UI_DETECTION_NONE
+
 
 # ── 工具列表：(svg路径, 中文名key, 中文描述key)
 _TOOLS = [
@@ -340,15 +342,18 @@ class ScreenshotHotkeyPage(BasePage):
         )
         layout.addWidget(format_row)
 
-        # ── 智能选区 ──────────────────────────────────
+        # ── UI 检测 ──────────────────────────────────
+        # 向导里只有开关：开 = 检测元素（默认档），关 = 不检测；细档在设置页里选
         layout.addSpacing(12)
-        self._smart_toggle = ToggleSwitch()
-        self._smart_toggle.setChecked(self._config.get_smart_selection())
-        smart_row, self._smart_lbl, self._smart_desc = (
+        self._ui_detection_toggle = ToggleSwitch()
+        self._ui_detection_toggle.setChecked(
+            self._config.get_ui_detection() != UI_DETECTION_NONE
+        )
+        smart_row, self._ui_detection_lbl, self._ui_detection_desc = (
             self._make_setting_row_with_refs(
-                _tr("智能选区"),
-                self._smart_toggle,
-                _tr("悬停时自动识别窗口边界，单击即可精准截取。"),
+                _tr("UI 检测"),
+                self._ui_detection_toggle,
+                _tr("悬停时自动框出窗口或控件，单击即可精准截取。"),
             )
         )
         layout.addWidget(smart_row)
@@ -380,10 +385,10 @@ class ScreenshotHotkeyPage(BasePage):
             self._autosave_desc.setText(_tr("关闭时截图只复制到剪贴板，不落盘。"))
         if hasattr(self, "_format_lbl"):
             self._format_lbl.setText(_tr("保存格式"))
-        if hasattr(self, "_smart_lbl"):
-            self._smart_lbl.setText(_tr("智能选区"))
-        if hasattr(self, "_smart_desc") and self._smart_desc:
-            self._smart_desc.setText(_tr("悬停时自动识别窗口边界，单击即可精准截取。"))
+        if hasattr(self, "_ui_detection_lbl"):
+            self._ui_detection_lbl.setText(_tr("UI 检测"))
+        if hasattr(self, "_ui_detection_desc") and self._ui_detection_desc:
+            self._ui_detection_desc.setText(_tr("悬停时自动框出窗口或控件，单击即可精准截取。"))
         if hasattr(self, "_save_lbl"):
             self._save_lbl.setText(_tr("截图保存位置"))
         if hasattr(self, "_save_desc"):
@@ -395,7 +400,9 @@ class ScreenshotHotkeyPage(BasePage):
 
     def save(self):
         self._config.set_screenshot_save_enabled(self._autosave_toggle.isChecked())
-        self._config.set_smart_selection(self._smart_toggle.isChecked())
+        self._config.set_ui_detection(
+            UI_DETECTION_ELEMENT if self._ui_detection_toggle.isChecked() else UI_DETECTION_NONE
+        )
         fmt = self._format_combo.currentData()
         if fmt:
             self._config.set_screenshot_format(fmt)

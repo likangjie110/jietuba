@@ -4,6 +4,7 @@
 //! opencv/numpy 依赖与 GIL 争用（推理时通过 allow_threads 释放 GIL）。
 
 mod engine;
+mod formula;
 mod geometry;
 
 use std::sync::Mutex;
@@ -142,5 +143,9 @@ fn ppocr_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("OcrError", m.py().get_type_bound::<OcrError>())?;
     m.add_class::<PyEngine>()?;
     m.add_class::<TextLine>()?;
+    // 公式识别与文本 OCR 是两套模型/两套解码，但同属一个扩展：
+    // 装一次 wheel 就能同时提供两条能力，Python 侧按需挑
+    m.add_class::<formula::FormulaEngine>()?;
+    m.add_function(wrap_pyfunction!(formula::formula_model_present, m)?)?;
     Ok(())
 }

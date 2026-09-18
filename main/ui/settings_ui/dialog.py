@@ -28,11 +28,23 @@ from ui.fluent_lite.theme import ACCENT, ACCENT_HOVER, ACCENT_PRESSED
 from core import log_info, safe_event
 from core.logger import log_exception, T
 from core.constants import CSS_FONT_FAMILY, DEFAULT_FONT_FAMILY
-from core.platform import shell, window_ops
+from core.platform import permissions, shell, window_ops
 
 # 页面创建函数
-from .page_hotkey import create_hotkey_page, validate_global_hotkey_edits
-from .page_capture import create_capture_page
+from .page_hotkey import (
+    collect_action_hotkeys, collect_action_tray_flags, create_hotkey_page,
+    refresh_action_rows, reset_action_rows, validate_global_hotkey_edits,
+)
+from .page_mouse import (
+    collect_mouse_gestures, create_mouse_page, read_ignored_apps, reset_mouse_page,
+)
+from .page_appearance import _refresh_logo_preview, _refresh_skin_buttons, _update_color_btn
+from .page_capture import create_capture_page, refresh_capture_appearance
+from .page_pin import collect_pin_settings, create_pin_page, refresh_pin_page, reset_pin_page
+from .page_annotation import (
+    apply_annotation_settings, create_annotation_page, refresh_annotation_page,
+    reset_annotation_page,
+)
 from .page_clipboard import create_clipboard_page
 from .page_translation import create_translation_page
 from .page_log import create_log_page, refresh_latest_log_label
@@ -40,12 +52,18 @@ from .page_misc import create_misc_page
 from .page_appearance import create_appearance_page
 from .page_developer import create_developer_page
 from .page_about import create_about_page
+from .page_permission import create_permission_page
 from .components import (
     theme_surface_color, theme_sidebar_color,
     theme_input_background, theme_popup_background,
-    theme_popup_hover_background, theme_text_style, theme_menu_style, theme_color, refresh_theme_widget_styles,
+    theme_popup_hover_background, theme_text_style, theme_menu_style, refresh_theme_widget_styles,
     apply_theme_text_style,
 )
+
+# 权限页在内容栈里的下标。导航项先于内容栈构建，两处都要用它，所以写成常量。
+_PERMISSION_PAGE_INDEX = 12
+# 开发者选项页没有导航项，只能由 logo 右键菜单进入
+_DEVELOPER_PAGE_INDEX = 10
 
 
 class _FooterPrimaryButton(PrimaryPushButton):
@@ -83,10 +101,9 @@ class SettingsDialog(FrostedFramelessDialog):
 
     wizard_requested = Signal()
 
-    def __init__(self, config_manager=None, current_hotkey="ctrl+shift+a", parent=None):
+    def __init__(self, config_manager=None, parent=None):
         super().__init__(parent)
         self.config_manager = config_manager
-        self.current_hotkey = current_hotkey
         self.main_window = parent
         self._skip_unsaved_close_prompt = False
         if self.config_manager is None:
@@ -95,6 +112,11 @@ class SettingsDialog(FrostedFramelessDialog):
 
         # 自定义 Fluent 标题栏（在 setWindowTitle 之前，以接收信号）
         self._setup_titlebar()
+
+        # 平台声明了权限需求（macOS）才有权限页与对应导航项；导航先于内容栈构建，先算出来
+        self._permission_page_index = (
+            _PERMISSION_PAGE_INDEX if permissions.requirements() else None
+        )
 
         self.setWindowTitle("jietuba")
         self.resize(900, 670)
@@ -119,9 +141,7 @@ class SettingsDialog(FrostedFramelessDialog):
         # 设置窗口图标
         try:
             from core.resource_manager import ResourceManager
-            icon_path = ResourceManager.get_resource_path("svg/托盘.svg")
-            if os.path.exists(icon_path):
-                self.setWindowIcon(QIcon(icon_path))
+            self.setWindowIcon(ResourceManager.get_app_icon())
         except Exception as e:
             log_exception(e, T("设置窗口图标"))
 
@@ -203,14 +223,19 @@ class SettingsDialog(FrostedFramelessDialog):
 
         self.content_stack = QStackedWidget()
         self.content_stack.addWidget(create_hotkey_page(self))           # 0
-        self.content_stack.addWidget(create_capture_page(self))          # 1
-        self.content_stack.addWidget(create_clipboard_page(self))        # 2
-        self.content_stack.addWidget(create_appearance_page(self))       # 3
-        self.content_stack.addWidget(create_translation_page(self))      # 4
-        self.content_stack.addWidget(create_log_page(self))              # 5
-        self.content_stack.addWidget(create_misc_page(self))             # 6
-        self.content_stack.addWidget(create_developer_page(self))        # 7
-        self.content_stack.addWidget(create_about_page(self))            # 8
+        self.content_stack.addWidget(create_mouse_page(self))            # 1
+        self.content_stack.addWidget(create_capture_page(self))          # 2
+        self.content_stack.addWidget(create_pin_page(self))              # 3
+        self.content_stack.addWidget(create_annotation_page(self))       # 4
+        self.content_stack.addWidget(create_clipboard_page(self))        # 5
+        self.content_stack.addWidget(create_appearance_page(self))       # 6
+        self.content_stack.addWidget(create_translation_page(self))      # 7
+        self.content_stack.addWidget(create_log_page(self))              # 8
+        self.content_stack.addWidget(create_misc_page(self))             # 9
+        self.content_stack.addWidget(create_developer_page(self))        # 10
+        self.content_stack.addWidget(create_about_page(self))            # 11
+        if self._permission_page_index is not None:
+            self.content_stack.addWidget(create_permission_page(self))   # 12
 
         right_layout.addWidget(self.content_title)
         right_layout.addWidget(self.content_stack)
@@ -234,14 +259,24 @@ class SettingsDialog(FrostedFramelessDialog):
 
         self._nav_items = [
             ("shortcuts", FluentIcon.COMMAND_PROMPT, self.tr("Shortcuts"), 0, NavigationItemPosition.TOP),
-            ("capture", FluentIcon.CAMERA, self.tr("Capture Settings"), 1, NavigationItemPosition.TOP),
-            ("clipboard", FluentIcon.PASTE, self.tr("Clipboard"), 2, NavigationItemPosition.TOP),
-            ("appearance", FluentIcon.BRUSH, self.tr("Appearance"), 3, NavigationItemPosition.TOP),
-            ("translation", FluentIcon.LANGUAGE, self.tr("Translation"), 4, NavigationItemPosition.TOP),
-            ("log", FluentIcon.HISTORY, self.tr("Log Settings"), 5, NavigationItemPosition.TOP),
-            ("other", FluentIcon.APPLICATION, self.tr("Other"), 6, NavigationItemPosition.TOP),
-            ("about", FluentIcon.INFO, self.tr("About"), 8, NavigationItemPosition.BOTTOM),
+            ("mouse", FluentIcon.SETTING, self.tr("Global Mouse"), 1, NavigationItemPosition.TOP),
+            ("capture", FluentIcon.CAMERA, self.tr("Capture Settings"), 2, NavigationItemPosition.TOP),
+            ("pin", FluentIcon.PIN, self.tr("Pin Settings"), 3, NavigationItemPosition.TOP),
+            ("annotation", FluentIcon.BRUSH, self.tr("Annotation"), 4, NavigationItemPosition.TOP),
+            ("clipboard", FluentIcon.PASTE, self.tr("Clipboard"), 5, NavigationItemPosition.TOP),
+            ("appearance", FluentIcon.BRUSH, self.tr("Appearance"), 6, NavigationItemPosition.TOP),
+            ("translation", FluentIcon.LANGUAGE, self.tr("Translation"), 7, NavigationItemPosition.TOP),
+            ("log", FluentIcon.HISTORY, self.tr("Log Settings"), 8, NavigationItemPosition.TOP),
+            ("other", FluentIcon.APPLICATION, self.tr("Other"), 9, NavigationItemPosition.TOP),
+            ("about", FluentIcon.INFO, self.tr("About"), 11, NavigationItemPosition.BOTTOM),
         ]
+
+        if self._permission_page_index is not None:
+            self._nav_items.insert(
+                5,
+                ("permissions", FluentIcon.CERTIFICATE, self.tr("Permissions"),
+                 self._permission_page_index, NavigationItemPosition.TOP),
+            )
 
         for route_key, icon, text, stack_index, position in self._nav_items:
             nav.addItem(
@@ -280,13 +315,19 @@ class SettingsDialog(FrostedFramelessDialog):
         return row
 
     def _get_input_style(self):
+        from core.ui_theme import get_ui_theme
+
+        tokens = get_ui_theme().tokens
         input_bg = theme_input_background()
         popup_bg = theme_popup_background()
         popup_hover = theme_popup_hover_background()
-        text_color = theme_color("#202020", "#F3F3F3")
-        border_color = theme_color("#D9DDE3", "#3A3D43")
-        focus_bg = theme_color("#FFFFFF", "#25272B")
-        arrow_color = theme_color("#666666", "#D0D0D0")
+        # 输入框的文字/边框/按下底色都跟皮肤走：写死的话，皮肤换了底色，
+        # 输入框里的字还是老配色（深底深字）
+        text_color = tokens.text
+        border_color = tokens.border
+        focus_bg = tokens.surface_strong
+        pressed_bg = tokens.accent_soft
+        arrow_color = tokens.text_muted
         return f"""
             QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
                 border: 1px solid {border_color}; border-radius: 4px;
@@ -305,7 +346,7 @@ class SettingsDialog(FrostedFramelessDialog):
                 background: {input_bg};
             }}
             QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover {{ background: {popup_hover}; }}
-            QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {{ background: #DCE8F4; }}
+            QSpinBox::up-button:pressed, QDoubleSpinBox::up-button:pressed {{ background: {pressed_bg}; }}
             QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
                 image: none; border-left: 4px solid transparent;
                 border-right: 4px solid transparent; border-bottom: 6px solid {arrow_color};
@@ -317,7 +358,7 @@ class SettingsDialog(FrostedFramelessDialog):
                 border-bottom-right-radius: 4px; background: {input_bg};
             }}
             QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{ background: {popup_hover}; }}
-            QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {{ background: #DCE8F4; }}
+            QSpinBox::down-button:pressed, QDoubleSpinBox::down-button:pressed {{ background: {pressed_bg}; }}
             QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
                 image: none; border-left: 4px solid transparent;
                 border-right: 4px solid transparent; border-top: 6px solid {arrow_color};
@@ -358,13 +399,17 @@ class SettingsDialog(FrostedFramelessDialog):
     def _on_nav_changed(self, stack_index, route_key=None):
         title_map = {
             0: self.tr("Shortcut Settings"),
-            1: self.tr("Capture Settings"),
-            2: self.tr("Clipboard Settings"),
-            3: self.tr("Appearance Settings"),
-            4: self.tr("Translation Settings"),
-            5: self.tr("Log Settings"),
-            6: self.tr("Other Settings"),
-            8: self.tr("Software Information"),
+            1: self.tr("Global Mouse Settings"),
+            2: self.tr("Capture Settings"),
+            3: self.tr("Pin Settings"),
+            4: self.tr("Annotation Settings"),
+            5: self.tr("Clipboard Settings"),
+            6: self.tr("Appearance Settings"),
+            7: self.tr("Translation Settings"),
+            8: self.tr("Log Settings"),
+            9: self.tr("Other Settings"),
+            11: self.tr("Software Information"),
+            _PERMISSION_PAGE_INDEX: self.tr("Permissions"),
         }
 
         if stack_index in title_map:
@@ -372,6 +417,9 @@ class SettingsDialog(FrostedFramelessDialog):
             self.content_stack.setCurrentIndex(stack_index)
             if route_key:
                 self._set_current_nav(route_key)
+            # 权限页没有可重置的配置项，按钮留着只会给人「点了没反应」的错觉
+            if hasattr(self, "_footer_reset_btn"):
+                self._footer_reset_btn.setEnabled(stack_index != _PERMISSION_PAGE_INDEX)
             self._refresh_after_page_change()
 
     def _refresh_clipboard_size(self, delay_ms: int = 0):
@@ -394,10 +442,22 @@ class SettingsDialog(FrostedFramelessDialog):
             self._open_developer_page()
 
     def _open_developer_page(self):
-        self.content_stack.setCurrentIndex(7)
+        self.content_stack.setCurrentIndex(_DEVELOPER_PAGE_INDEX)
         self.content_title.setText(self.tr("Developer Options"))
         self.nav_list.clearCurrentItem()
         self._refresh_after_page_change()
+
+    def show_permission_page(self) -> bool:
+        """直接跳到权限页；平台没有权限需求时返回 False。
+
+        抓屏/热键因为缺权限失败时，弹窗要把用户送到这里（``ui.permission_prompt``），
+        而不是让人自己去翻设置。
+        """
+        if self._permission_page_index is None:
+            return False
+        self._set_current_nav("permissions")
+        self._on_nav_changed(self._permission_page_index, "permissions")
+        return True
 
     def _refresh_after_page_change(self):
         """Clear the translucent backing store before painting a new page."""
@@ -449,6 +509,7 @@ class SettingsDialog(FrostedFramelessDialog):
         reset_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         reset_btn.setIcon(FluentIcon.DELETE)
         reset_btn.clicked.connect(self._reset_current_page)
+        self._footer_reset_btn = reset_btn
 
         cancel_btn = FluentPushButton(self.tr("Cancel"))
         self._footer_cancel_btn = cancel_btn
@@ -584,35 +645,32 @@ class SettingsDialog(FrostedFramelessDialog):
         if current_index == 0:
             self._reset_hotkey_page()
         elif current_index == 1:
-            self._reset_screenshot_settings_page()
+            self._reset_mouse_page()
         elif current_index == 2:
-            self._reset_clipboard_page()
+            self._reset_screenshot_settings_page()
         elif current_index == 3:
-            self._reset_appearance_page()
+            self._reset_pin_page()
         elif current_index == 4:
-            self._reset_translation_page()
+            self._reset_annotation_page()
         elif current_index == 5:
-            self._reset_log_page()
+            self._reset_clipboard_page()
         elif current_index == 6:
-            self._reset_misc_page()
+            self._reset_appearance_page()
         elif current_index == 7:
-            self._reset_long_screenshot_page()
+            self._reset_translation_page()
         elif current_index == 8:
+            self._reset_log_page()
+        elif current_index == 9:
+            self._reset_misc_page()
+        elif current_index == 10:
+            self._reset_long_screenshot_page()
+        elif current_index == 11:
             pass
 
     def _reset_hotkey_page(self):
         defaults = self.config_manager.APP_DEFAULT_SETTINGS
-        self.hotkey_input.setText(defaults["hotkey"])
-        if hasattr(self, 'hotkey_input_2'):
-            self.hotkey_input_2.setText(defaults["hotkey_2"])
-        if hasattr(self, 'clipboard_hotkey_edit'):
-            self.clipboard_hotkey_edit.setText(defaults["clipboard_hotkey"])
-        if hasattr(self, 'clipboard_hotkey_edit_2'):
-            self.clipboard_hotkey_edit_2.setText(defaults["clipboard_hotkey_2"])
-        if hasattr(self, 'translation_hotkey_edit'):
-            self.translation_hotkey_edit.setText(defaults["translation_hotkey"])
-        if hasattr(self, 'translation_hotkey_edit_2'):
-            self.translation_hotkey_edit_2.setText(defaults["translation_hotkey_2"])
+        # 全局动作：恢复成默认动作表（动作清单、热键、托盘开关一起回默认）
+        reset_action_rows(self)
         # 应用内快捷键
         if hasattr(self, '_inapp_edits'):
             for cfg_key, edit in self._inapp_edits.items():
@@ -621,6 +679,18 @@ class SettingsDialog(FrostedFramelessDialog):
             idx = self.cursor_move_combo.findData(defaults["inapp_cursor_move_mode"])
             if idx >= 0:
                 self.cursor_move_combo.setCurrentIndex(idx)
+
+    def _reset_mouse_page(self):
+        """重置全局鼠标页。"""
+        reset_mouse_page(self)
+
+    def _reset_pin_page(self):
+        """重置贴图页。"""
+        reset_pin_page(self)
+
+    def _reset_annotation_page(self):
+        """重置标注页（各工具回到出厂样式）。"""
+        reset_annotation_page(self)
 
     def _reset_long_screenshot_page(self):
         """重置开发者选项页。"""
@@ -647,7 +717,6 @@ class SettingsDialog(FrostedFramelessDialog):
 
     def _reset_appearance_page(self):
         """重置外观设置页面"""
-        from .page_appearance import _update_color_btn
         defaults = self.config_manager.APP_DEFAULT_SETTINGS
         if hasattr(self, '_ui_theme_combo'):
             index = self._ui_theme_combo.findData(
@@ -664,9 +733,24 @@ class SettingsDialog(FrostedFramelessDialog):
                 defaults["mask_color_b"]
             )
             _update_color_btn(self._mask_color_btn, self._appearance_mask_color)
+        if hasattr(self, '_skin_overrides'):
+            from core.ui_theme import SkinOverrides
+
+            self._skin_overrides = SkinOverrides.from_values(
+                accent=defaults.get("skin_accent_color"),
+                window=defaults.get("skin_window_color"),
+                text=defaults.get("skin_text_color"),
+            )
+            if hasattr(self, '_skin_buttons'):
+                _refresh_skin_buttons(self)
+        if hasattr(self, '_custom_logo_path'):
+            self._custom_logo_path = defaults.get("custom_logo_path", "") or ""
+            if hasattr(self, '_logo_preview'):
+                _refresh_logo_preview(self)
 
     def _reset_screenshot_settings_page(self):
         defaults = self.config_manager.APP_DEFAULT_SETTINGS
+        _reset_integration_controls(self)
         if hasattr(self, 'double_click_copy_close_toggle'):
             self.double_click_copy_close_toggle.setChecked(
                 defaults["double_click_copy_close"]
@@ -679,8 +763,11 @@ class SettingsDialog(FrostedFramelessDialog):
             self.text_always_on_top_toggle.setChecked(
                 defaults["text_always_on_top"]
             )
-        if hasattr(self, 'smart_toggle'):
-            self.smart_toggle.setChecked(defaults["smart_selection"])
+        if hasattr(self, 'ui_detection_combo'):
+            index = self.ui_detection_combo.findData(defaults["ui_detection"])
+            self.ui_detection_combo.setCurrentIndex(max(0, index))
+        if hasattr(self, 'ui_detection_margin_spin'):
+            self.ui_detection_margin_spin.setValue(defaults["ui_detection_margin"])
         if hasattr(self, 'save_toggle'):
             self.save_toggle.setChecked(defaults["screenshot_save_enabled"])
         if hasattr(self, 'save_path_lbl'):
@@ -712,6 +799,7 @@ class SettingsDialog(FrostedFramelessDialog):
 
     def _reset_misc_page(self):
         defaults = self.config_manager.APP_DEFAULT_SETTINGS
+        _reset_integration_controls(self)
         if hasattr(self, 'autostart_toggle'):
             self.autostart_toggle.setChecked(False)
         if hasattr(self, 'show_main_window_toggle'):
@@ -778,6 +866,7 @@ class SettingsDialog(FrostedFramelessDialog):
 
     def _reset_clipboard_page(self):
         defaults = self.config_manager.APP_DEFAULT_SETTINGS
+        _reset_integration_controls(self)
         if hasattr(self, 'clipboard_enabled_toggle'):
             self.clipboard_enabled_toggle.setChecked(defaults["clipboard_enabled"])
         if hasattr(self, 'clipboard_auto_paste_toggle'):
@@ -791,7 +880,7 @@ class SettingsDialog(FrostedFramelessDialog):
 
     def accept(self):
         """保存所有设置"""
-        # 六个全局快捷键必须先整体通过校验。这里发生在任何 set_* 之前，
+        # 全部动作热键必须先整体通过校验。这里发生在任何 set_* 之前，
         # 因而冲突值不会写入配置，窗口也不会关闭。
         if not validate_global_hotkey_edits(self, check_system=True):
             self.content_stack.setCurrentIndex(0)
@@ -809,18 +898,55 @@ class SettingsDialog(FrostedFramelessDialog):
         # 防止保存过程中（比如语言切换触发的窗口重建）触发未保存确认弹窗
         self._skip_unsaved_close_prompt = True
 
-        # 0. 快捷键
-        self.config_manager.set_hotkey(self.hotkey_input.text().strip())
-        if hasattr(self, 'hotkey_input_2'):
-            self.config_manager.set_hotkey_2(self.hotkey_input_2.text().strip())
-        if hasattr(self, 'translation_hotkey_edit'):
-            self.config_manager.set_translation_hotkey(
-                self.translation_hotkey_edit.text().strip()
+        # 0. 全局动作的快捷键与托盘开关（动作清单来自 core.actions）
+        if hasattr(self, '_action_hotkey_rows'):
+            self.config_manager.set_action_hotkeys(collect_action_hotkeys(self))
+            self.config_manager.set_action_tray_flags(collect_action_tray_flags(self))
+
+        # 0.7 标注样式（写回同一份工具设置，工具栏会跟着变）
+        if hasattr(self, '_annotation_color_readers'):
+            apply_annotation_settings(self)
+
+        # 0.6 贴图设置
+        if hasattr(self, 'pin_zoom_step_spin'):
+            pin_settings = collect_pin_settings(self)
+            if "zoom_step" in pin_settings:
+                self.config_manager.set_pin_zoom_step(pin_settings["zoom_step"])
+            if "opacity_step" in pin_settings:
+                self.config_manager.set_pin_opacity_step(pin_settings["opacity_step"])
+            if "default_opacity" in pin_settings:
+                self.config_manager.set_pin_default_opacity(pin_settings["default_opacity"])
+            if "shadow_enabled" in pin_settings:
+                self.config_manager.set_pin_shadow_enabled(pin_settings["shadow_enabled"])
+            if "auto_toolbar" in pin_settings:
+                self.config_manager.set_pin_auto_toolbar(pin_settings["auto_toolbar"])
+            if "new_position" in pin_settings:
+                self.config_manager.set_pin_new_position(pin_settings["new_position"])
+            if "order" in pin_settings:
+                self.config_manager.set_pin_order(pin_settings["order"])
+            if "close_confirm" in pin_settings:
+                self.config_manager.set_pin_close_confirm(pin_settings["close_confirm"])
+            if "mouse_actions" in pin_settings:
+                self.config_manager.set_pin_mouse_actions(pin_settings["mouse_actions"])
+            if "restore_on_startup" in pin_settings:
+                self.config_manager.set_pin_restore_on_startup(
+                    pin_settings["restore_on_startup"])
+            if "history_limit" in pin_settings:
+                self.config_manager.set_pin_history_limit(pin_settings["history_limit"])
+            if "text_font_size" in pin_settings:
+                self.config_manager.set_pin_text_font_size(pin_settings["text_font_size"])
+            if "text_max_width" in pin_settings:
+                self.config_manager.set_pin_text_max_width(pin_settings["text_max_width"])
+
+        # 0.5 全局鼠标动作
+        if hasattr(self, '_mouse_gesture_rows'):
+            self.config_manager.set_mouse_gestures(collect_mouse_gestures(self))
+        if hasattr(self, 'mouse_overlay_toggle'):
+            self.config_manager.set_mouse_capture_overlay_enabled(
+                self.mouse_overlay_toggle.isChecked()
             )
-        if hasattr(self, 'translation_hotkey_edit_2'):
-            self.config_manager.set_translation_hotkey_2(
-                self.translation_hotkey_edit_2.text().strip()
-            )
+        if hasattr(self, '_mouse_ignored_names'):
+            self.config_manager.set_mouse_ignored_apps(read_ignored_apps(self))
 
         # 1. 截图交互（双击确认 + 智能选区）
         if hasattr(self, 'double_click_copy_close_toggle'):
@@ -835,8 +961,40 @@ class SettingsDialog(FrostedFramelessDialog):
             self.config_manager.set_text_always_on_top_enabled(
                 self.text_always_on_top_toggle.isChecked()
             )
-        if hasattr(self, 'smart_toggle'):
-            self.config_manager.set_smart_selection(self.smart_toggle.isChecked())
+        if hasattr(self, 'ui_detection_combo'):
+            self.config_manager.set_ui_detection(self.ui_detection_combo.currentData())
+        if hasattr(self, 'ui_detection_margin_spin'):
+            self.config_manager.set_ui_detection_margin(
+                self.ui_detection_margin_spin.value()
+            )
+        # 截图外观（圆角 / 描边阴影）：与截图窗口里的浮层面板读写同一批键
+        if hasattr(self, 'screenshot_rounded_toggle'):
+            self.config_manager.set_app_setting(
+                "screenshot_rounded_enabled", self.screenshot_rounded_toggle.isChecked())
+        if hasattr(self, 'screenshot_radius_spin'):
+            self.config_manager.set_app_setting(
+                "screenshot_rounded_radius", self.screenshot_radius_spin.value())
+        if hasattr(self, 'screenshot_border_toggle'):
+            self.config_manager.set_app_setting(
+                "screenshot_border_enabled", self.screenshot_border_toggle.isChecked())
+        if hasattr(self, 'screenshot_border_mode_combo'):
+            self.config_manager.set_app_setting(
+                "screenshot_border_mode", self.screenshot_border_mode_combo.currentData())
+        if hasattr(self, 'screenshot_border_size_spin'):
+            self.config_manager.set_app_setting(
+                "screenshot_border_size", self.screenshot_border_size_spin.value())
+        if hasattr(self, '_screenshot_border_color'):
+            self.config_manager.set_app_setting(
+                "screenshot_border_color", self._screenshot_border_color.name())
+        if hasattr(self, '_screenshot_shadow_color'):
+            self.config_manager.set_app_setting(
+                "screenshot_shadow_color", self._screenshot_shadow_color.name())
+        if hasattr(self, 'screenshot_border_persist_toggle'):
+            self.config_manager.set_app_setting(
+                "screenshot_border_persist", self.screenshot_border_persist_toggle.isChecked())
+        if hasattr(self, 'magnifier_zoom_spin'):
+            self.config_manager.set_app_setting(
+                "magnifier_zoom", self.magnifier_zoom_spin.value())
 
         # 2. 日志设置
         if hasattr(self, 'log_toggle'):
@@ -1022,10 +1180,13 @@ class SettingsDialog(FrostedFramelessDialog):
         if hasattr(self, 'info_hide_on_drag_toggle'):
             self.config_manager.set_app_setting("screenshot_info_hide_on_drag", self.info_hide_on_drag_toggle.isChecked())
 
-        # 11. 外观设置（主题色、遮罩色）
+        # 11. 外观设置（主题模式、皮肤、自定义 logo、主题色、遮罩色）
         if hasattr(self, '_ui_theme_combo'):
             from core.ui_theme import get_ui_theme
             get_ui_theme().set_mode(self._ui_theme_combo.currentData())
+
+        self._save_appearance_settings()
+        self._save_integration_settings()
 
         from core.theme import get_theme
         theme = get_theme()
@@ -1045,12 +1206,6 @@ class SettingsDialog(FrostedFramelessDialog):
     # ================================================================
     # showEvent / refresh
     # ================================================================
-
-    def get_hotkey(self):
-        return self.hotkey_input.text().strip()
-
-    def update_hotkey(self, new_hotkey):
-        self.hotkey_input.setText(new_hotkey)
 
     def _refresh_latest_log_label(self):
         refresh_latest_log_label(self)
@@ -1148,9 +1303,7 @@ class SettingsDialog(FrostedFramelessDialog):
         """捕获所有可编辑控件的当前值，返回 dict"""
         snap = {}
         # 文本类
-        for attr in ('hotkey_input', 'hotkey_input_2', 'clipboard_hotkey_edit',
-                      'translation_hotkey_edit', 'translation_hotkey_edit_2',
-                      'clipboard_hotkey_edit_2', 'save_path_lbl', 'path_lbl',
+        for attr in ('save_path_lbl', 'path_lbl',
                       'deepl_api_key_input', 'amazon_translate_region_input',
                       'amazon_translate_access_key_input',
                       'amazon_translate_secret_key_input',
@@ -1163,7 +1316,6 @@ class SettingsDialog(FrostedFramelessDialog):
         for attr in ('double_click_copy_close_toggle',
                       'cross_tool_selection_toggle',
                       'text_always_on_top_toggle',
-                      'smart_toggle',
                       'save_toggle', 'ocr_enable_toggle',
                       'ocr_grayscale_toggle', 'ocr_upscale_toggle',
                       'deepl_pro_toggle', 'split_sentences_toggle',
@@ -1173,27 +1325,56 @@ class SettingsDialog(FrostedFramelessDialog):
                       'pin_auto_toolbar_toggle', 'info_hide_on_drag_toggle',
                       'preload_screenshot_toggle',
                       'preload_toolbar_toggle', 'preload_ocr_toggle',
-                      'preload_settings_toggle', 'preload_clipboard_toggle'):
+                      'preload_settings_toggle', 'preload_clipboard_toggle',
+                      'pin_shadow_toggle', 'pin_close_confirm_toggle',
+                      'pin_restore_toggle', 'screenshot_rounded_toggle',
+                      'screenshot_border_toggle', 'screenshot_border_persist_toggle'):
             w = getattr(self, attr, None)
             if w is not None:
                 snap[attr] = w.isChecked()
         # 下拉框类
         for attr in ('screenshot_format_combo', 'ocr_engine_combo',
                       'translation_provider_combo', 'translation_target_combo',
-                      'log_level_combo',
+                      'log_level_combo', 'ui_detection_combo',
                       'language_combo', 'engine_combo', 'cursor_move_combo',
                       'magnifier_color_format_combo', 'log_retention_combo',
+                      'pin_new_position_combo', 'pin_order_combo',
+                      'screenshot_border_mode_combo',
                       '_ui_theme_combo'):
             w = getattr(self, attr, None)
             if w is not None:
                 snap[attr] = w.currentIndex()
         # 数值类
-        for attr in ('clipboard_history_limit_spin',
+        for attr in ('clipboard_history_limit_spin', 'ui_detection_margin_spin',
+                      'screenshot_radius_spin', 'screenshot_border_size_spin',
                       'cooldown_spinbox', 'ignore_top_pixels_spinbox',
-                      'ocr_scale_spinbox'):
+                      'ocr_scale_spinbox', 'pin_zoom_step_spin',
+                      'pin_opacity_step_spin', 'pin_default_opacity_spin',
+                      'pin_history_limit_spin', 'pin_text_font_size_spin',
+                      'pin_text_max_width_spin'):
             w = getattr(self, attr, None)
             if w is not None:
                 snap[attr] = w.value()
+        # 贴图窗口的手势绑定（每个手势一个下拉）
+        if hasattr(self, 'pin_gesture_combos'):
+            snap['pin_gesture_actions'] = {
+                gesture: combo.currentData()
+                for gesture, combo in self.pin_gesture_combos.items()
+            }
+        # 全局动作行（动作、主/备热键、托盘开关都算未保存变更）
+        if hasattr(self, '_action_hotkey_rows'):
+            snap['action_hotkeys'] = [
+                (row['action'].currentData(), row['primary'].text(),
+                 row['secondary'].text(), row['tray'].isChecked())
+                for row in self._action_hotkey_rows
+            ]
+        # 全局鼠标动作行
+        if hasattr(self, '_mouse_gesture_rows'):
+            snap['mouse_gestures'] = [
+                (row['action'].currentData(), row['modifier'].currentData(),
+                 row['gesture'].currentData())
+                for row in self._mouse_gesture_rows
+            ]
         # 应用内快捷键
         if hasattr(self, '_inapp_edits'):
             for cfg_key, edit in self._inapp_edits.items():
@@ -1203,6 +1384,17 @@ class SettingsDialog(FrostedFramelessDialog):
             snap['theme_color'] = self._appearance_theme_color.name()
         if hasattr(self, '_appearance_mask_color'):
             snap['mask_color'] = self._appearance_mask_color.name()
+        # 皮肤覆盖与自定义 logo
+        if hasattr(self, '_skin_overrides'):
+            snap['skin'] = (
+                self._skin_overrides.accent,
+                self._skin_overrides.window,
+                self._skin_overrides.text,
+            )
+        if hasattr(self, '_custom_logo_path'):
+            snap['custom_logo_path'] = self._custom_logo_path
+        # 系统集成 / 文字识别 / 公式识别这几组新控件
+        _snapshot_integration_controls(self, snap)
         return snap
 
     def _has_unsaved_changes(self):
@@ -1249,36 +1441,170 @@ class SettingsDialog(FrostedFramelessDialog):
             event.accept()
 
     def _apply_taskbar_icon(self):
-        """把任务栏图标设成托盘图标（仅 Windows 需要）。
+        """把任务栏/Dock 图标设成用户选的自定义 logo（没设时保持原有行为）。
 
-        Qt 的 setWindowIcon 在 Windows 上管不到任务栏那一份；迁移前这里直接
-        ctypes.windll.user32，非 Windows 上每次 showEvent 都会记一条异常日志。
-        现在整个实现（含临时 .ico 的生成）在平台层，非 Windows 直接返回。
+        平台差异全在平台层：Windows 的任务栏那一份要单独设（Qt 的 setWindowIcon 管不到），
+        macOS 的 Dock 那一枚走 NSApplication；两者都不可用时平台函数自己返回 False。
+        macOS 只在用户设了自定义 logo 时才动 Dock——否则会把系统给的品牌图标换成
+        菜单栏小图标，那是退化。
         """
         from core.resource_manager import ResourceManager
 
-        window_ops.set_taskbar_icon(
-            self, ResourceManager.get_resource_path("svg/托盘.svg")
-        )
+        custom = ResourceManager.custom_logo_path()
+        icon_path = custom or ResourceManager.get_resource_path("svg/托盘.svg")
+        window_ops.set_taskbar_icon(self, icon_path)
+        if custom:
+            from main_app import apply_configured_app_icon
+
+            apply_configured_app_icon()
+
+
+
+
+    def _save_integration_settings(self) -> None:
+        """保存「系统集成 / 文字识别 / 公式识别」这几组 2026-09-19 新增的设置。
+
+        它们分散在三个页面上（其它页、截图页、剪贴板页），但都属于「保存后要立刻生效」
+        的一类，所以在这里一次性落盘 + 应用，免得每加一项就在保存流程里插一段。
+        """
+        config = self.config_manager
+        from core.net import apply_proxy_from_settings
+
+        # 桌面工具栏 / 托盘单击动作
+        if hasattr(self, "desktop_toolbar_combo"):
+            config.set_desktop_toolbar_mode(self.desktop_toolbar_combo.currentData())
+        if hasattr(self, "tray_click_combo"):
+            config.set_tray_click_action(self.tray_click_combo.currentData())
+
+        # 网络代理（进程级，不必等重启）
+        if hasattr(self, "proxy_mode_combo"):
+            config.set_proxy_config(
+                self.proxy_mode_combo.currentData(),
+                self.proxy_host_input.text().strip(),
+                int(self.proxy_port_spin.value()),
+            )
+            apply_proxy_from_settings()
+
+        # 更新源
+        if hasattr(self, "update_source_input"):
+            config.set_update_source_url(self.update_source_input.text().strip())
+
+        # 剪贴板：复制图像为文件 / 忽略自己回写
+        if hasattr(self, "clipboard_image_mode_combo"):
+            config.set_clipboard_image_copy_mode(
+                self.clipboard_image_mode_combo.currentData()
+            )
+        if hasattr(self, "clipboard_ignore_own_toggle"):
+            config.set_clipboard_ignore_own_copy(
+                self.clipboard_ignore_own_toggle.isChecked()
+            )
+
+        # 文字识别：布局 / 标点 / 语言 / 对话框时机
+        if hasattr(self, "ocr_layout_combo"):
+            config.set_ocr_text_layout(self.ocr_layout_combo.currentData())
+        if hasattr(self, "ocr_punctuation_combo"):
+            config.set_ocr_punctuation(self.ocr_punctuation_combo.currentData())
+        language_changed = False
+        if hasattr(self, "ocr_language_combo"):
+            new_language = self.ocr_language_combo.currentData()
+            language_changed = new_language != config.get_ocr_language()
+            config.set_ocr_language(new_language)
+        if hasattr(self, "ocr_dialog_checks"):
+            config.set_ocr_dialog_triggers(
+                [trigger for trigger, check in self.ocr_dialog_checks.items()
+                 if check.isChecked()]
+            )
+
+        # 公式识别：引擎与外部服务
+        if hasattr(self, "formula_engine_combo"):
+            config.set_formula_engine(self.formula_engine_combo.currentData())
+        if hasattr(self, "formula_url_input"):
+            config.set_formula_service_config(
+                self.formula_url_input.text().strip(),
+                self.formula_key_input.text().strip(),
+            )
+
+        # 视频录制：这些键一次录制只读一次，落盘即可，没有需要立刻应用的活对象
+        if hasattr(self, "video_container_combo"):
+            config.set_video_container(self.video_container_combo.currentData())
+        if hasattr(self, "video_codec_combo"):
+            config.set_video_codec(self.video_codec_combo.currentData())
+        if hasattr(self, "video_quality_combo"):
+            config.set_video_quality(self.video_quality_combo.currentData())
+        if hasattr(self, "video_fps_combo"):
+            config.set_video_fps(int(self.video_fps_combo.currentData()))
+        if hasattr(self, "video_bitrate_spin"):
+            config.set_video_bitrate_mbps(int(self.video_bitrate_spin.value()))
+        if hasattr(self, "video_audio_combo"):
+            config.set_video_audio(self.video_audio_combo.currentData())
+        if hasattr(self, "video_audio_device_combo"):
+            config.set_video_audio_device(self.video_audio_device_combo.currentData() or "")
+        if hasattr(self, "video_duration_spin"):
+            config.set_video_max_duration_s(int(self.video_duration_spin.value()))
+        if hasattr(self, "video_save_path_input"):
+            config.set_video_save_path(self.video_save_path_input.text().strip())
+
+        app = None
+        try:
+            from main_app import main_app_instance
+
+            app = main_app_instance()
+        except Exception as e:
+            log_exception(e, T("读取主程序实例"))
+        if app is not None:
+            app.apply_desktop_toolbar_mode()
+
+        if language_changed:
+            # 识别语言是引擎初始化参数，改了要重新初始化一次（否则下次识别还用旧语言）
+            try:
+                from ocr import initialize_ocr, resolve_ocr_language
+
+                initialize_ocr(resolve_ocr_language(
+                    config.get_ocr_language(),
+                    config.get_app_setting("language", ""),
+                ))
+            except Exception as e:
+                log_exception(e, T("按新语言重新初始化 OCR"))
+
+    def _save_appearance_settings(self):
+        """把皮肤与自定义 logo 写进配置并立即生效（保存按钮走这里）。"""
+        from core.resource_manager import ResourceManager
+        from core.ui_theme import get_ui_theme
+
+        if hasattr(self, '_skin_overrides'):
+            get_ui_theme().set_skin(self._skin_overrides)
+            # 同时自己落一份配置：皮肤是「设置页保存」的产物，不该依赖主题管理器当初
+            # 是不是带着配置管理器初始化的
+            for key, value in self._skin_overrides.as_settings().items():
+                self.config_manager.set_app_setting(key, value)
+
+        if not hasattr(self, '_custom_logo_path'):
+            return
+
+        self.config_manager.set_app_setting("custom_logo_path", self._custom_logo_path)
+        ResourceManager.refresh_app_icons()
+        self._apply_taskbar_icon()
+
+        try:
+            from main_app import main_app_instance
+
+            app = main_app_instance()
+        except Exception as e:                    # 主程序还没起来（例如无头测试）
+            log_exception(e, T("刷新托盘图标"))
+            app = None
+        if app is not None:
+            app.refresh_app_icon()
 
     def refresh_settings(self):
         """从配置管理器重新读取所有设置并更新界面"""
-        if hasattr(self, 'hotkey_input'):
-            self.hotkey_input.setText(self.config_manager.get_hotkey())
-        if hasattr(self, 'hotkey_input_2'):
-            self.hotkey_input_2.setText(self.config_manager.get_hotkey_2())
-        if hasattr(self, 'clipboard_hotkey_edit'):
-            self.clipboard_hotkey_edit.setText(self.config_manager.get_clipboard_hotkey())
-        if hasattr(self, 'clipboard_hotkey_edit_2'):
-            self.clipboard_hotkey_edit_2.setText(self.config_manager.get_clipboard_hotkey_2())
-        if hasattr(self, 'translation_hotkey_edit'):
-            self.translation_hotkey_edit.setText(
-                self.config_manager.get_translation_hotkey()
-            )
-        if hasattr(self, 'translation_hotkey_edit_2'):
-            self.translation_hotkey_edit_2.setText(
-                self.config_manager.get_translation_hotkey_2()
-            )
+        if hasattr(self, '_action_hotkey_rows'):
+            refresh_action_rows(self)
+        if hasattr(self, 'pin_zoom_step_spin'):
+            refresh_pin_page(self)
+        if hasattr(self, '_annotation_color_readers'):
+            refresh_annotation_page(self)
+        if hasattr(self, 'screenshot_rounded_toggle'):
+            refresh_capture_appearance(self)
 
         # 应用内快捷键
         if hasattr(self, '_inapp_edits'):
@@ -1302,8 +1628,13 @@ class SettingsDialog(FrostedFramelessDialog):
         if hasattr(self, 'ignore_top_pixels_spinbox'):
             self.ignore_top_pixels_spinbox.setValue(self.config_manager.get_long_stitch_ignore_top_pixels())
 
-        if hasattr(self, 'smart_toggle'):
-            self.smart_toggle.setChecked(self.config_manager.get_smart_selection())
+        if hasattr(self, 'ui_detection_combo'):
+            index = self.ui_detection_combo.findData(self.config_manager.get_ui_detection())
+            self.ui_detection_combo.setCurrentIndex(max(0, index))
+        if hasattr(self, 'ui_detection_margin_spin'):
+            self.ui_detection_margin_spin.setValue(
+                self.config_manager.get_ui_detection_margin()
+            )
 
         if hasattr(self, 'double_click_copy_close_toggle'):
             self.double_click_copy_close_toggle.setChecked(
@@ -1439,7 +1770,7 @@ class SettingsDialog(FrostedFramelessDialog):
 
         if hasattr(self, '_theme_color_btn'):
             from core.theme import get_theme
-            from .page_appearance import _update_color_btn
+
             theme = get_theme()
             self._appearance_theme_color = QColor(theme.theme_color)
             mc = theme.mask_color
@@ -1447,9 +1778,175 @@ class SettingsDialog(FrostedFramelessDialog):
             _update_color_btn(self._theme_color_btn, self._appearance_theme_color)
             _update_color_btn(self._mask_color_btn, self._appearance_mask_color)
 
+        _refresh_integration_controls(self)
+
+        # 皮肤与自定义 logo（外部改过配置时刷新到界面上）
+        if hasattr(self, '_skin_buttons'):
+            from core.ui_theme import get_ui_theme
+
+            self._skin_overrides = get_ui_theme().skin
+            _refresh_skin_buttons(self)
+        if hasattr(self, '_logo_preview'):
+            self._custom_logo_path = (
+                self.config_manager.get_app_setting("custom_logo_path", "") or ""
+            )
+            _refresh_logo_preview(self)
+
         # 剪切板主题色同步（在别处改了主题色后打开设置，确保显示最新值）
         if hasattr(self, '_clip_theme_btn'):
             from settings import get_tool_settings_manager
             from .page_appearance import _apply_clip_theme_btn_style
             self._clip_theme_name = get_tool_settings_manager().get_clipboard_theme()
             _apply_clip_theme_btn_style(self._clip_theme_btn, self._clip_theme_name)
+
+
+def _reset_integration_controls(dialog) -> None:
+        """把「系统集成 / 文字识别 / 公式识别」这几组控件恢复成默认值。
+
+        只改界面上的值，真正落盘仍走保存按钮——和这个对话框里其它重置换算方式一致。
+        """
+        from .page_misc import _select_combo
+
+        defaults = dialog.config_manager.APP_DEFAULT_SETTINGS
+
+        if hasattr(dialog, "desktop_toolbar_combo"):
+            _select_combo(dialog.desktop_toolbar_combo, defaults["desktop_toolbar_mode"])
+        if hasattr(dialog, "tray_click_combo"):
+            _select_combo(dialog.tray_click_combo, defaults["tray_click_action"])
+        if hasattr(dialog, "proxy_mode_combo"):
+            _select_combo(dialog.proxy_mode_combo, defaults["proxy_mode"])
+            dialog.proxy_host_input.setText(defaults["proxy_host"])
+            dialog.proxy_port_spin.setValue(int(defaults["proxy_port"]))
+        if hasattr(dialog, "update_source_input"):
+            dialog.update_source_input.setText(defaults["update_source_url"])
+        if hasattr(dialog, "clipboard_image_mode_combo"):
+            _select_combo(dialog.clipboard_image_mode_combo,
+                          defaults["clipboard_image_copy_mode"])
+        if hasattr(dialog, "clipboard_ignore_own_toggle"):
+            dialog.clipboard_ignore_own_toggle.setChecked(
+                defaults["clipboard_ignore_own_copy"]
+            )
+        if hasattr(dialog, "ocr_layout_combo"):
+            _select_combo(dialog.ocr_layout_combo, defaults["ocr_text_layout"])
+        if hasattr(dialog, "ocr_punctuation_combo"):
+            _select_combo(dialog.ocr_punctuation_combo, defaults["ocr_punctuation"])
+        if hasattr(dialog, "ocr_language_combo"):
+            _select_combo(dialog.ocr_language_combo, defaults["ocr_language"])
+        if hasattr(dialog, "ocr_dialog_checks"):
+            enabled = set(defaults["ocr_dialog_triggers"])
+            for trigger, check in dialog.ocr_dialog_checks.items():
+                check.setChecked(trigger in enabled)
+        if hasattr(dialog, "formula_engine_combo"):
+            _select_combo(dialog.formula_engine_combo, defaults["formula_engine"])
+        if hasattr(dialog, "formula_url_input"):
+            dialog.formula_url_input.setText(defaults["formula_service_url"])
+            dialog.formula_key_input.setText(defaults["formula_service_api_key"])
+        if hasattr(dialog, "video_container_combo"):
+            _select_combo(dialog.video_container_combo, defaults["video_container"])
+        if hasattr(dialog, "video_codec_combo"):
+            _select_combo(dialog.video_codec_combo, defaults["video_codec"])
+        if hasattr(dialog, "video_quality_combo"):
+            _select_combo(dialog.video_quality_combo, defaults["video_quality"])
+        if hasattr(dialog, "video_fps_combo"):
+            _select_combo(dialog.video_fps_combo, defaults["video_fps"])
+        if hasattr(dialog, "video_bitrate_spin"):
+            dialog.video_bitrate_spin.setValue(int(defaults["video_bitrate_mbps"]))
+        if hasattr(dialog, "video_audio_combo"):
+            _select_combo(dialog.video_audio_combo, defaults["video_audio"])
+        if hasattr(dialog, "video_audio_device_combo"):
+            _select_combo(dialog.video_audio_device_combo, defaults["video_audio_device"])
+        if hasattr(dialog, "video_duration_spin"):
+            dialog.video_duration_spin.setValue(int(defaults["video_max_duration_s"]))
+        if hasattr(dialog, "video_save_path_input"):
+            dialog.video_save_path_input.setText(defaults["video_save_path"])
+
+def _refresh_integration_controls(dialog) -> None:
+        """外部改过配置时（例如另一处保存过）把新控件刷新成配置里的值。"""
+        from .page_misc import _select_combo
+
+        config = dialog.config_manager
+
+        if hasattr(dialog, "desktop_toolbar_combo"):
+            _select_combo(dialog.desktop_toolbar_combo, config.get_desktop_toolbar_mode())
+        if hasattr(dialog, "tray_click_combo"):
+            _select_combo(dialog.tray_click_combo, config.get_tray_click_action())
+        if hasattr(dialog, "proxy_mode_combo"):
+            proxy = config.get_proxy_config()
+            _select_combo(dialog.proxy_mode_combo, proxy["mode"])
+            dialog.proxy_host_input.setText(proxy["host"])
+            dialog.proxy_port_spin.setValue(int(proxy["port"]))
+        if hasattr(dialog, "update_source_input"):
+            dialog.update_source_input.setText(
+                config.get_app_setting("update_source_url", "") or ""
+            )
+        if hasattr(dialog, "clipboard_image_mode_combo"):
+            _select_combo(dialog.clipboard_image_mode_combo,
+                          config.get_clipboard_image_copy_mode())
+        if hasattr(dialog, "clipboard_ignore_own_toggle"):
+            dialog.clipboard_ignore_own_toggle.setChecked(
+                config.get_clipboard_ignore_own_copy()
+            )
+        if hasattr(dialog, "ocr_layout_combo"):
+            _select_combo(dialog.ocr_layout_combo, config.get_ocr_text_layout())
+        if hasattr(dialog, "ocr_punctuation_combo"):
+            _select_combo(dialog.ocr_punctuation_combo, config.get_ocr_punctuation())
+        if hasattr(dialog, "ocr_language_combo"):
+            _select_combo(dialog.ocr_language_combo, config.get_ocr_language())
+        if hasattr(dialog, "ocr_dialog_checks"):
+            enabled = set(config.get_ocr_dialog_triggers())
+            for trigger, check in dialog.ocr_dialog_checks.items():
+                check.setChecked(trigger in enabled)
+        if hasattr(dialog, "formula_engine_combo"):
+            _select_combo(dialog.formula_engine_combo, config.get_formula_engine())
+        if hasattr(dialog, "formula_url_input"):
+            service = config.get_formula_service_config()
+            dialog.formula_url_input.setText(service["url"])
+            dialog.formula_key_input.setText(service["api_key"])
+        if hasattr(dialog, "video_container_combo"):
+            _select_combo(dialog.video_container_combo, config.get_video_container())
+        if hasattr(dialog, "video_codec_combo"):
+            _select_combo(dialog.video_codec_combo, config.get_video_codec())
+        if hasattr(dialog, "video_quality_combo"):
+            _select_combo(dialog.video_quality_combo, config.get_video_quality())
+        if hasattr(dialog, "video_fps_combo"):
+            _select_combo(dialog.video_fps_combo, config.get_video_fps())
+        if hasattr(dialog, "video_bitrate_spin"):
+            dialog.video_bitrate_spin.setValue(config.get_video_bitrate_mbps())
+        if hasattr(dialog, "video_audio_combo"):
+            _select_combo(dialog.video_audio_combo, config.get_video_audio())
+        if hasattr(dialog, "video_audio_device_combo"):
+            _select_combo(dialog.video_audio_device_combo, config.get_video_audio_device())
+        if hasattr(dialog, "video_duration_spin"):
+            dialog.video_duration_spin.setValue(config.get_video_max_duration_s())
+        if hasattr(dialog, "video_save_path_input"):
+            dialog.video_save_path_input.setText(config.get_video_save_path())
+
+def _snapshot_integration_controls(dialog, snap: dict) -> None:
+        """把新控件也算进「未保存变更」快照。"""
+        for attr in ("desktop_toolbar_combo", "tray_click_combo", "proxy_mode_combo",
+                     "clipboard_image_mode_combo", "ocr_layout_combo",
+                     "ocr_punctuation_combo", "ocr_language_combo",
+                     "formula_engine_combo", "video_container_combo", "video_codec_combo",
+                     "video_quality_combo", "video_fps_combo", "video_audio_combo",
+                     "video_audio_device_combo"):
+            widget = getattr(dialog, attr, None)
+            if widget is not None:
+                snap[attr] = widget.currentIndex()
+        for attr in ("proxy_host_input", "update_source_input", "formula_url_input",
+                     "formula_key_input", "video_save_path_input"):
+            widget = getattr(dialog, attr, None)
+            if widget is not None:
+                snap[attr] = widget.text()
+        if hasattr(dialog, "proxy_port_spin"):
+            snap["proxy_port_spin"] = dialog.proxy_port_spin.value()
+        for attr in ("video_bitrate_spin", "video_duration_spin"):
+            widget = getattr(dialog, attr, None)
+            if widget is not None:
+                snap[attr] = widget.value()
+        if hasattr(dialog, "clipboard_ignore_own_toggle"):
+            snap["clipboard_ignore_own_toggle"] = dialog.clipboard_ignore_own_toggle.isChecked()
+        if hasattr(dialog, "ocr_dialog_checks"):
+            snap["ocr_dialog_triggers"] = sorted(
+                trigger for trigger, check in dialog.ocr_dialog_checks.items()
+                if check.isChecked()
+            )

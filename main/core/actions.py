@@ -1,0 +1,609 @@
+# -*- coding: utf-8 -*-
+"""动作注册表：应用里「能做哪些事」的唯一出处，以及全局鼠标手势的执行入口。
+
+全局鼠标动作（修饰键 + 鼠标手势）从这里取动作表，后面的「快捷键/动作页」与托盘菜单
+也会读同一张表。动作的具体入口仍留在原处（``MainApp`` / 截图窗口），这里只做
+「id → 名称 → 怎么跑」的映射，免得每个入口各自维护一份动作清单。
+
+三类动作：
+
+- ``silent_capture``：**静默截图**——按「UI 检测」档位在鼠标位置抓一块，直接做后续
+  处理（复制/贴图/快速保存/识别文字），不进截图编辑器；
+- ``editor_mode``：打开截图编辑器，并且把检测到的区域设成选区后直接进入某个模式
+  （翻译/长截图/GIF）。走既有入口而不是另写一套，行为才和用户手动点工具栏一致；
+- 其余动作交给应用既有入口（截图编辑器、剪贴板窗口、翻译窗口）。
+"""
+
+from dataclasses import dataclass
+
+from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtWidgets import QApplication
+
+from core.logger import T, log_debug, log_exception, log_warning
+from core.platform.window import UI_DETECTION_NONE
+
+#: 打开编辑器后直接进入的模式（``Action.editor_mode``）
+EDITOR_MODE_TRANSLATE = "translate"
+EDITOR_MODE_LONG = "long"
+EDITOR_MODE_GIF = "gif"
+EDITOR_MODE_VIDEO = "video"
+
+#: 不走截图链路、直接调应用入口的动作 id
+APP_ENTRY_ACTIONS = ("clipboard", "open_translation", "pin_clipboard_text",
+                     "open_save_folder", "translate_clipboard_image", "check_updates")
+
+
+@dataclass(frozen=True)
+class Action:
+    """一个可绑定、可触发的动作。"""
+
+    id: str
+    label: str                      # 界面文案（英文源，界面用 tr() 翻译）
+    silent_capture: bool = False    # 静默截图：不进编辑器
+    editor_mode: str = ""           # 进编辑器后直接进入的模式（空 = 普通截图）
+    tray: bool = False              # 默认是否出现在托盘菜单里
+
+
+ACTIONS = (
+    Action("screenshot", "Screenshot", tray=True),
+    Action("screenshot_copy", "Screenshot and Copy", silent_capture=True, tray=True),
+    Action("screenshot_pin", "Screenshot and Pin", silent_capture=True),
+    Action("screenshot_quick_save", "Screenshot and Save", silent_capture=True, tray=True),
+    Action("screenshot_copy_text", "Screenshot and Copy Text", silent_capture=True),
+    Action("copy_table_markdown", "Copy Table as Markdown", silent_capture=True),
+    Action("recognize_formula", "Recognize Formula as LaTeX", silent_capture=True),
+    Action("screenshot_translate", "Screenshot and Translate",
+           editor_mode=EDITOR_MODE_TRANSLATE),
+    Action("long_screenshot", "Long Screenshot", editor_mode=EDITOR_MODE_LONG, tray=True),
+    Action("gif_capture", "GIF Capture", editor_mode=EDITOR_MODE_GIF, tray=True),
+    Action("video_capture", "Video Recording", editor_mode=EDITOR_MODE_VIDEO, tray=True),
+    Action("clipboard", "Clipboard", tray=True),
+    Action("open_translation", "Translation", tray=True),
+    Action("pin_clipboard_text", "Pin Clipboard Text", tray=True),
+    Action("translate_clipboard_image", "Translate Clipboard Image", tray=True),
+    # 托盘常用入口：直接打开截图保存目录（找不到目录时用平台层兜底打开）
+    Action("open_save_folder", "Open Save Folder", tray=True),
+    # 检查更新：更新源是 GitHub 发布页（见 core/updates.py），当前只做「展示 + 打开」
+    Action("check_updates", "Check for Updates"),
+)
+
+ACTIONS_BY_ID = {action.id: action for action in ACTIONS}
+
+#: 全局鼠标手势能绑的动作（顺序即界面顺序）
+GESTURE_ACTION_IDS = tuple(action.id for action in ACTIONS)
+
+
+def _target_rect(app) -> list[int] | None:
+    """鼠标位置的抓取范围（屏幕坐标）。
+
+    按「UI 检测」档位取：element/window 档给出元素或窗口矩形，none 档或没有窗口枚举
+    后端时返回 None（调用方按整屏处理）。
+    """
+    from PySide6.QtGui import QCursor
+
+    from core.platform import window as platform_window
+
+    try:
+        mode = app.config_manager.get_ui_detection()
+        margin = app.config_manager.get_ui_detection_margin()
+    except Exception:
+        return None
+
+    if mode == UI_DETECTION_NONE or not platform_window.is_window_enumeration_available():
+        return None
+
+    try:
+        finder = platform_window.WindowFinder()
+        finder.find_windows()
+        cursor = QCursor.pos()
+        return finder.find_rect_at_point(cursor.x(), cursor.y(), mode=mode, margin=margin)
+    except Exception as e:
+        log_exception(e, T("确定鼠标位置的抓取范围"))
+        return None
+
+
+def capture_at_cursor(app):
+    """按 UI 检测档位静默抓一块屏幕；返回 ``(QImage, QRectF)`` 或 None。
+
+    ``QRectF`` 是这块区域在屏幕上的位置（钉图要按它定位）。
+    """
+    from PySide6.QtCore import QRectF
+
+    try:
+        from capture.capture_service import CaptureService
+
+        image, virtual_rect = CaptureService().capture_all_screens()
+    except Exception as e:
+        log_exception(e, T("静默截屏"))
+        return None
+
+    if image is None or image.isNull():
+        return None
+
+    rect = _target_rect(app)
+    if not rect:
+        return image, virtual_rect
+
+    # 整屏图的原点不一定是 (0, 0)（多显示器可以有负坐标），要减掉虚拟桌面原点再裁
+    x1 = int(rect[0] - virtual_rect.x())
+    y1 = int(rect[1] - virtual_rect.y())
+    width = int(rect[2] - rect[0])
+    height = int(rect[3] - rect[1])
+    if width <= 0 or height <= 0:
+        return image, virtual_rect
+
+    cropped = image.copy(x1, y1, width, height)
+    if cropped.isNull():
+        return image, virtual_rect
+    log_debug(T("静默截屏: {width}x{height} @({x}, {y})",
+                width=width, height=height, x=int(rect[0]), y=int(rect[1])), "Action")
+    return cropped, QRectF(float(rect[0]), float(rect[1]), float(width), float(height))
+
+
+def _copy(image) -> bool:
+    from core.clipboard_utils import deliver_image_async
+
+    return deliver_image_async(image) is not None
+
+
+def _quick_save(image, app) -> bool:
+    from core.clipboard_utils import deliver_image_async
+    from core.save import SaveService
+
+    config = app.config_manager
+    thread = deliver_image_async(
+        image,
+        copy_to_clipboard=False,
+        save_service=SaveService(config_manager=config),
+        save_kwargs=dict(
+            directory=config.get_screenshot_save_path(),
+            prefix="",
+            image_format=config.get_screenshot_format(),
+        ),
+    )
+    return thread is not None
+
+
+def _pin(image, position, app) -> bool:
+    from pin.pin_manager import PinManager
+
+    pin_window = PinManager.instance().create_pin(
+        image=image,
+        position=position,
+        config_manager=app.config_manager,
+    )
+    if pin_window is None:
+        log_warning(T("钉图创建失败"), "Action")
+        return False
+    pin_window.show()
+    return True
+
+
+def _flash_capture_mask(rect, app) -> None:
+    """按设置闪一下「截图遮罩」，让用户看到刚才抓的是哪一块。"""
+    try:
+        if not app.config_manager.get_mouse_capture_overlay_enabled():
+            return
+        from ui.capture_mask import flash_capture_mask
+
+        log_debug(T("显示截图遮罩: {rect}", rect=rect), "Action")
+        flash_capture_mask(rect)
+    except Exception as e:
+        log_exception(e, T("显示截图遮罩"))
+
+
+def _normalize_app_name(name: str) -> str:
+    """比较用的程序名：去空白、忽略大小写、去掉 .app/.exe 后缀。"""
+    normalized = str(name or "").strip().casefold()
+    for suffix in (".app", ".exe"):
+        if normalized.endswith(suffix):
+            normalized = normalized[: -len(suffix)]
+    return normalized
+
+
+def gesture_ignored_app_name(app) -> str | None:
+    """前台程序命中「忽略程序列表」时返回它的名字，否则 None。
+
+    程序名是平台相关的（macOS 是本地化名、Windows 是可执行文件名），因此比较统一走
+    ``_normalize_app_name``。列表里的名字由用户手输，只做这一个方向的宽容，不做子串
+    匹配——「忽略 Finder」不代表「忽略 Finder 里的所有子窗口」这种暗示。
+    """
+    from core.platform import focus
+
+    try:
+        ignored = app.config_manager.get_mouse_ignored_apps()
+    except Exception as e:
+        log_exception(e, T("读取忽略程序列表"))
+        return None
+    if not ignored:
+        return None
+
+    name = focus.foreground_app_name()
+    if not name:
+        return None
+    if _normalize_app_name(name) in {_normalize_app_name(item) for item in ignored}:
+        return name
+    return None
+
+
+def _ocr_text_options() -> dict:
+    """识别结果的处理选项：文本布局与标点处理（设置页「文字识别」组那两个下拉）。
+
+    读配置失败时退回默认（智能分行、不动标点）：这两个选项只影响可读性，
+    不该因为它们把整条复制路径带塌。
+    """
+    try:
+        from settings import get_tool_settings_manager
+
+        config = get_tool_settings_manager()
+        return {
+            "layout": config.get_ocr_text_layout(),
+            "punctuation": config.get_ocr_punctuation(),
+        }
+    except Exception as e:
+        log_exception(e, T("读取识别结果处理选项"))
+        return {"layout": "auto", "punctuation": "none"}
+
+
+class _OcrTextThread(QThread):
+    """只做 OCR 的线程；持有 QImage（值类型），不碰任何 GUI 对象。
+
+    ``converter`` 决定识别结果怎么变成文本：默认是阅读顺序的纯文本（按设置里的
+    「文本布局」「标点处理」加工），表格那个动作传 ``format_ocr_result_markdown``
+    （没有表格特征时它自己也会退回纯文本）。
+    """
+
+    recognized = Signal(str)
+
+    def __init__(self, image, converter=None, options=None):
+        super().__init__()
+        self._image = image
+        self._converter = converter
+        self._options = dict(options or {})
+
+    def run(self):
+        try:
+            from ocr import format_ocr_result_text, is_ocr_available, recognize_text
+
+            converter = self._converter or format_ocr_result_text
+            options = self._options or _ocr_text_options()
+
+            if not is_ocr_available():
+                log_warning(T("OCR 不可用，无法识别截图文字"), "Action")
+                self.recognized.emit("")
+                return
+            result = recognize_text(self._image, return_format="dict")
+            text = ""
+            if isinstance(result, dict) and result.get("code") == 100:
+                if self._converter is None:
+                    text = (format_ocr_result_text(result, **options) or "").strip()
+                else:
+                    text = (converter(result) or "").strip()
+            self.recognized.emit(text)
+        except Exception as e:
+            log_exception(e, T("识别截图文字"))
+            self.recognized.emit("")
+        finally:
+            self._image = None
+
+
+class _TextClipboardSink(QObject):
+    """OCR 结果的接收端：把识别到的文字写进剪贴板（按设置决定是否再弹一次结果窗）。
+
+    接收端必须是主线程的 QObject：信号连到普通函数时 Qt 走直连，回调会在 OCR 线程里
+    跑，而剪贴板只能在主线程碰。
+    """
+
+    def on_text(self, text: str) -> None:
+        if not text:
+            log_warning(T("未识别到文字"), "Action")
+            return
+        clipboard = QApplication.clipboard()
+        if clipboard is None:
+            return
+        clipboard.setText(text)
+        log_debug(T("识别到的文字已复制到剪贴板（{count} 字）", count=len(text)), "Action")
+
+        from ocr.result_dialog import maybe_show_ocr_result
+
+        maybe_show_ocr_result(text, "copy_all")
+
+    def on_finished(self) -> None:
+        """线程跑完就放开引用（信号回到主线程，这里单线程改列表）。"""
+        _ocr_thread_refs[:] = [ref for ref in _ocr_thread_refs if ref[1] is not self]
+
+
+#: 活着的 OCR 线程与接收端。不持有引用的话线程对象会被回收，run() 还没跑完就崩。
+_ocr_thread_refs: list = []
+
+
+def _copy_text(image) -> bool:
+    """静默截取 → OCR → 文字进剪贴板。
+
+    识别放在线程里：一次 OCR 是百毫秒到秒级的 FFI 调用，在鼠标动作的主线程上跑会把
+    界面卡住——这正是「全局鼠标动作必须立刻有反馈」最不能接受的部分。
+    """
+    return _ocr_to_clipboard(image, converter=None, log_message=T("开始识别截图文字"))
+
+
+def _copy_table_markdown(image) -> bool:
+    """静默截取 → OCR → 按表格渲染成 Markdown 进剪贴板。
+
+    输入里没有表格特征时 ``format_ocr_result_markdown`` 自己会退回纯文本，所以这条
+    动作在普通段落上也不会给出一个空结果或半张表。
+    """
+    from ocr import format_ocr_result_markdown
+
+    return _ocr_to_clipboard(
+        image, converter=format_ocr_result_markdown, log_message=T("开始识别表格文字")
+    )
+
+
+def _ocr_to_clipboard(image, converter, log_message) -> bool:
+    """截图 → OCR → 文本进剪贴板（可选：再弹一次结果窗，见 ocr.result_dialog）。"""
+    from PySide6.QtGui import QImage
+
+    qimage = image if isinstance(image, QImage) else image.toImage()
+    qimage = qimage.copy()
+    if qimage.isNull():
+        log_warning(T("截图内容为空，无法识别文字"), "Action")
+        return False
+
+    thread = _OcrTextThread(qimage, converter=converter)
+    sink = _TextClipboardSink()
+    thread.recognized.connect(sink.on_text)
+    thread.finished.connect(sink.on_finished)
+    _ocr_thread_refs.append((thread, sink))
+    thread.start()
+    log_debug(log_message, "Action")
+    return True
+
+
+def _configured_formula_engine() -> str:
+    """设置的公式引擎名；读不到就用默认（Rust 侧 PP-FormulaNet 绑定）。"""
+    try:
+        from settings import get_tool_settings_manager
+
+        return get_tool_settings_manager().get_formula_engine()
+    except Exception as e:
+        log_exception(e, T("读取公式引擎设置"))
+        return "ppocr_formula"
+
+
+def _recognize_formula(image) -> bool:
+    """静默截取 → 公式引擎 → LaTeX 进结果窗口并复制到剪贴板。
+
+    用设置里选的引擎（默认 Rust 侧 PP-FormulaNet 绑定）；它不可用但别的引擎可用时
+    自动换一个并把这件事记进日志——比直接报「不可用」更接近用户想要的。全都不可用时
+    **先提示再返回 False**：静默失败会让用户以为「图里没公式」。
+    """
+    from ocr import formula as formula_module
+    from ocr.formula import is_formula_available, recognize_formula
+
+    if not is_formula_available():
+        log_warning(T("公式识别不可用：没有可用的公式引擎"), "Action")
+        _show_formula_unavailable()
+        return False
+
+    engine_name = _configured_formula_engine()
+    available = formula_module.available_formula_engines()
+    if engine_name not in available:
+        log_warning(
+            T("设置的公式引擎不可用，改用 {engine}: {configured}",
+              engine=available[0], configured=engine_name),
+            "Action",
+        )
+        engine_name = available[0]
+
+    latex = recognize_formula(image, engine_name=engine_name)
+    if not latex:
+        log_warning(T("未识别到公式"), "Action")
+        return False
+
+    _copy_to_clipboard_text(latex, T("公式已复制到剪贴板（{count} 字）", count=len(latex)))
+    _show_formula_result(latex)
+    return True
+
+
+def _copy_to_clipboard_text(text: str, log_message) -> None:
+    clipboard = QApplication.clipboard()
+    if clipboard is not None:
+        clipboard.setText(text)
+    log_debug(log_message, "Action")
+
+
+def _show_formula_result(latex: str) -> None:
+    """展示识别到的 LaTeX：复用既有的可选中文本对话框，不另造窗口。"""
+    from core.i18n import make_tr
+    from ui.dialogs import show_text_dialog
+
+    show_text_dialog(None, make_tr("FormulaResult")("Formula Result"), latex)
+
+
+def _show_formula_unavailable() -> None:
+    """公式引擎缺失时的显式提示（不是静默失败）。"""
+    from core.i18n import make_tr
+    from ui.dialogs import show_warning_dialog
+
+    _tr = make_tr("FormulaResult")
+    show_warning_dialog(
+        None,
+        _tr("Formula Recognition Unavailable"),
+        _tr("No formula engine is available on this machine: jietuba does not ship a "
+            "formula model. Install a formula engine plugin and try again."),
+    )
+
+
+def _run_app_entry(action_id: str, app) -> bool:
+    """打开剪贴板 / 翻译 / 贴图这类应用级入口（托盘、热键、全局鼠标动作共用）。"""
+    if action_id == "clipboard":
+        app.open_clipboard_window()
+        return True
+    if action_id == "open_translation":
+        # 有选中文本时显示小窗，否则打开完整输入窗口——与旧热键走的是同一个入口
+        app.smart_translation_controller.trigger()
+        return True
+    if action_id == "pin_clipboard_text":
+        return _pin_clipboard_text(app)
+    if action_id == "open_save_folder":
+        return _open_save_folder(app)
+    if action_id == "translate_clipboard_image":
+        return _translate_clipboard_image(app)
+    if action_id == "check_updates":
+        from core.updates import check_for_updates
+
+        return bool(check_for_updates())
+    return False
+
+
+def _translate_clipboard_image(app) -> bool:
+    """翻译剪贴板里的图片：OCR → 翻译 → 结果窗口。
+
+    直接复用截图翻译那条链路（``TranslationManager.translate_from_image``）：
+    它已经负责「先开结果窗口、后台识别、识别完自动翻译」，另写一套只会多一份行为差。
+    """
+    image = clipboard_image()
+    if image is None:
+        log_warning(T("剪贴板里没有图片，无法翻译"), "Action")
+        return False
+
+    from PySide6.QtGui import QPixmap
+
+    from translation import TranslationManager
+
+    pixmap = QPixmap.fromImage(image)
+    params = {}
+    getter = getattr(app.config_manager, "get_translation_request_params", None)
+    if getter is not None:
+        try:
+            params = getter()
+        except Exception as e:
+            log_exception(e, T("读取翻译参数"))
+
+    log_debug(T("图片翻译: {width}x{height}", width=pixmap.width(), height=pixmap.height()),
+              "Action")
+    TranslationManager.instance().translate_from_image(pixmap=pixmap, **params)
+    return True
+
+
+def _open_save_folder(app) -> bool:
+    """用系统文件管理器打开截图保存目录。"""
+    from core.platform import shell
+
+    folder = ""
+    getter = getattr(app.config_manager, "get_screenshot_save_path", None)
+    if getter is not None:
+        try:
+            folder = str(getter() or "")
+        except Exception as e:
+            log_exception(e, T("读取截图保存目录"))
+
+    if not folder:
+        log_warning(T("没有配置截图保存目录，无法打开"), "Action")
+        return False
+    opened = shell.open_path(folder)
+    if not opened:
+        log_warning(T("打开截图保存目录失败: {folder}", folder=folder), "Action")
+    return bool(opened)
+
+
+def clipboard_text() -> str:
+    """剪贴板里的纯文本；拿不到剪贴板时返回空串。"""
+    from PySide6.QtWidgets import QApplication
+
+    clipboard = QApplication.clipboard()
+    return clipboard.text() if clipboard is not None else ""
+
+
+def clipboard_image():
+    """剪贴板里的图片；剪贴板里不是图（或拿不到剪贴板）时返回 None。"""
+    from PySide6.QtWidgets import QApplication
+
+    clipboard = QApplication.clipboard()
+    if clipboard is None:
+        return None
+    image = clipboard.image()
+    return None if image is None or image.isNull() else image
+
+
+def _pin_clipboard_text(app) -> bool:
+    """把剪贴板里的文字做成一张贴图（「文字贴图」）。
+
+    渲染成图像贴图而不是另立文本贴图管线：贴图的缩放/透明度/复制/会话恢复都建立在
+    QImage 上，这样一行代码就能拥有全部能力，代价是贴出来的字不能再编辑。
+    """
+    from PySide6.QtGui import QCursor
+
+    text = clipboard_text()
+    if not text.strip():
+        log_warning(T("剪贴板里没有文字，无法贴图"), "Action")
+        return False
+
+    from pin.pin_manager import PinManager
+    from pin.pin_text_pin import render_text_image
+
+    config = app.config_manager
+    image = render_text_image(
+        text,
+        font_size=config.get_pin_text_font_size(),
+        max_width=config.get_pin_text_max_width(),
+    )
+    if image.isNull():
+        return False
+
+    pin = PinManager.instance().create_pin(
+        image=image, position=QCursor.pos(), config_manager=config
+    )
+    if pin is None:
+        return False
+    log_debug(T("已把剪贴板文字做成贴图（{count} 字）", count=len(text)), "Action")
+    return True
+
+
+def run_action(action_id: str, app) -> bool:
+    """执行一个动作；不认识的 id 记一条日志并返回 False。
+
+    静默动作先抓图再分发；编辑类动作把检测到的区域带进截图编辑器；打开编辑器那类
+    动作直接走应用入口，不做额外处理。
+    """
+    action = ACTIONS_BY_ID.get(action_id)
+    if action is None:
+        log_warning(T("不认识的动作: {action_id}", action_id=action_id), "Action")
+        return False
+
+    if action_id in APP_ENTRY_ACTIONS:
+        log_debug(T("动作触发: {action_id}", action_id=action_id), "Action")
+        return _run_app_entry(action_id, app)
+
+    if action.editor_mode:
+        log_debug(T("动作触发: {action_id}", action_id=action_id), "Action")
+        return bool(app.start_screenshot_for_gesture(action.editor_mode, _target_rect(app)))
+
+    if not action.silent_capture:
+        log_debug(T("动作触发: {action_id}", action_id=action_id), "Action")
+        app.start_screenshot()
+        return True
+
+    captured = capture_at_cursor(app)
+    if captured is None:
+        log_warning(T("静默截图失败，动作未执行: {action_id}", action_id=action_id), "Action")
+        return False
+
+    image, rect = captured
+    from PySide6.QtCore import QPoint
+
+    log_debug(T("动作触发: {action_id}", action_id=action_id), "Action")
+    _flash_capture_mask(rect, app)
+    if action_id == "screenshot_copy":
+        return _copy(image)
+    if action_id == "screenshot_quick_save":
+        return _quick_save(image, app)
+    if action_id == "screenshot_pin":
+        return _pin(image, QPoint(int(rect.x()), int(rect.y())), app)
+    if action_id == "screenshot_copy_text":
+        return _copy_text(image)
+    if action_id == "copy_table_markdown":
+        return _copy_table_markdown(image)
+    if action_id == "recognize_formula":
+        return _recognize_formula(image)
+    return False

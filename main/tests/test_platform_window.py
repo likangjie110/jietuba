@@ -448,6 +448,148 @@ class TestMacOSBackend:
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="macOS 的 Quartz 枚举")
+class TestElementDetection:
+    """「UI 检测」的元素档：档位收敛、元素后端、档位分派。
+
+    元素后端只在 macOS 上存在，所以这里全程用替身驱动，不依赖真机（真机验证见
+    ``TestMacOSRealElementDetection``）。
+    """
+
+    @pytest.mark.parametrize("raw, expected", [
+        ("none", "none"),
+        ("window", "window"),
+        ("element", "element"),
+        (" Element ", "element"),
+        (True, "element"),         # 旧的 smart_selection：打开 = 检测（默认档）
+        (False, "none"),
+        ("banana", None),
+        (None, None),
+        (2, None),
+    ])
+    def test_normalize_accepts_known_modes_and_legacy_bool(self, raw, expected):
+        assert window.normalize_ui_detection(raw) == expected
+
+    @staticmethod
+    def _fake_element_backend(monkeypatch, rect):
+        """让门面认下 macOS 的元素后端，并返回固定的元素矩形。"""
+        import core.platform.window_macos as backend
+
+        monkeypatch.setattr(window, "IS_WINDOWS", False)
+        monkeypatch.setattr(window, "IS_MACOS", True)
+        monkeypatch.setattr(backend, "ELEMENT_API_AVAILABLE", True)
+        monkeypatch.setattr(backend, "element_rect_at_point", lambda x, y: rect)
+        monkeypatch.setattr(window, "available", lambda *a, **k: True)
+        return backend
+
+    def test_availability_needs_capability_and_backend(self, monkeypatch):
+        monkeypatch.setattr(window, "available", lambda *a, **k: True)
+        monkeypatch.setattr(window, "IS_MACOS", False)          # 没有元素后端
+        assert window.is_element_detection_available() is False
+
+        monkeypatch.setattr(window, "available", lambda *a, **k: False)
+        assert window.is_element_detection_available() is False
+
+    def test_find_element_returns_none_without_backend(self, monkeypatch):
+        monkeypatch.setattr(window, "IS_MACOS", False)
+        assert window.find_element_at_point(10, 10) is None
+
+    def test_margin_expands_the_element_rect(self, monkeypatch):
+        self._fake_element_backend(monkeypatch, [100, 100, 200, 150])
+
+        assert window.find_element_at_point(120, 120) == [100, 100, 200, 150]
+        assert window.find_element_at_point(120, 120, margin=8) == [92, 92, 208, 158]
+
+    def test_finder_falls_back_to_the_window_when_element_misses(self, monkeypatch):
+        """element 档没命中元素时按窗口级给结果，别变成「什么都不框」。"""
+        self._fake_element_backend(monkeypatch, None)
+        finder = window.WindowFinder()
+        finder.windows = [WindowInfo(1, (0, 0, 400, 300), "窗口")]
+
+        assert finder.find_rect_at_point(50, 50, mode="element") == [0, 0, 400, 300]
+
+    def test_finder_prefers_the_element_when_it_hits(self, monkeypatch):
+        self._fake_element_backend(monkeypatch, [120, 130, 180, 170])
+        finder = window.WindowFinder()
+        finder.windows = [WindowInfo(1, (0, 0, 400, 300), "窗口")]
+
+        assert finder.find_rect_at_point(50, 50, mode="element") == [120, 130, 180, 170]
+        # 窗口档不受元素影响
+        assert finder.find_rect_at_point(50, 50, mode="window") == [0, 0, 400, 300]
+
+    def test_finder_element_mode_without_backend_uses_the_window(self, monkeypatch):
+        import core.platform.window_macos as backend
+
+        monkeypatch.setattr(window, "IS_WINDOWS", False)
+        monkeypatch.setattr(window, "IS_MACOS", True)
+        monkeypatch.setattr(backend, "MACOS_API_AVAILABLE", True)
+        monkeypatch.setattr(backend, "ELEMENT_API_AVAILABLE", False)   # 缺元素后端
+        monkeypatch.setattr(window, "available", lambda *a, **k: True)
+        finder = window.WindowFinder()
+        finder.windows = [WindowInfo(1, (0, 0, 400, 300), "窗口")]
+
+        assert finder.find_rect_at_point(50, 50, mode="element") == [0, 0, 400, 300]
+
+
+class TestMacOSElementBackendInternals:
+    """macOS 元素后端的过滤规则：命中自己 = 没元素、窗口级角色不算元素。"""
+
+    def _fake_element(self, monkeypatch, *, role="AXButton", pid=999, rect=(10, 20, 60, 40)):
+        import core.platform.window_macos as backend
+
+        class _Value:
+            def __init__(self, point=None, size=None):
+                self.point = point
+                self.size = size
+
+        monkeypatch.setattr(backend, "ELEMENT_API_AVAILABLE", True)
+        monkeypatch.setattr(backend, "AXUIElementCreateSystemWide", lambda: "systemwide")
+        monkeypatch.setattr(backend, "AXUIElementCopyElementAtPosition",
+                            lambda *a: (0, "element"))
+        monkeypatch.setattr(backend, "AXUIElementGetPid", lambda *a: (0, pid))
+        monkeypatch.setattr(backend, "AXUIElementCopyAttributeValue",
+                            lambda el, attr, _: (0, role if attr == "AXRole" else None))
+        monkeypatch.setattr(backend, "_element_rect", lambda el: list(rect))
+        return backend
+
+    def test_element_of_our_own_process_is_not_an_element(self, monkeypatch):
+        """截图遮罩是自己进程的全屏窗口，命中它必须当作没元素，否则元素档框的是遮罩。"""
+        import os
+
+        backend = self._fake_element(monkeypatch, pid=os.getpid())
+        assert backend.element_rect_at_point(100, 100) is None
+
+    def test_other_apps_element_is_returned(self, monkeypatch):
+        backend = self._fake_element(monkeypatch, pid=4321)
+        assert backend.element_rect_at_point(100, 100) == [10, 20, 60, 40]
+
+    @pytest.mark.parametrize("role", ["AXWindow", "AXSheet", "AXApplication", "AXSystemWide"])
+    def test_window_level_roles_fall_back_to_the_window_path(self, monkeypatch, role):
+        backend = self._fake_element(monkeypatch, role=role)
+        assert backend.element_rect_at_point(100, 100) is None
+
+
+class TestMacOSRealElementDetection:
+    """真机：把鼠标所在位置上的元素框出来，结果要落在屏幕内、且不该是整屏。"""
+
+    @pytest.mark.skipif(not sys.platform == "darwin", reason="元素检测只有 macOS 后端")
+    def test_returns_a_sane_rect_for_a_real_point(self):
+        import core.platform.window_macos as backend
+
+        if not backend.ELEMENT_API_AVAILABLE:
+            pytest.skip("当前环境没有 ApplicationServices")
+
+        from PySide6.QtGui import QCursor
+
+        cursor = QCursor.pos()
+        rect = backend.element_rect_at_point(cursor.x(), cursor.y())
+        if rect is None:
+            pytest.skip("这一点上没有可用的元素（或缺少辅助功能权限）")
+
+        x1, y1, x2, y2 = rect
+        assert x2 > x1 and y2 > y1
+        assert x2 - x1 < 10000 and y2 - y1 < 10000
+
+
 class TestMacOSRealEnumeration:
     """真机枚举：结构正确、坐标自洽（CI 在 Windows 上，这部分跳过）。"""
 
@@ -478,3 +620,53 @@ class TestMacOSRealEnumeration:
         """端到端：门面 + Quartz 后端 + 命中测试走通一次。"""
         result = window.find_window_at_cursor()
         assert result is None or len(result) == 4
+
+
+class TestKeepVisibleWhenInactive:
+    """贴图不能随失焦被系统藏起来（macOS 的 Qt Tool 窗口默认会）。"""
+
+    def test_unavailable_platform_is_a_no_op(self, monkeypatch):
+        from core.platform import window_ops
+
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: False)
+
+        assert window_ops.keep_visible_when_inactive(object()) is False
+
+    def test_macos_clears_hides_on_deactivate(self, monkeypatch):
+        from core.platform import window_ops
+
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: True)
+        monkeypatch.setattr("core.logger.log_exception", lambda *_a, **_k: None)
+
+        calls = []
+
+        class _FakeNSWindow:
+            @staticmethod
+            def hidesOnDeactivate():
+                return True
+
+            @staticmethod
+            def setHidesOnDeactivate_(value):
+                calls.append(value)
+
+        fake_module = SimpleNamespace(
+            objc_object=lambda **_k: SimpleNamespace(window=lambda: _FakeNSWindow())
+        )
+        monkeypatch.setitem(sys.modules, "objc", fake_module)
+        window = SimpleNamespace(winId=lambda: 12345)
+
+        assert window_ops.keep_visible_when_inactive(window) is True
+        assert calls == [False]
+
+    def test_failure_is_reported_not_raised(self, monkeypatch):
+        from core.platform import window_ops
+
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: True)
+        monkeypatch.setattr("core.logger.log_exception", lambda *_a, **_k: None)
+
+        def _boom():
+            raise RuntimeError("没有原生窗口")
+
+        window = SimpleNamespace(winId=_boom)
+
+        assert window_ops.keep_visible_when_inactive(window) is False

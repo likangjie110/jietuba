@@ -772,6 +772,1014 @@ Replace it?</source>
         <source>Keep original text formatting</source>
         <translation>원본 텍스트 서식을 유지</translation>
     </message>
+    <message>
+        <source>UI Detection</source>
+        <translation>UI 감지</translation>
+    </message>
+    <message>
+        <source>Automatically frames the window or control under the mouse cursor.</source>
+        <translation>마우스 커서 아래의 창 또는 컨트롤을 자동으로 선택합니다.</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>감지 안 함</translation>
+    </message>
+    <message>
+        <source>Window only</source>
+        <translation>창만</translation>
+    </message>
+    <message>
+        <source>Elements</source>
+        <translation>요소 감지</translation>
+    </message>
+    <message>
+        <source>Element Margin</source>
+        <translation>요소 감지 여백</translation>
+    </message>
+    <message>
+        <source>Expands the detected element by this many pixels.</source>
+        <translation>감지된 요소를 지정한 픽셀만큼 바깥으로 확장합니다.</translation>
+    </message>
+    <message>
+        <source>Global Mouse</source>
+        <translation>전역 마우스</translation>
+    </message>
+    <message>
+        <source>Global Mouse Settings</source>
+        <translation>전역 마우스 설정</translation>
+    </message>
+    <message>
+        <source>Global Mouse Actions</source>
+        <translation>전역 마우스 동작</translation>
+    </message>
+    <message>
+        <source>No global mouse actions yet. Add one to trigger actions with the mouse.</source>
+        <translation>아직 전역 마우스 동작이 없습니다. 추가하면 마우스로 동작을 실행할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Add Action</source>
+        <translation>동작 추가</translation>
+    </message>
+    <message>
+        <source>Bind another modifier + mouse gesture to an action.</source>
+        <translation>다른 '보조키 + 마우스 제스처'를 동작에 연결합니다.</translation>
+    </message>
+    <message>
+        <source>Clear All</source>
+        <translation>모두 지우기</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>Scroll Up</source>
+        <translation>위로 스크롤</translation>
+    </message>
+    <message>
+        <source>Scroll Down</source>
+        <translation>아래로 스크롤</translation>
+    </message>
+    <message>
+        <source>Middle Click</source>
+        <translation>가운데 클릭</translation>
+    </message>
+    <message>
+        <source>Back Button</source>
+        <translation>뒤로 가기 버튼</translation>
+    </message>
+    <message>
+        <source>Forward Button</source>
+        <translation>앞으로 가기 버튼</translation>
+    </message>
+    <message>
+        <source>No Modifier</source>
+        <translation>보조키 없음</translation>
+    </message>
+    <message>
+        <source>Cmd / Win</source>
+        <translation>Cmd / Win</translation>
+    </message>
+    <message>
+        <source>Global Mouse Capture</source>
+        <translation>전역 마우스 캡처</translation>
+    </message>
+    <message>
+        <source>Show Mask While Capturing</source>
+        <translation>캡처할 때 마스크 표시</translation>
+    </message>
+    <message>
+        <source>Briefly dims the screen and highlights the captured area after a global mouse screenshot, so you can see what was grabbed.</source>
+        <translation>전역 마우스 캡처 직후 화면을 잠시 어둡게 하고 캡처 영역을 강조해 무엇을 캡처했는지 보여줍니다.</translation>
+    </message>
+    <message>
+        <source>Ignored Applications</source>
+        <translation>제외할 프로그램</translation>
+    </message>
+    <message>
+        <source>Global mouse actions do nothing while one of these applications is in front. Names are matched ignoring case, and .app / .exe suffixes.</source>
+        <translation>이 프로그램들이 앞에 있을 때는 전역 마우스 동작이 실행되지 않습니다. 이름은 대소문자와 .app / .exe 확장자를 무시하고 비교합니다.</translation>
+    </message>
+    <message>
+        <source>Application name</source>
+        <translation>프로그램 이름</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>추가</translation>
+    </message>
+    <message>
+        <source>No ignored applications.</source>
+        <translation>제외한 프로그램이 없습니다.</translation>
+    </message>
+    <message>
+        <source>💡 Modifier keys are read live: a binding without a modifier fires only when no modifier is held. On Windows the hotkey module and global mouse actions can fight over side buttons.</source>
+        <translation>💡 보조키는 현재 눌린 상태를 그대로 읽습니다. 보조키 없는 바인딩은 보조키를 누르지 않았을 때만 동작합니다. Windows에서는 단축키 기능과 전역 마우스 동작이 사이드 버튼을 두고 충돌할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy</source>
+        <translation>캡처 후 복사</translation>
+    </message>
+    <message>
+        <source>Screenshot and Pin</source>
+        <translation>캡처 후 이미지 고정</translation>
+    </message>
+    <message>
+        <source>Screenshot and Save</source>
+        <translation>캡처 후 저장</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy Text</source>
+        <translation>캡처 후 텍스트 복사</translation>
+    </message>
+    <message>
+        <source>Screenshot and Translate</source>
+        <translation>캡처 후 번역</translation>
+    </message>
+    <message>
+        <source>GIF Capture</source>
+        <translation>GIF 캡처</translation>
+    </message>
+    <message>
+        <source>Global Actions</source>
+        <translation>전역 동작</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation>동작</translation>
+    </message>
+    <message>
+        <source>Hotkey</source>
+        <translation>단축키</translation>
+    </message>
+    <message>
+        <source>Backup Hotkey</source>
+        <translation>보조 단축키</translation>
+    </message>
+    <message>
+        <source>Tray</source>
+        <translation>트레이</translation>
+    </message>
+    <message>
+        <source>Bind another action to a global hotkey.</source>
+        <translation>다른 동작에 전역 단축키를 지정합니다.</translation>
+    </message>
+    <message>
+        <source>Clear All Hotkeys</source>
+        <translation>모든 단축키 지우기</translation>
+    </message>
+    <message>
+        <source>No global actions yet. Add one to bind a hotkey.</source>
+        <translation>아직 전역 동작이 없습니다. 추가하면 단축키를 지정할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Show in the tray menu</source>
+        <translation>트레이 메뉴에 표시</translation>
+    </message>
+    <message>
+        <source>Pin Settings</source>
+        <translation>고정 설정</translation>
+    </message>
+    <message>
+        <source>Pin Interaction</source>
+        <translation>고정 이미지 조작</translation>
+    </message>
+    <message>
+        <source>Wheel Zoom Step</source>
+        <translation>휠 확대 단계</translation>
+    </message>
+    <message>
+        <source>How much one wheel notch scales the pinned image (1.05 means +5%).</source>
+        <translation>휠 한 칸이 고정 이미지를 얼마나 확대/축소할지 (1.05는 +5%).</translation>
+    </message>
+    <message>
+        <source>Opacity Step</source>
+        <translation>투명도 단계</translation>
+    </message>
+    <message>
+        <source>How much Ctrl + wheel changes the window opacity.</source>
+        <translation>Ctrl+휠 한 번에 투명도를 얼마나 바꿀지.</translation>
+    </message>
+    <message>
+        <source>Default Opacity</source>
+        <translation>기본 투명도</translation>
+    </message>
+    <message>
+        <source>Opacity of a newly pinned image.</source>
+        <translation>새로 고정한 이미지의 투명도.</translation>
+    </message>
+    <message>
+        <source>Shadow and Border</source>
+        <translation>그림자와 테두리</translation>
+    </message>
+    <message>
+        <source>Draw a border (and shadow) around new pinned images.</source>
+        <translation>새로 고정한 이미지에 테두리(와 그림자)를 그립니다.</translation>
+    </message>
+    <message>
+        <source>Show Toolbar on Hover</source>
+        <translation>마우스가 들어오면 도구 모음 표시</translation>
+    </message>
+    <message>
+        <source>On: shows the toolbar when the mouse enters a pinned window.</source>
+        <translation>켜기: 마우스가 고정 창에 들어가면 도구 모음을 표시합니다.</translation>
+    </message>
+    <message>
+        <source>New Pinned Image</source>
+        <translation>새 고정 이미지</translation>
+    </message>
+    <message>
+        <source>Appearance Position</source>
+        <translation>나타나는 위치</translation>
+    </message>
+    <message>
+        <source>Where a new pinned image shows up.</source>
+        <translation>새 고정 이미지가 어디에 나타날지.</translation>
+    </message>
+    <message>
+        <source>At the captured area</source>
+        <translation>캡처 영역 위치</translation>
+    </message>
+    <message>
+        <source>At the mouse position</source>
+        <translation>마우스 위치</translation>
+    </message>
+    <message>
+        <source>Center of the screen</source>
+        <translation>화면 가운데</translation>
+    </message>
+    <message>
+        <source>Stacking Order</source>
+        <translation>겹침 순서</translation>
+    </message>
+    <message>
+        <source>Whether a new pinned image goes above or below the existing ones.</source>
+        <translation>새 고정 이미지를 기존 이미지 위에 둘지 아래에 둘지.</translation>
+    </message>
+    <message>
+        <source>Above existing pins</source>
+        <translation>기존 이미지 위</translation>
+    </message>
+    <message>
+        <source>Below existing pins</source>
+        <translation>기존 이미지 아래</translation>
+    </message>
+    <message>
+        <source>Confirm Before Closing</source>
+        <translation>닫기 전 확인</translation>
+    </message>
+    <message>
+        <source>Ask before closing a pinned image. Closing all pins at once and quitting never ask.</source>
+        <translation>고정 이미지를 닫기 전에 확인합니다. '모두 닫기'와 종료 시에는 묻지 않습니다.</translation>
+    </message>
+    <message>
+        <source>💡 Values apply to pinned windows created from now on; changes to wheel steps apply immediately.</source>
+        <translation>💡 이 값은 앞으로 만드는 고정 이미지에 적용됩니다. 휠 단계는 즉시 반영됩니다.</translation>
+    </message>
+    <message>
+        <source>Pin Mouse Actions</source>
+        <translation>고정 이미지 마우스 동작</translation>
+    </message>
+    <message>
+        <source>Wheel Up</source>
+        <translation>휠 위로</translation>
+    </message>
+    <message>
+        <source>Wheel Down</source>
+        <translation>휠 아래로</translation>
+    </message>
+    <message>
+        <source>Ctrl + Wheel Up</source>
+        <translation>Ctrl + 휠 위로</translation>
+    </message>
+    <message>
+        <source>Ctrl + Wheel Down</source>
+        <translation>Ctrl + 휠 아래로</translation>
+    </message>
+    <message>
+        <source>Double Click</source>
+        <translation>더블 클릭</translation>
+    </message>
+    <message>
+        <source>Right Click</source>
+        <translation>오른쪽 클릭</translation>
+    </message>
+    <message>
+        <source>Rolling the wheel up on a pinned image.</source>
+        <translation>고정 이미지 위에서 휠을 위로 굴립니다.</translation>
+    </message>
+    <message>
+        <source>Rolling the wheel down on a pinned image.</source>
+        <translation>고정 이미지 위에서 휠을 아래로 굴립니다.</translation>
+    </message>
+    <message>
+        <source>Ctrl + wheel up; adjusts opacity by default.</source>
+        <translation>Ctrl + 휠 위로. 기본값은 투명도 조절입니다.</translation>
+    </message>
+    <message>
+        <source>Ctrl + wheel down; adjusts opacity by default.</source>
+        <translation>Ctrl + 휠 아래로. 기본값은 투명도 조절입니다.</translation>
+    </message>
+    <message>
+        <source>Pressing the middle button on a pinned image.</source>
+        <translation>고정 이미지 위에서 가운데 버튼을 누릅니다.</translation>
+    </message>
+    <message>
+        <source>Double-clicking a pinned image.</source>
+        <translation>고정 이미지를 더블 클릭합니다.</translation>
+    </message>
+    <message>
+        <source>Right-clicking a pinned image; opens the menu by default.</source>
+        <translation>고정 이미지를 오른쪽 클릭합니다. 기본값은 메뉴 열기입니다.</translation>
+    </message>
+    <message>
+        <source>Do nothing</source>
+        <translation>아무것도 안 함</translation>
+    </message>
+    <message>
+        <source>Zoom In</source>
+        <translation>확대</translation>
+    </message>
+    <message>
+        <source>Zoom Out</source>
+        <translation>축소</translation>
+    </message>
+    <message>
+        <source>Fine Zoom In</source>
+        <translation>세밀 확대</translation>
+    </message>
+    <message>
+        <source>Fine Zoom Out</source>
+        <translation>세밀 축소</translation>
+    </message>
+    <message>
+        <source>Increase Opacity</source>
+        <translation>불투명도 올리기</translation>
+    </message>
+    <message>
+        <source>Decrease Opacity</source>
+        <translation>불투명도 내리기</translation>
+    </message>
+    <message>
+        <source>Reset Size</source>
+        <translation>원래 크기로</translation>
+    </message>
+    <message>
+        <source>Copy Content</source>
+        <translation>내용 복사</translation>
+    </message>
+    <message>
+        <source>Copy Recognized Text</source>
+        <translation>인식한 텍스트 복사</translation>
+    </message>
+    <message>
+        <source>Translate</source>
+        <translation>번역</translation>
+    </message>
+    <message>
+        <source>Thumbnail Mode</source>
+        <translation>썸네일 모드</translation>
+    </message>
+    <message>
+        <source>Lock Position and Size</source>
+        <translation>위치와 크기 고정</translation>
+    </message>
+    <message>
+        <source>Show Context Menu</source>
+        <translation>상황 메뉴 표시</translation>
+    </message>
+    <message>
+        <source>Copy and Close</source>
+        <translation>복사하고 닫기</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Saved Pins</source>
+        <translation>저장할 고정 이미지 수</translation>
+    </message>
+    <message>
+        <source>How many pinned images are remembered when restoring on startup.</source>
+        <translation>시작할 때 복원할 고정 이미지의 최대 개수.</translation>
+    </message>
+    <message>
+        <source>Restore Pins on Startup</source>
+        <translation>시작할 때 고정 이미지 복원</translation>
+    </message>
+    <message>
+        <source>Save the pinned images you leave open, and bring them back the next time jietuba starts.</source>
+        <translation>종료할 때 열어 둔 고정 이미지를 저장하고, 다음에 jietuba를 시작할 때 복원합니다.</translation>
+    </message>
+    <message>
+        <source>Text Pin Font Size</source>
+        <translation>텍스트 고정 글꼴 크기</translation>
+    </message>
+    <message>
+        <source>Font size used when turning clipboard text into a pinned image.</source>
+        <translation>클립보드 텍스트를 고정 이미지로 만들 때 쓰는 글꼴 크기.</translation>
+    </message>
+    <message>
+        <source>Text Pin Max Width</source>
+        <translation>텍스트 고정 최대 너비</translation>
+    </message>
+    <message>
+        <source>Content width limit; longer text wraps like a note card.</source>
+        <translation>너비 상한. 더 긴 텍스트는 메모처럼 줄바꿈됩니다.</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Text</source>
+        <translation>클립보드 텍스트 고정</translation>
+    </message>
+    <message>
+        <source>Close Selected Pins</source>
+        <translation>선택한 고정 이미지 닫기</translation>
+    </message>
+    <message>
+        <source>Annotation</source>
+        <translation>주석</translation>
+    </message>
+    <message>
+        <source>Annotation Settings</source>
+        <translation>주석 설정</translation>
+    </message>
+    <message>
+        <source>Color</source>
+        <translation>색상</translation>
+    </message>
+    <message>
+        <source>Default color</source>
+        <translation>이 도구의 기본 색상.</translation>
+    </message>
+    <message>
+        <source>Default value</source>
+        <translation>이 도구의 기본값.</translation>
+    </message>
+    <message>
+        <source>Thickness</source>
+        <translation>두께</translation>
+    </message>
+    <message>
+        <source>Pick a color</source>
+        <translation>색상 선택</translation>
+    </message>
+    <message>
+        <source>Mosaic Style</source>
+        <translation>모자이크 스타일</translation>
+    </message>
+    <message>
+        <source>Pixelate for hard blocks, blur for soft ones.</source>
+        <translation>모자이크는 각진 블록, 흐림은 부드럽게 처리합니다.</translation>
+    </message>
+    <message>
+        <source>Pixelate</source>
+        <translation>모자이크</translation>
+    </message>
+    <message>
+        <source>Blur</source>
+        <translation>흐림</translation>
+    </message>
+    <message>
+        <source>Mosaic Brush</source>
+        <translation>모자이크 브러시</translation>
+    </message>
+    <message>
+        <source>How coarse the mosaic brush is.</source>
+        <translation>모자이크 브러시의 거칠기.</translation>
+    </message>
+    <message>
+        <source>Coarse</source>
+        <translation>거침</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>중간</translation>
+    </message>
+    <message>
+        <source>Fine</source>
+        <translation>고움</translation>
+    </message>
+    <message>
+        <source>Restore Defaults</source>
+        <translation>기본 스타일로 복원</translation>
+    </message>
+    <message>
+        <source>Reset every tool on this page to its factory style.</source>
+        <translation>이 페이지의 모든 도구를 공장 기본 스타일로 되돌립니다.</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>복원</translation>
+    </message>
+    <message>
+        <source>💡 These are the defaults each tool starts with; the toolbar keeps remembering whatever you last used.</source>
+        <translation>💡 여기의 값은 각 도구의 시작 기본값입니다. 도구 모음은 마지막으로 쓴 스타일을 계속 기억합니다.</translation>
+    </message>
+    <message>
+        <source>Screenshot Appearance</source>
+        <translation>캡처 모양</translation>
+    </message>
+    <message>
+        <source>Rounded Corners</source>
+        <translation>둥근 모서리</translation>
+    </message>
+    <message>
+        <source>Rounds the corners of the captured image.</source>
+        <translation>캡처한 이미지의 모서리를 둥글게 만듭니다.</translation>
+    </message>
+    <message>
+        <source>Corner Radius</source>
+        <translation>모서리 반경</translation>
+    </message>
+    <message>
+        <source>How round the corners are (0-100).</source>
+        <translation>모서리가 얼마나 둥근지 (0-100).</translation>
+    </message>
+    <message>
+        <source>Border or Shadow</source>
+        <translation>테두리/그림자</translation>
+    </message>
+    <message>
+        <source>Draws a border or a drop shadow around the captured image.</source>
+        <translation>캡처한 이미지에 테두리나 그림자를 그립니다.</translation>
+    </message>
+    <message>
+        <source>Border Style</source>
+        <translation>스타일</translation>
+    </message>
+    <message>
+        <source>Border draws a solid frame; shadow softens the edges.</source>
+        <translation>테두리는 실선 프레임, 그림자는 가장자리를 부드럽게 합니다.</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>테두리</translation>
+    </message>
+    <message>
+        <source>Border or Shadow Size</source>
+        <translation>테두리/그림자 크기</translation>
+    </message>
+    <message>
+        <source>Thickness of the border, or how far the shadow spreads (1-50).</source>
+        <translation>테두리 두께 또는 그림자 번짐 범위 (1-50).</translation>
+    </message>
+    <message>
+        <source>Border Color</source>
+        <translation>테두리 색상</translation>
+    </message>
+    <message>
+        <source>Color used when the style is Border.</source>
+        <translation>스타일이 테두리일 때 쓰는 색상.</translation>
+    </message>
+    <message>
+        <source>Shadow Color</source>
+        <translation>그림자 색상</translation>
+    </message>
+    <message>
+        <source>Color used when the style is Shadow.</source>
+        <translation>스타일이 그림자일 때 쓰는 색상.</translation>
+    </message>
+    <message>
+        <source>Keep the Style On</source>
+        <translation>매번 스타일 유지</translation>
+    </message>
+    <message>
+        <source>Keeps border/shadow enabled for every new capture.</source>
+        <translation>새 캡처에서도 테두리/그림자를 켜 둡니다.</translation>
+    </message>
+    <message>
+        <source>Magnifier</source>
+        <translation>돋보기</translation>
+    </message>
+    <message>
+        <source>Default Zoom</source>
+        <translation>기본 배율</translation>
+    </message>
+    <message>
+        <source>Starting magnification of the magnifier (1-10).</source>
+        <translation>돋보기를 열었을 때의 배율 (1-10).</translation>
+    </message>
+    <message>
+        <source>Save Pinned Image</source>
+        <translation>고정 이미지 저장</translation>
+    </message>
+    <message>
+        <source>Rotate Pinned Image</source>
+        <translation>고정 이미지 회전</translation>
+    </message>
+    <message>
+        <source>Lock Pinned Image</source>
+        <translation>고정 이미지 위치·크기 고정</translation>
+    </message>
+    <message>
+        <source>Toggle Always on Top</source>
+        <translation>항상 위 토글</translation>
+    </message>
+    <message>
+        <source>Toggle Shadow</source>
+        <translation>그림자 토글</translation>
+    </message>
+    <message>
+        <source>Increase Pin Opacity</source>
+        <translation>고정 이미지 불투명도 올리기</translation>
+    </message>
+    <message>
+        <source>Decrease Pin Opacity</source>
+        <translation>고정 이미지 불투명도 내리기</translation>
+    </message>
+    <message>
+        <source>Copy Pin and Close</source>
+        <translation>복사하고 닫기</translation>
+    </message>
+    <message>
+        <source>Save Image</source>
+        <translation>이미지 저장</translation>
+    </message>
+    <message>
+        <source>Rotate Right</source>
+        <translation>오른쪽 회전</translation>
+    </message>
+    <message>
+        <source>Open Save Folder</source>
+        <translation>저장 폴더 열기</translation>
+    </message>
+    <message>
+        <source>Translate Clipboard Image</source>
+        <translation>클립보드 이미지 번역</translation>
+    </message>
+    <message>
+        <source>Skin Colors</source>
+        <translation>스킨 색상</translation>
+    </message>
+    <message>
+        <source>Override the window background, text and accent colors.</source>
+        <translation>기본 테마 위에 창 배경, 텍스트, 강조 색상을 직접 지정합니다.</translation>
+    </message>
+    <message>
+        <source>Window Background</source>
+        <translation>창 배경</translation>
+    </message>
+    <message>
+        <source>Text Color</source>
+        <translation>텍스트 색상</translation>
+    </message>
+    <message>
+        <source>Accent Color</source>
+        <translation>강조 색상</translation>
+    </message>
+    <message>
+        <source>Follow Theme</source>
+        <translation>테마 따르기</translation>
+    </message>
+    <message>
+        <source>Customized</source>
+        <translation>사용자 지정됨</translation>
+    </message>
+    <message>
+        <source>Following the theme</source>
+        <translation>테마를 따르는 중</translation>
+    </message>
+    <message>
+        <source>Select Color</source>
+        <translation>색상 선택</translation>
+    </message>
+    <message>
+        <source>Custom Logo</source>
+        <translation>사용자 로고</translation>
+    </message>
+    <message>
+        <source>Use your own image for the tray and window icons.</source>
+        <translation>트레이와 창 아이콘에 직접 고른 이미지를 사용합니다.</translation>
+    </message>
+    <message>
+        <source>Choose Image</source>
+        <translation>이미지 선택</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>지우기</translation>
+    </message>
+    <message>
+        <source>Built-in icon</source>
+        <translation>내장 아이콘</translation>
+    </message>
+    <message>
+        <source>Cannot read this image, using the built-in icon</source>
+        <translation>이 이미지를 읽을 수 없어 내장 아이콘을 사용합니다</translation>
+    </message>
+    <message>
+        <source>Choose Logo Image</source>
+        <translation>로고 이미지 선택</translation>
+    </message>
+    <message>
+        <source>Images (*.png *.jpg *.jpeg *.bmp *.gif *.svg *.ico)</source>
+        <translation>이미지 (*.png *.jpg *.jpeg *.bmp *.gif *.svg *.ico)</translation>
+    </message>
+    <message>
+        <source>Copy Table as Markdown</source>
+        <translation>표를 Markdown으로 복사</translation>
+    </message>
+    <message>
+        <source>Recognize Formula as LaTeX</source>
+        <translation>수식 인식 (LaTeX)</translation>
+    </message>
+    <message>
+        <source>Desktop &amp; Tray</source>
+        <translation>데스크톱 및 트레이</translation>
+    </message>
+    <message>
+        <source>Desktop Toolbar</source>
+        <translation>데스크톱 도구 모음</translation>
+    </message>
+    <message>
+        <source>A floating ball on the desktop: click to capture, right-click for the tray menu.</source>
+        <translation>데스크톱 위의 플로팅 볼입니다. 클릭하면 캡처, 오른쪽 클릭하면 트레이 메뉴.</translation>
+    </message>
+    <message>
+        <source>Do Not Show</source>
+        <translation>표시 안 함</translation>
+    </message>
+    <message>
+        <source>Floating Ball</source>
+        <translation>플로팅 볼</translation>
+    </message>
+    <message>
+        <source>Tray Click Action</source>
+        <translation>트레이 클릭 동작</translation>
+    </message>
+    <message>
+        <source>What a single click on the tray icon does.</source>
+        <translation>트레이 아이콘을 한 번 클릭했을 때 실행할 동작.</translation>
+    </message>
+    <message>
+        <source>Network Proxy</source>
+        <translation>네트워크 프록시</translation>
+    </message>
+    <message>
+        <source>Proxy Type</source>
+        <translation>프록시 유형</translation>
+    </message>
+    <message>
+        <source>Used by translation and other network features.</source>
+        <translation>번역 등 네트워크 기능에서 사용합니다.</translation>
+    </message>
+    <message>
+        <source>No Proxy</source>
+        <translation>프록시 없음</translation>
+    </message>
+    <message>
+        <source>Manual</source>
+        <translation>수동</translation>
+    </message>
+    <message>
+        <source>Host</source>
+        <translation>호스트</translation>
+    </message>
+    <message>
+        <source>Verify</source>
+        <translation>확인</translation>
+    </message>
+    <message>
+        <source>Proxy</source>
+        <translation>프록시</translation>
+    </message>
+    <message>
+        <source>Connected to the proxy server.</source>
+        <translation>프록시 서버에 연결되었습니다.</translation>
+    </message>
+    <message>
+        <source>Cannot reach the proxy server: {reason}</source>
+        <translation>프록시 서버에 연결할 수 없습니다: {reason}</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>업데이트</translation>
+    </message>
+    <message>
+        <source>Update Source</source>
+        <translation>업데이트 소스</translation>
+    </message>
+    <message>
+        <source>Releases page used by "Check for Updates".</source>
+        <translation>"업데이트 확인"에서 여는 릴리스 페이지.</translation>
+    </message>
+    <message>
+        <source>Default: GitHub releases page</source>
+        <translation>기본값: GitHub 릴리스 페이지</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>업데이트 확인</translation>
+    </message>
+    <message>
+        <source>Usage Data</source>
+        <translation>사용 데이터</translation>
+    </message>
+    <message>
+        <source>Send Usage Statistics Automatically</source>
+        <translation>사용 통계 자동 전송</translation>
+    </message>
+    <message>
+        <source>Reserved: this version collects and uploads nothing.</source>
+        <translation>예약 항목: 이 버전은 아무것도 수집하거나 전송하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Copy Images as Files</source>
+        <translation>이미지를 파일로 복사</translation>
+    </message>
+    <message>
+        <source>Also offer a PNG file, for apps that only accept file pastes.</source>
+        <translation>파일 붙여넣기만 지원하는 앱을 위해 PNG 파일도 함께 제공합니다.</translation>
+    </message>
+    <message>
+        <source>Automatic</source>
+        <translation>자동</translation>
+    </message>
+    <message>
+        <source>File Only</source>
+        <translation>파일만</translation>
+    </message>
+    <message>
+        <source>Image Only</source>
+        <translation>이미지만</translation>
+    </message>
+    <message>
+        <source>Ignore Own Copy Key Macro</source>
+        <translation>자체 복사 키 매크로 무시</translation>
+    </message>
+    <message>
+        <source>Do not record the paste-back this app writes to the clipboard.</source>
+        <translation>붙여넣기 시 앱이 되쓰는 내용을 새 기록으로 저장하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Text Layout</source>
+        <translation>텍스트 레이아웃</translation>
+    </message>
+    <message>
+        <source>How recognized lines are put together.</source>
+        <translation>인식된 줄을 어떻게 조합할지.</translation>
+    </message>
+    <message>
+        <source>One Line per Block</source>
+        <translation>블록마다 한 줄</translation>
+    </message>
+    <message>
+        <source>Single Line</source>
+        <translation>한 줄로 합치기</translation>
+    </message>
+    <message>
+        <source>Punctuation</source>
+        <translation>문장 부호 처리</translation>
+    </message>
+    <message>
+        <source>Clean up the punctuation OCR guessed from image noise.</source>
+        <translation>이미지 노이즈로 추측된 문장 부호를 정리합니다.</translation>
+    </message>
+    <message>
+        <source>Do Nothing</source>
+        <translation>아무것도 안 함</translation>
+    </message>
+    <message>
+        <source>Strip Trailing</source>
+        <translation>줄 끝 문장 부호 제거</translation>
+    </message>
+    <message>
+        <source>Full-width to Half-width</source>
+        <translation>전각을 반각으로</translation>
+    </message>
+    <message>
+        <source>Recognition Language</source>
+        <translation>인식 언어</translation>
+    </message>
+    <message>
+        <source>Language passed to the OCR engine.</source>
+        <translation>OCR 엔진에 전달할 언어.</translation>
+    </message>
+    <message>
+        <source>Follow App</source>
+        <translation>앱 설정 따르기</translation>
+    </message>
+    <message>
+        <source>Simplified Chinese</source>
+        <translation>중국어 간체</translation>
+    </message>
+    <message>
+        <source>Japanese</source>
+        <translation>일본어</translation>
+    </message>
+    <message>
+        <source>Korean</source>
+        <translation>한국어</translation>
+    </message>
+    <message>
+        <source>Show Result Dialog</source>
+        <translation>결과 대화상자 표시 시점</translation>
+    </message>
+    <message>
+        <source>When to pop up the recognized text (copying still happens either way).</source>
+        <translation>인식 결과를 언제 띄울지 (복사는 항상 수행됩니다).</translation>
+    </message>
+    <message>
+        <source>After Capture</source>
+        <translation>캡처 후</translation>
+    </message>
+    <message>
+        <source>Copy Selection</source>
+        <translation>선택 텍스트 복사</translation>
+    </message>
+    <message>
+        <source>Copy All Text</source>
+        <translation>모든 텍스트 복사</translation>
+    </message>
+    <message>
+        <source>Formula Recognition Engine</source>
+        <translation>수식 인식 엔진</translation>
+    </message>
+    <message>
+        <source>PP-FormulaNet runs locally through the Rust binding.</source>
+        <translation>PP-FormulaNet은 Rust 바인딩으로 로컬에서 실행됩니다.</translation>
+    </message>
+    <message>
+        <source>PP-FormulaNet (Local, Rust)</source>
+        <translation>PP-FormulaNet (로컬 Rust)</translation>
+    </message>
+    <message>
+        <source>External Service</source>
+        <translation>외부 서비스</translation>
+    </message>
+    <message>
+        <source>Formula Service URL</source>
+        <translation>수식 서비스 URL</translation>
+    </message>
+    <message>
+        <source>Only used by the external service engine.</source>
+        <translation>외부 서비스 엔진을 선택했을 때만 사용합니다.</translation>
+    </message>
+    <message>
+        <source>API Key</source>
+        <translation>API 키</translation>
+    </message>
+    <message>
+        <source>Formula Service</source>
+        <translation>수식 서비스</translation>
+    </message>
+    <message>
+        <source>The service answered.</source>
+        <translation>서비스가 응답했습니다.</translation>
+    </message>
+    <message>
+        <source>Cannot use this service: {reason}</source>
+        <translation>이 서비스를 사용할 수 없습니다: {reason}</translation>
+    </message>
+    <message>
+        <source>💡 Hint: the local engine needs a formula model in models/formula/; without it, use an external service.</source>
+        <translation>💡 팁: 로컬 엔진은 models/formula/ 에 모델이 필요합니다. 없으면 외부 서비스를 사용하세요.</translation>
+    </message>
+    <message>
+        <source>English</source>
+        <translation>영어</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to clear all clipboard history?
+This action cannot be undone.</source>
+        <translation>클립보드 기록을 모두 지우시겠습니까?
+이 작업은 되돌릴 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully, but the old files are still in the previous folder and can be deleted manually.</source>
+        <translation>클립보드 데이터 위치가 변경되었습니다. 이전 폴더의 옛 파일은 직접 삭제할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully, but the old files are still in use and could not be deleted. You can remove them after restarting the app.
+{error}</source>
+        <translation>클립보드 데이터 위치를 변경했지만 이전 파일이 사용 중이라 삭제하지 못했습니다. 앱을 다시 시작한 뒤 삭제할 수 있습니다.
+{error}</translation>
+    </message>
 </context>
 
 <context>
@@ -1086,6 +2094,34 @@ Replace it?</source>
         <source>Save Pin Image</source>
         <translation>고정 이미지 저장</translation>
     </message>
+    <message>
+        <source>Close pin</source>
+        <translation>고정 닫기</translation>
+    </message>
+    <message>
+        <source>Close this pinned image?</source>
+        <translation>이 고정 이미지를 닫을까요?</translation>
+    </message>
+    <message>
+        <source>Lock</source>
+        <translation>고정</translation>
+    </message>
+    <message>
+        <source>Locked</source>
+        <translation>고정됨</translation>
+    </message>
+    <message>
+        <source>Unlocked</source>
+        <translation>고정 해제됨</translation>
+    </message>
+    <message>
+        <source>Selected</source>
+        <translation>선택됨</translation>
+    </message>
+    <message>
+        <source>Close Selected Pins</source>
+        <translation>선택한 고정 이미지 닫기</translation>
+    </message>
 </context>
 
 <!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
@@ -1194,6 +2230,62 @@ Replace it?</source>
     <message><source>Choose folder to save pinned images</source><translation>고정 이미지를 저장할 폴더 선택</translation></message>
     <message><source>Save Failed</source><translation>저장 실패</translation></message>
     <message><source>Saved {saved} pinned images, failed {failed}.</source><translation>고정 이미지 {saved}개 저장, {failed}개 실패.</translation></message>
+    <message>
+        <source>Screenshot and Copy</source>
+        <translation>캡처 후 복사</translation>
+    </message>
+    <message>
+        <source>Screenshot and Pin</source>
+        <translation>캡처 후 이미지 고정</translation>
+    </message>
+    <message>
+        <source>Screenshot and Save</source>
+        <translation>캡처 후 저장</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy Text</source>
+        <translation>캡처 후 텍스트 복사</translation>
+    </message>
+    <message>
+        <source>Screenshot and Translate</source>
+        <translation>캡처 후 번역</translation>
+    </message>
+    <message>
+        <source>Long Screenshot</source>
+        <translation>긴 스크린샷</translation>
+    </message>
+    <message>
+        <source>GIF Capture</source>
+        <translation>GIF 캡처</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Text</source>
+        <translation>클립보드 텍스트 고정</translation>
+    </message>
+    <message>
+        <source>Open Save Folder</source>
+        <translation>저장 폴더 열기</translation>
+    </message>
+    <message>
+        <source>Translate Clipboard Image</source>
+        <translation>클립보드 이미지 번역</translation>
+    </message>
+    <message>
+        <source>Copy Table as Markdown</source>
+        <translation>표를 Markdown으로 복사</translation>
+    </message>
+    <message>
+        <source>Recognize Formula as LaTeX</source>
+        <translation>수식 인식 (LaTeX)</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>업데이트 확인</translation>
+    </message>
+    <message>
+        <source>Video Recording</source>
+        <translation>동영상 녹화</translation>
+    </message>
 </context>
 
 <!-- ========== Main App (Tray Menu) ========== -->
@@ -1224,18 +2316,6 @@ Replace it?</source>
         <translation>종료</translation>
     </message>
     <message>
-        <source>Screenshot (2)</source>
-        <translation>스크린샷 (2)</translation>
-    </message>
-    <message>
-        <source>Translation (2)</source>
-        <translation>번역 (2)</translation>
-    </message>
-    <message>
-        <source>Clipboard (2)</source>
-        <translation>클립보드 (2)</translation>
-    </message>
-    <message>
         <source>Hotkey Registration Failed</source>
         <translation>단축키 등록 실패</translation>
     </message>
@@ -1246,6 +2326,62 @@ Replace it?</source>
     <message>
         <source>The hotkey may be occupied by other programs. Please try a different combination.</source>
         <translation>다른 프로그램에서 해당 단축키를 사용 중일 수 있습니다. 다른 조합을 사용해 보세요.</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy</source>
+        <translation>캡처 후 복사</translation>
+    </message>
+    <message>
+        <source>Screenshot and Pin</source>
+        <translation>캡처 후 이미지 고정</translation>
+    </message>
+    <message>
+        <source>Screenshot and Save</source>
+        <translation>캡처 후 저장</translation>
+    </message>
+    <message>
+        <source>Screenshot and Copy Text</source>
+        <translation>캡처 후 텍스트 복사</translation>
+    </message>
+    <message>
+        <source>Screenshot and Translate</source>
+        <translation>캡처 후 번역</translation>
+    </message>
+    <message>
+        <source>Long Screenshot</source>
+        <translation>긴 스크린샷</translation>
+    </message>
+    <message>
+        <source>GIF Capture</source>
+        <translation>GIF 캡처</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Text</source>
+        <translation>클립보드 텍스트 고정</translation>
+    </message>
+    <message>
+        <source>Open Save Folder</source>
+        <translation>저장 폴더 열기</translation>
+    </message>
+    <message>
+        <source>Translate Clipboard Image</source>
+        <translation>클립보드 이미지 번역</translation>
+    </message>
+    <message>
+        <source>Copy Table as Markdown</source>
+        <translation>표를 Markdown으로 복사</translation>
+    </message>
+    <message>
+        <source>Recognize Formula as LaTeX</source>
+        <translation>수식 인식 (LaTeX)</translation>
+    </message>
+    <message>
+        <source>Check for Updates</source>
+        <translation>업데이트 확인</translation>
+    </message>
+    <message>
+        <source>Video Recording</source>
+        <translation>동영상 녹화</translation>
     </message>
 </context>
 
@@ -2912,6 +4048,14 @@ Replace it?</source>
         <source>当前按下</source>
         <translation>누르는 중</translation>
     </message>
+    <message>
+        <source>UI 检测</source>
+        <translation>UI 감지</translation>
+    </message>
+    <message>
+        <source>悬停时自动框出窗口或控件，单击即可精准截取。</source>
+        <translation>커서 아래의 창이나 컨트롤을 자동으로 선택해 클릭 한 번으로 캡처합니다.</translation>
+    </message>
 </context>
 
 <!-- ========== GIF Record Toolbar ========== -->
@@ -3367,6 +4511,422 @@ SOFTWARE.</translation></message>
     <message>
         <source>Open link</source>
         <translation>링크 열기</translation>
+    </message>
+</context>
+<!-- ========== 权限页（SettingsDialog） ========== -->
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Permissions</source>
+        <translation>권한</translation>
+    </message>
+    <message>
+        <source>System Permissions</source>
+        <translation>시스템 권한</translation>
+    </message>
+    <message>
+        <source>jietuba needs these system permissions. Grant them here; the status refreshes by itself once granted.</source>
+        <translation>jietuba에 다음 시스템 권한이 필요합니다. 여기에서 허용하면 상태가 자동으로 갱신됩니다.</translation>
+    </message>
+    <message>
+        <source>Accessibility Permission</source>
+        <translation>손쉬운 사용 권한</translation>
+    </message>
+    <message>
+        <source>Global hotkeys only work with this permission, and smart selection uses it to detect the element under the cursor.</source>
+        <translation>전역 단축키는 이 권한이 있어야 동작하며, 스마트 선택도 커서 아래의 요소를 감지할 때 이 권한을 사용합니다.</translation>
+    </message>
+    <message>
+        <source>Screen Recording Permission</source>
+        <translation>화면 기록 권한</translation>
+    </message>
+    <message>
+        <source>Screenshots contain window contents only with this permission; without it they show the desktop wallpaper only.</source>
+        <translation>이 권한이 있어야 스크린샷에 창 내용이 포함됩니다. 없으면 바탕 화면 배경만 캡처됩니다.</translation>
+    </message>
+    <message>
+        <source>Granted</source>
+        <translation>허용됨</translation>
+    </message>
+    <message>
+        <source>Not Granted</source>
+        <translation>허용되지 않음</translation>
+    </message>
+    <message>
+        <source>Granted. Restart jietuba for it to take effect.</source>
+        <translation>허용됨. jietuba를 다시 시작하면 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Authorize</source>
+        <translation>권한 허용</translation>
+    </message>
+    <message>
+        <source>Open System Settings</source>
+        <translation>시스템 설정 열기</translation>
+    </message>
+</context>
+<!-- ========== 权限页：重启本程序（SettingsDialog） ========== -->
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Restart jietuba</source>
+        <translation>jietuba 다시 시작</translation>
+    </message>
+    <message>
+        <source>jietuba will close and reopen so the newly granted permission takes effect.</source>
+        <translation>jietuba를 종료하고 다시 열면 새로 허용한 권한이 적용됩니다.</translation>
+    </message>
+</context>
+<!-- ========== 权限缺失提示（PermissionPrompt） ========== -->
+<context>
+    <name>PermissionPrompt</name>
+    <message>
+        <source>Screen Recording Permission Missing</source>
+        <translation>화면 기록 권한 없음</translation>
+    </message>
+    <message>
+        <source>Screenshots will contain the desktop only, because jietuba has no Screen Recording permission.</source>
+        <translation>jietuba에 화면 기록 권한이 없어 스크린샷에 바탕 화면만 담깁니다.</translation>
+    </message>
+    <message>
+        <source>Accessibility Permission Missing</source>
+        <translation>손쉬운 사용 권한 없음</translation>
+    </message>
+    <message>
+        <source>Global hotkeys do nothing while jietuba has no Accessibility permission.</source>
+        <translation>jietuba에 손쉬운 사용 권한이 없는 동안에는 전역 단축키가 동작하지 않습니다.</translation>
+    </message>
+    <message>
+        <source>System Permission Missing</source>
+        <translation>시스템 권한 없음</translation>
+    </message>
+    <message>
+        <source>jietuba is missing a system permission it needs to work.</source>
+        <translation>jietuba에 필요한 시스템 권한이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Open Permission Settings</source>
+        <translation>권한 설정 열기</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>나중에</translation>
+    </message>
+</context>
+<!-- ========== 向导权限步骤（WelcomeWizard） ========== -->
+<context>
+    <name>WelcomeWizard</name>
+    <message>
+        <source>权限</source>
+        <translation>권한</translation>
+    </message>
+    <message>
+        <source>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</source>
+        <translation>두 가지 모두 시스템 권한입니다. 없으면 단축키가 동작하지 않고 스크린샷에는 바탕 화면만 담깁니다.</translation>
+    </message>
+    <message>
+        <source>权限只对本机生效，随时可以在设置里复查。</source>
+        <translation>권한은 이 Mac에만 적용되며 언제든 설정에서 확인할 수 있습니다.</translation>
+    </message>
+</context>
+<!-- ========== Formula Result ========== -->
+<context>
+    <name>FormulaResult</name>
+    <message>
+        <source>Formula Result</source>
+        <translation>수식 인식 결과</translation>
+    </message>
+    <message>
+        <source>Formula Recognition Unavailable</source>
+        <translation>수식 인식을 사용할 수 없음</translation>
+    </message>
+    <message>
+        <source>No formula engine is available on this machine: jietuba does not ship a formula model. Install a formula engine plugin and try again.</source>
+        <translation>이 환경에서 사용할 수 있는 수식 엔진이 없습니다. jietuba는 수식 모델을 포함하지 않으므로 수식 엔진 플러그인을 설치한 뒤 다시 시도하세요.</translation>
+    </message>
+</context>
+
+<!-- ========== OcrResultDialog ========== -->
+<context>
+    <name>OcrResultDialog</name>
+    <message>
+        <source>Recognition Result</source>
+        <translation>인식 결과</translation>
+    </message>
+</context>
+
+
+<!-- ========== 视频录制 ========== -->
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Video Recording</source>
+        <translation>동영상 녹화</translation>
+    </message>
+    <message>
+        <source>Video Container</source>
+        <translation>동영상 컨테이너</translation>
+    </message>
+    <message>
+        <source>File format of the recorded video.</source>
+        <translation>녹화한 동영상의 파일 형식입니다.</translation>
+    </message>
+    <message>
+        <source>Video Codec</source>
+        <translation>동영상 코덱</translation>
+    </message>
+    <message>
+        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
+        <translation>H.264는 호환성이 가장 좋고, H.265는 파일이 더 작습니다.</translation>
+    </message>
+    <message>
+        <source>Video Quality</source>
+        <translation>화질</translation>
+    </message>
+    <message>
+        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
+        <translation>선택 영역을 따르거나 1080p/720p/480p로 제한합니다.</translation>
+    </message>
+    <message>
+        <source>Follow Selection</source>
+        <translation>선택 영역에 맞춤</translation>
+    </message>
+    <message>
+        <source>Video Frame Rate</source>
+        <translation>프레임 레이트</translation>
+    </message>
+    <message>
+        <source>Higher frame rates make smoother videos and larger files.</source>
+        <translation>프레임 레이트가 높을수록 부드럽지만 파일이 커집니다.</translation>
+    </message>
+    <message>
+        <source>Bitrate Limit</source>
+        <translation>비트레이트 상한</translation>
+    </message>
+    <message>
+        <source>0 lets the encoder decide from the quality preset.</source>
+        <translation>0이면 화질 설정에 따라 인코더가 결정합니다.</translation>
+    </message>
+    <message>
+        <source>Record Audio</source>
+        <translation>소리 녹음</translation>
+    </message>
+    <message>
+        <source>Record the microphone together with the screen.</source>
+        <translation>화면과 함께 마이크를 녹음합니다.</translation>
+    </message>
+    <message>
+        <source>No Audio</source>
+        <translation>소리 없음</translation>
+    </message>
+    <message>
+        <source>Microphone</source>
+        <translation>마이크</translation>
+    </message>
+    <message>
+        <source>Microphone Device</source>
+        <translation>마이크 장치</translation>
+    </message>
+    <message>
+        <source>Device used when recording audio (empty = system default).</source>
+        <translation>소리 녹음에 사용할 장치(비워 두면 시스템 기본).</translation>
+    </message>
+    <message>
+        <source>System Default</source>
+        <translation>시스템 기본</translation>
+    </message>
+    <message>
+        <source>Maximum Duration</source>
+        <translation>최대 녹화 시간</translation>
+    </message>
+    <message>
+        <source>Automatically stop after this many seconds (0 = no limit).</source>
+        <translation>이 초를 넘으면 자동으로 중지합니다(0 = 제한 없음).</translation>
+    </message>
+    <message>
+        <source> seconds</source>
+        <translation> 초</translation>
+    </message>
+    <message>
+        <source>Video Save Folder</source>
+        <translation>동영상 저장 폴더</translation>
+    </message>
+    <message>
+        <source>Empty = follow the screenshot save folder.</source>
+        <translation>비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Video recording is unavailable: no encoding backend.</source>
+        <translation>동영상 녹화를 사용할 수 없습니다: 사용 가능한 인코딩 백엔드가 없습니다.</translation>
+    </message>
+    <message>
+        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
+        <translation>💡 녹화 파일을 저장할 폴더를 입력합니다. 비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
+    </message>
+
+    <message>
+        <source>Video Recording</source>
+        <translation>동영상 녹화</translation>
+    </message>
+    <message>
+        <source>Video Container</source>
+        <translation>동영상 컨테이너</translation>
+    </message>
+    <message>
+        <source>File format of the recorded video.</source>
+        <translation>녹화한 동영상의 파일 형식입니다.</translation>
+    </message>
+    <message>
+        <source>Video Codec</source>
+        <translation>동영상 코덱</translation>
+    </message>
+    <message>
+        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
+        <translation>H.264는 호환성이 가장 좋고, H.265는 파일이 더 작습니다.</translation>
+    </message>
+    <message>
+        <source>Video Quality</source>
+        <translation>화질</translation>
+    </message>
+    <message>
+        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
+        <translation>선택 영역을 따르거나 1080p/720p/480p로 제한합니다.</translation>
+    </message>
+    <message>
+        <source>Follow Selection</source>
+        <translation>선택 영역에 맞춤</translation>
+    </message>
+    <message>
+        <source>Video Frame Rate</source>
+        <translation>프레임 레이트</translation>
+    </message>
+    <message>
+        <source>Higher frame rates make smoother videos and larger files.</source>
+        <translation>프레임 레이트가 높을수록 부드럽지만 파일이 커집니다.</translation>
+    </message>
+    <message>
+        <source>Bitrate Limit</source>
+        <translation>비트레이트 상한</translation>
+    </message>
+    <message>
+        <source>0 lets the encoder decide from the quality preset.</source>
+        <translation>0이면 화질 설정에 따라 인코더가 결정합니다.</translation>
+    </message>
+    <message>
+        <source>Record Audio</source>
+        <translation>소리 녹음</translation>
+    </message>
+    <message>
+        <source>Record the microphone together with the screen.</source>
+        <translation>화면과 함께 마이크를 녹음합니다.</translation>
+    </message>
+    <message>
+        <source>No Audio</source>
+        <translation>소리 없음</translation>
+    </message>
+    <message>
+        <source>Microphone</source>
+        <translation>마이크</translation>
+    </message>
+    <message>
+        <source>Microphone Device</source>
+        <translation>마이크 장치</translation>
+    </message>
+    <message>
+        <source>Device used when recording audio (empty = system default).</source>
+        <translation>소리 녹음에 사용할 장치(비워 두면 시스템 기본).</translation>
+    </message>
+    <message>
+        <source>System Default</source>
+        <translation>시스템 기본</translation>
+    </message>
+    <message>
+        <source>Maximum Duration</source>
+        <translation>최대 녹화 시간</translation>
+    </message>
+    <message>
+        <source>Automatically stop after this many seconds (0 = no limit).</source>
+        <translation>이 초를 넘으면 자동으로 중지합니다(0 = 제한 없음).</translation>
+    </message>
+    <message>
+        <source> seconds</source>
+        <translation> 초</translation>
+    </message>
+    <message>
+        <source>Video Save Folder</source>
+        <translation>동영상 저장 폴더</translation>
+    </message>
+    <message>
+        <source>Empty = follow the screenshot save folder.</source>
+        <translation>비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Video recording is unavailable: no encoding backend.</source>
+        <translation>동영상 녹화를 사용할 수 없습니다: 사용 가능한 인코딩 백엔드가 없습니다.</translation>
+    </message>
+    <message>
+        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
+        <translation>💡 녹화 파일을 저장할 폴더를 입력합니다. 비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>찾아보기</translation>
+    </message>
+</context>
+<context>
+    <name>VideoRecordToolbar</name>
+    <message>
+        <source>开始录制</source>
+        <translation>녹화 시작</translation>
+    </message>
+    <message>
+        <source>停止录制</source>
+        <translation>녹화 중지</translation>
+    </message>
+    <message>
+        <source>暂停录制</source>
+        <translation>녹화 일시정지</translation>
+    </message>
+    <message>
+        <source>恢复录制</source>
+        <translation>녹화 재개</translation>
+    </message>
+    <message>
+        <source>拖动工具栏</source>
+        <translation>도구 모음 끌기</translation>
+    </message>
+    <message>
+        <source>关闭</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>跟随区域</source>
+        <translation>선택 영역에 맞춤</translation>
+    </message>
+</context>
+<context>
+    <name>VideoRecordWindow</name>
+    <message>
+        <source>视频录制</source>
+        <translation>동영상 녹화</translation>
+    </message>
+    <message>
+        <source>视频已保存到:
+{path}</source>
+        <translation>동영상을 저장했습니다:
+{path}</translation>
+    </message>
+    <message>
+        <source>打开文件夹</source>
+        <translation>폴더 열기</translation>
+    </message>
+    <message>
+        <source>复制路径</source>
+        <translation>경로 복사</translation>
+    </message>
+    <message>
+        <source>确定</source>
+        <translation>확인</translation>
     </message>
 </context>
 </TS>

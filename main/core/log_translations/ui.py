@@ -93,4 +93,45 @@ TRANSLATIONS: dict[str, str] = {
     "获取剪贴板数据库路径": "Getting clipboard database path",
     "计算图片目录大小": "Calculating image directory size",
     "计算剪贴板存储大小": "Calculating clipboard storage size",
+
+    # -- ui/permission_prompt.py --
+    "不在主线程，跳过权限提示: {key}": "Not on the main thread, skipping the permission prompt: {key}",
+    # -- ui/toolbar.py（亚克力背景）--
+    "工具栏背景: 原生模糊": "Toolbar background: native blur",
+    "工具栏背景: 半透明降级": "Toolbar background: semi-transparent (degraded)",
+    "工具栏背景: 不透明": "Toolbar background: opaque",
+    "应用工具栏亚克力背景": "Applying the toolbar acrylic background",
+
+    # -- ui/screenshot_window.py --
+    "不认识的截图模式: {mode}": "Unknown screenshot mode: {mode}",
+    "UI 检测初始化: 鼠标位置({x}, {y}) -> 选区{rect}":
+        "UI detection initialized: mouse position ({x}, {y}) -> selection {rect}",
+    "全局鼠标动作选区: {rect}": "Global mouse action selection: {rect}",
+
+    # -- ui/settings_ui/page_hotkey.py、ui/settings_ui/page_mouse.py --
+    "忽略不认识的动作绑定: {action_id}": "Ignoring unknown action binding: {action_id}",
+
+    # -- ui/floating_ball.py --
+    "读取悬浮球位置": "Reading the floating ball position",
+    "保存悬浮球位置": "Saving the floating ball position",
+    "加载悬浮球图标": "Loading the floating ball icon",
+    "悬浮球位置配置无效，回落到默认位置: {value}":
+        "Invalid floating ball position in settings, falling back to the default: {value}",
+    "悬浮球位置已保存: {position}": "Floating ball position saved: {position}",
+    "没有应用实例，悬浮球单击不触发动作":
+        "No app instance: clicking the floating ball triggers no action",
+    "没有应用实例，悬浮球双击不打开剪贴板":
+        "No app instance: double-clicking the floating ball does not open the clipboard",
+    "没有应用实例，悬浮球右键菜单不弹出":
+        "No app instance: the floating ball context menu is not shown",
+    "悬浮球打开剪贴板窗口": "Opening the clipboard window from the floating ball",
+    "悬浮球右键菜单创建失败": "Failed to create the floating ball context menu",
+
+    # -- 2026-09-19 新增设置与识别结果对话框 --
+    "按设置显示识别结果对话框: {trigger}": "Showing the recognition result dialog as configured: {trigger}",
+    "读取识别结果对话框时机": "Reading the recognition result dialog triggers",
+    "显示识别结果对话框": "Showing the recognition result dialog",
+    "按新语言重新初始化 OCR": "Re-initializing OCR with the new language",
+    "刷新托盘图标": "Refreshing the tray icon",
+    "托盘单击触发动作: {action_id}": "Tray click triggered action: {action_id}",
 }

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""进程与运行环境：工作集回收、进程身份/终止、DPI 感知、任务栏应用标识。
+"""进程与运行环境：工作集回收、进程身份/终止、DPI 感知、任务栏应用标识、重开本程序。
 
 这些是从 ``core/platform_utils.py`` 拆出来的「进程级」部分（「窗口级」部分见
 ``window_ops.py``）。原文件 224 行全是 Win32 调用，却**一个平台守卫都没有**——
@@ -13,9 +13,13 @@
 
 import ctypes
 import ntpath
+import os
+import pathlib
+import shlex
+import subprocess
 import sys
 
-from core.platform.detection import IS_WINDOWS
+from core.platform.detection import IS_MACOS, IS_WINDOWS
 
 
 # ──────────────────────────────────────────────
@@ -284,4 +288,65 @@ def terminate_process_by_pid(pid: int) -> bool:
             k.CloseHandle(handle)
     except Exception as e:
         log_exception(e, T("终止进程"))
+        return False
+
+
+# ──────────────────────────────────────────────
+# 重开本程序
+# ──────────────────────────────────────────────
+
+def _macos_app_bundle() -> str | None:
+    """当前进程所属的 .app bundle；没打包或不在 bundle 里时返回 None。
+
+    冻结版的 ``sys.executable`` 形如 ``…/Jietuba.app/Contents/MacOS/Jietuba``，
+    往上第三层就是 bundle 本身。
+    """
+    if not (IS_MACOS and getattr(sys, "frozen", False)):
+        return None
+    parents = pathlib.Path(sys.executable).resolve().parents
+    if len(parents) < 3:
+        return None
+    bundle = parents[2]
+    return str(bundle) if bundle.suffix == ".app" else None
+
+
+def _spawn_detached(argv: list[str], **kwargs) -> None:
+    """起一个与当前进程脱钩的子进程：父进程退出后它还要继续跑。"""
+    if IS_WINDOWS:
+        kwargs["creationflags"] = getattr(subprocess, "DETACHED_PROCESS", 0)
+    else:
+        kwargs["start_new_session"] = True
+    subprocess.Popen(argv, **kwargs)
+
+
+def relaunch_application() -> bool:
+    """重开本程序；调用方随后应正常退出，否则会同时存在两个实例。
+
+    macOS 打包版必须让 LaunchServices 重开 **.app**（``open -a``，和双击 Dock 图标同
+    一条路），不能直接 exec 内层二进制：TCC 按 bundle 的代码签名认应用，用内层二进制
+    起来的那份对不上辅助功能/录屏里已有的授权条目，用户刚勾上的权限等于没给。
+
+    重开的时机也要绕一下：新实例带单实例检查，本进程还活着时它一启动就会自己退出，
+    所以真正干活的是一个脱离父进程的 shell——等本进程 pid 消失后再 open。
+
+    源码运行（开发机上的 ``python main_app.py``）没有 bundle，重开同一个解释器和参数即可。
+    返回值只表示「已经把重开动作交出去」，不保证新实例一定起得来。
+    """
+    from core.logger import log_exception, log_info, T
+
+    try:
+        bundle = _macos_app_bundle()
+        if bundle:
+            helper = (
+                f"while kill -0 {os.getpid()} 2>/dev/null; do sleep 0.2; done; "
+                f"open -a {shlex.quote(bundle)}"
+            )
+            _spawn_detached(["/bin/sh", "-c", helper])
+            log_info(T("已安排退出后重新打开 {path}", path=bundle), "Process")
+            return True
+
+        _spawn_detached([sys.executable, *sys.argv], cwd=os.getcwd())
+        return True
+    except Exception as e:
+        log_exception(e, T("重开本程序"))
         return False

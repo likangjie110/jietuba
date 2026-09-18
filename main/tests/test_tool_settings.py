@@ -8,7 +8,7 @@ ToolSettings / ToolSettingsManager 单元测试
 import pytest
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QSettings
-from settings.tool_settings import ToolSettings, ToolSettingsManager
+from settings.tool_settings import MAX_ELEMENT_MARGIN, ToolSettings, ToolSettingsManager
 
 
 @pytest.fixture(scope="module")
@@ -90,6 +90,37 @@ class TestToolSettingsManager:
         qs = QSettings(ini_path, QSettings.Format.IniFormat)
         mgr = ToolSettingsManager(qsettings=qs)
         yield mgr
+
+    # ── UI 检测档位（旧的是 Bool 键 smart_selection）──
+
+    def test_ui_detection_default_is_element(self, manager):
+        assert manager.get_ui_detection() == "element"
+        assert manager.get_ui_detection_margin() == 0
+
+    def test_ui_detection_round_trip(self, manager):
+        manager.set_ui_detection("window")
+        manager.set_ui_detection_margin(6)
+
+        assert manager.get_ui_detection() == "window"
+        assert manager.get_ui_detection_margin() == 6
+
+    def test_ui_detection_rejects_unknown_values(self, manager):
+        manager.set_ui_detection("banana")
+        assert manager.get_ui_detection() == "element"     # 回落默认档
+
+    def test_ui_detection_margin_is_clamped(self, manager):
+        manager.set_ui_detection_margin(9999)
+        assert manager.get_ui_detection_margin() == MAX_ELEMENT_MARGIN
+
+        manager.set_ui_detection_margin(-5)
+        assert manager.get_ui_detection_margin() == 0
+
+    @pytest.mark.parametrize("legacy, expected", [(True, "element"), (False, "none")])
+    def test_ui_detection_migrates_the_old_bool_setting(self, manager, legacy, expected):
+        """老配置里只有 smart_selection（开关），迁移后开=检测元素、关=不检测。"""
+        manager.qsettings.setValue("app/smart_selection", legacy)
+
+        assert manager.get_ui_detection() == expected
 
     def test_default_tools_initialized(self, manager):
         """所有默认工具都应被初始化"""

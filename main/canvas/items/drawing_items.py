@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import math
 from PySide6.QtWidgets import QGraphicsPathItem, QGraphicsRectItem, QGraphicsEllipseItem, QGraphicsItem, QGraphicsTextItem
-from PySide6.QtGui import QPen, QPainter, QPainterPath, QColor, QFont, QPainterPathStroker, QBrush
+from PySide6.QtGui import (QPen, QPainter, QPainterPath, QColor, QFont, QPainterPathStroker, QBrush, QTextCursor)
 from PySide6.QtCore import Qt, QRectF, QPointF
 from core import log_debug, log_warning, safe_event
 from core.logger import T
@@ -1374,6 +1374,11 @@ class TextItem(QGraphicsTextItem, DrawingItemMixin):
         self.has_background = False # 默认关闭背景
         self.background_color = QColor(255, 255, 255, 255) # 白色全不透明
 
+        #: 最近一次在文档里框选的范围（逐字符格式的目标）。
+        #: 点工具栏按钮会让文字项失焦，而失焦要清掉可见选区，所以这里单独记一份，
+        #: 见 ``merge_char_format``。
+        self._format_target: tuple[int, int] | None = None
+
     # ------------------------------------------------------------------
     # 字号缩放（右下角手柄驱动）
     # ------------------------------------------------------------------
@@ -1384,6 +1389,92 @@ class TextItem(QGraphicsTextItem, DrawingItemMixin):
         if size <= 0:
             size = float(self.font().pixelSize())
         return max(float(size), self.MIN_POINT_SIZE)
+
+    # ------------------------------------------------------------------
+    # 富文本：逐段/逐字符格式
+    # ------------------------------------------------------------------
+
+    def merge_char_format(self, char_format) -> bool:
+        """把字符格式合并进当前选区；返回是否真的改到了具体的一段文字。
+
+        选区优先取文档里的实时选区；实时选区为空时用「最近一次框选的那一段」——
+        工具栏上的格式按钮一点，文字项就失焦，而失焦会清掉文档选区，不记住这一段
+        的话「逐字符改格式」在真实操作里永远走不到。
+        """
+        cursor = self.textCursor()
+        if not cursor.hasSelection() and self._format_target is not None:
+            start, end = self._format_target
+            if start <= cursor.position() <= end:
+                cursor.setPosition(start)
+                cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+
+        if not cursor.hasSelection():
+            return False
+
+        cursor.mergeCharFormat(char_format)
+        self._resync_document_html()
+        self._format_target = (cursor.selectionStart(), cursor.selectionEnd())
+        self.setTextCursor(cursor)          # 选区留着，方便连着改下一项
+        self.update()
+        return True
+
+    def clear_format_target(self):
+        """忘掉记住的那段选区（换标注、重新进入编辑时调用）。"""
+        self._format_target = None
+
+    def _resync_document_html(self) -> None:
+        """把文档按 HTML 重新落一遍。
+
+        QGraphicsTextItem 的 paint 不会立刻用上「光标合并出来的新格式」——文档里的片段
+        是对的、``documentLayout().draw()`` 画出来也对，只有 item 自己的 paint 仍旧按
+        合并前的格式画（实测：先涂红前半段再涂蓝后半段，屏幕上与导出的图里后半段仍是
+        旧颜色，重新 ``setHtml`` 之后才一致）。所以合并完必须重落一遍，否则用户看到的
+        和文档里存的不是一回事。
+        """
+        document = self.document()
+        document.setHtml(document.toHtml())
+
+    def cursor_char_format(self):
+        """光标处（或选区起点）的字符格式；面板回显用。"""
+        return self.textCursor().charFormat()
+
+    def has_mixed_char_formats(self) -> bool:
+        """文档里是否已经混了多种格式（面板据此决定回显哪一段）。
+
+        比较的是会真正影响观感的几项：字体族、字号、粗斜下划线、前景色。图片等
+        其它片段属性不参与判断。
+        """
+        def signature(char_format):
+            font = char_format.font()
+            return (
+                font.family(),
+                round(font.pointSizeF(), 2),
+                font.bold(),
+                font.italic(),
+                font.underline(),
+                char_format.foreground().color().name(),
+            )
+
+        signatures = set()
+        block = self.document().begin()
+        while block.isValid():
+            iterator = block.begin()
+            while not iterator.atEnd():
+                fragment = iterator.fragment()
+                if fragment.isValid() and fragment.text():
+                    signatures.add(signature(fragment.charFormat()))
+                    if len(signatures) > 1:
+                        return True
+                iterator += 1
+            block = block.next()
+        return False
+
+    def select_all_text(self):
+        """全选（面板整条改格式时用）。"""
+        cursor = self.textCursor()
+        cursor.select(cursor.SelectionType.Document)
+        self.setTextCursor(cursor)
+        return cursor
 
     def set_font_point_size(self, point_size: float):
         """按字号重新排版；描边宽度、阴影偏移等不随之变化。"""
@@ -1528,8 +1619,14 @@ class TextItem(QGraphicsTextItem, DrawingItemMixin):
     def focusOutEvent(self, event):
         """失去焦点时，如果内容为空则自动删除"""
         super().focusOutEvent(event)
-        # 移除选中状态
+        # 移除选中状态；但把这段范围记下来——工具栏按钮一点就失焦，
+        # 不记的话「给选中的那截字改格式」就没法实现了
         cursor = self.textCursor()
+        self._format_target = (
+            (cursor.selectionStart(), cursor.selectionEnd())
+            if cursor.hasSelection()
+            else None
+        )
         cursor.clearSelection()
         self.setTextCursor(cursor)
         
@@ -1548,6 +1645,8 @@ class TextItem(QGraphicsTextItem, DrawingItemMixin):
     def mouseDoubleClickEvent(self, event):
         """双击进入编辑模式"""
         if self.textInteractionFlags() == Qt.TextInteractionFlag.NoTextInteraction:
+            # 重新进编辑：上一次的框选范围已经过时，忘掉它
+            self.clear_format_target()
             self.setTextInteractionFlags(Qt.TextInteractionFlag.TextEditorInteraction)
             self.setFocus()
         super().mouseDoubleClickEvent(event)

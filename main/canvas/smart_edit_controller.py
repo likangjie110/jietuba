@@ -523,7 +523,13 @@ class SmartEditController(QObject):
         """
         if self.selected_item == item:
             return
-        
+
+        # 换标注：上一条记着的「逐字符格式目标」不能带到新标注上
+        if self.selected_item is not None:
+            clear_target = getattr(self.selected_item, "clear_format_target", None)
+            if callable(clear_target):
+                clear_target()
+
         # 取消之前的选择
         if self.selected_item:
             self.selected_item.setSelected(False)
@@ -845,18 +851,53 @@ class SmartEditController(QObject):
     # ========================================================================
 
     def on_text_font_changed(self, font):
-        """更新选中文字的字体"""
-        if self.selected_item and isinstance(self.selected_item, TextItem):
-            self.selected_item.setFont(font)
-            self.selected_item.update()
-            if self.layer_editor:
-                self.layer_editor.start_edit(self.selected_item)
+        """更新选中文字的字体。
+
+        正在编辑且框选了一段文字时，只改那一段（逐字符格式）；否则维持原来的语义：
+        整条标注一起换字体。
+        """
+        from PySide6.QtGui import QTextCharFormat
+
+        char_format = QTextCharFormat()
+        char_format.setFont(font)
+
+        def _whole_item(item):
+            item.setFont(font)
+
+        self._apply_text_char_format(char_format, _whole_item)
 
     def on_text_color_changed(self, color):
-        """更新选中文字的颜色"""
-        if self.selected_item and isinstance(self.selected_item, TextItem):
-            self.selected_item.setDefaultTextColor(color)
-            self.selected_item.update()
+        """更新选中文字的颜色（有选区时只改选中的那一截）。"""
+        from PySide6.QtGui import QBrush, QTextCharFormat
+
+        char_format = QTextCharFormat()
+        char_format.setForeground(QBrush(color))
+
+        def _whole_item(item):
+            item.setDefaultTextColor(color)
+
+        self._apply_text_char_format(char_format, _whole_item)
+
+    def _apply_text_char_format(self, char_format, whole_item_apply) -> bool:
+        """把字符格式套到选中文字上；没有选区就整条标注处理。
+
+        返回 True 表示这次是逐段修改。面板状态与手柄在两条路径上都要刷新。
+        """
+        item = self.selected_item
+        if not isinstance(item, TextItem):
+            return False
+
+        if item.merge_char_format(char_format):
+            if self.layer_editor:
+                self.layer_editor.start_edit(item)
+            self._sync_text_panel_state(item)
+            return True
+
+        whole_item_apply(item)
+        item.update()
+        if self.layer_editor:
+            self.layer_editor.start_edit(item)
+        return False
 
     def on_text_outline_changed(self, enabled, color, width):
         """更新选中文字的描边"""

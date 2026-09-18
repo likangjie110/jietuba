@@ -35,6 +35,8 @@ TRANSLATIONS: dict[str, str] = {
     "[ERROR] 处理按键事件失败: {e}": "[ERROR] Failed to handle key event: {e}",
     "[OK] 键盘监听器已启动（横向模式，按Shift触发）": "[OK] Keyboard listener started (horizontal mode, triggered by Shift)",
     "[ERROR] 启动键盘监听器失败: {e}": "[ERROR] Failed to start keyboard listener: {e}",
+    "[ERROR] 键盘监听器不可用，横向模式请手动点「截图」按钮":
+        "[ERROR] Keyboard listener unavailable; in horizontal mode use the Capture button",
     "[OK] 键盘监听器已停止": "[OK] Keyboard listener stopped",
     "[WARN] 停止键盘监听器时出错: {e}": "[WARN] Error stopping keyboard listener: {e}",
     "[OK] 拼接引擎已重新配置: 横向截图（图片旋转90度+竖向拼接）": "[OK] Stitch engine reconfigured: horizontal screenshot (rotate 90° + vertical stitch)",

@@ -1,10 +1,15 @@
 ﻿"""
 截图捕获服务 - 负责获取屏幕截图
+
+macOS 上没给「屏幕录制」权限时，抓屏照样"成功"，但画面里只有桌面壁纸、所有窗口
+都不见了。用户看到的是一张坏掉的截图，看不出是权限问题，所以抓屏前问一句能力
+（平台层负责怎么问、也负责把说明写进日志）。
 """
 
 import mss
 from PySide6.QtGui import QImage
 from PySide6.QtCore import QRectF
+
 
 class CaptureService:
     """
@@ -21,6 +26,11 @@ class CaptureService:
             - QImage: 包含所有屏幕的完整截图
             - QRectF: 虚拟桌面的几何信息 (x, y, width, height)
         """
+        from core.platform import capture as platform_capture
+
+        if not platform_capture.screen_capture_trusted():
+            platform_capture.warn_missing_screen_capture_permission()
+
         with mss.mss() as sct:
             # monitors[0] 是所有显示器的合并区域 (虚拟桌面)
             monitors = sct.monitors
