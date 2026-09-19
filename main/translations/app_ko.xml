@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="ko_KR">
-<!--
-    Korean Translation File
--->
-<!-- ========== Settings Navigation ========== -->
+<TS version="2.1" language="zh_CN">
 <context>
     <name>SettingsDialog</name>
     <message>
@@ -2669,8 +2665,11 @@ SOFTWARE.</translation>
         <source>Manage…</source>
         <translation>관리…</translation>
     </message>
+    <message>
+        <source>Recognize Text</source>
+        <translation>텍스트 인식</translation>
+    </message>
 </context>
-
 
 <context>
     <name>ActionTools</name>
@@ -2704,7 +2703,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
 <context>
     <name>PinTranslationHelper</name>
     <message>
@@ -2717,8 +2715,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Toolbar ========== -->
 <context>
     <name>Toolbar</name>
     <message>
@@ -2877,10 +2873,12 @@ SOFTWARE.</translation>
         <source>Record</source>
         <translation>녹화</translation>
     </message>
+    <message>
+        <source>Recognize text (OCR)</source>
+        <translation>텍스트 인식(OCR)</translation>
+    </message>
 </context>
 
-
-<!-- ========== Pin Window ========== -->
 <context>
     <name>PinWindow</name>
     <message>
@@ -3065,8 +3063,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
 <context>
     <name>FloatingToolbar</name>
     <message>
@@ -3131,8 +3127,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== System Tray ========== -->
 <context>
     <name>SystemTray</name>
     <message>
@@ -3281,8 +3275,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Main App (Tray Menu) ========== -->
 <context>
     <name>MainApp</name>
     <message>
@@ -3397,10 +3389,20 @@ SOFTWARE.</translation>
         <source>Main Window</source>
         <translation>메인 창</translation>
     </message>
+    <message>
+        <source>Screenshot (2)</source>
+        <translation>스크린샷 (2)</translation>
+    </message>
+    <message>
+        <source>Translation (2)</source>
+        <translation>번역 (2)</translation>
+    </message>
+    <message>
+        <source>Clipboard (2)</source>
+        <translation>클립보드 (2)</translation>
+    </message>
 </context>
 
-
-<!-- ========== Translation Dialog ========== -->
 <context>
     <name>TranslationDialog</name>
     <message>
@@ -3545,7 +3547,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-<!-- ========== Clipboard Window ========== -->
 <context>
     <name>ClipboardWindow</name>
     <message>
@@ -3837,8 +3838,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Clipboard Management Dialog ========== -->
 <context>
     <name>ManageDialog</name>
     <message>
@@ -4235,7 +4234,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
 <context>
     <name>ArrowSettingsPanel</name>
     <message>
@@ -4394,8 +4392,43 @@ SOFTWARE.</translation>
         <source>Bar</source>
         <translation>가로 막대</translation>
     </message>
+    <message>
+        <source>Solid Arrow</source>
+        <translation>채움 화살표</translation>
+    </message>
+    <message>
+        <source>Solid Double Arrow</source>
+        <translation>채움 양방향 화살표</translation>
+    </message>
+    <message>
+        <source>Outlined Arrow</source>
+        <translation>외곽선 화살표</translation>
+    </message>
+    <message>
+        <source>Line Arrow</source>
+        <translation>선 화살표</translation>
+    </message>
+    <message>
+        <source>Line Double Arrow</source>
+        <translation>선 양방향 화살표</translation>
+    </message>
+    <message>
+        <source>Thin Arrow</source>
+        <translation>얇은 화살표</translation>
+    </message>
+    <message>
+        <source>Thin Double Arrow</source>
+        <translation>얇은 양방향 화살표</translation>
+    </message>
+    <message>
+        <source>Dimension Line</source>
+        <translation>치수선</translation>
+    </message>
+    <message>
+        <source>Dimension Arrow</source>
+        <translation>치수 양방향 화살표</translation>
+    </message>
 </context>
-
 
 <context>
     <name>TextSettingsPanel</name>
@@ -4455,8 +4488,43 @@ SOFTWARE.</translation>
         <source>Yellow</source>
         <translation>노란색</translation>
     </message>
+    <message>
+        <source>Text Outline</source>
+        <translation>텍스트 외곽선</translation>
+    </message>
+    <message>
+        <source>Text Shadow</source>
+        <translation>텍스트 그림자</translation>
+    </message>
+    <message>
+        <source>Custom Outline Color</source>
+        <translation>사용자 지정 외곽선 색상</translation>
+    </message>
+    <message>
+        <source>Custom Shadow Color</source>
+        <translation>사용자 지정 그림자 색상</translation>
+    </message>
+    <message>
+        <source>Shadow Opacity</source>
+        <translation>그림자 불투명도</translation>
+    </message>
+    <message>
+        <source>Outline: Thin</source>
+        <translation>외곽선: 얇게</translation>
+    </message>
+    <message>
+        <source>Outline: Medium</source>
+        <translation>외곽선: 보통</translation>
+    </message>
+    <message>
+        <source>Outline: Thick</source>
+        <translation>외곽선: 굵게</translation>
+    </message>
+    <message>
+        <source>Outline: Extra Thick</source>
+        <translation>외곽선: 아주 굵게</translation>
+    </message>
 </context>
-
 
 <context>
     <name>MagnifierOverlay</name>
@@ -4466,8 +4534,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Welcome Wizard ========== -->
 <context>
     <name>WelcomeWizard</name>
     <message>
@@ -4966,8 +5032,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== GIF Record Toolbar ========== -->
 <context>
     <name>GifRecordToolbar</name>
     <message>
@@ -5020,8 +5084,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== GIF Playback Toolbar ========== -->
 <context>
     <name>GifPlaybackToolbar</name>
     <message>
@@ -5054,8 +5116,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Selection Info Panel ========== -->
 <context>
     <name>SelectionInfoPanel</name>
     <message>
@@ -5076,8 +5136,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Border Shadow Popup ========== -->
 <context>
     <name>BorderShadowPopup</name>
     <message>
@@ -5105,7 +5163,6 @@ SOFTWARE.</translation>
         <translation>모든 스크린샷에 계속 적용</translation>
     </message>
 </context>
-
 
 <context>
     <name>GroupBar</name>
@@ -5155,7 +5212,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
 <context>
     <name>StandardDialog</name>
     <message>
@@ -5172,8 +5228,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Clipboard Preview ========== -->
 <context>
     <name>ClipboardPreview</name>
     <message>
@@ -5186,8 +5240,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Standard Text Editor Context Menu ========== -->
 <context>
     <name>TextEditContextMenu</name>
     <message>
@@ -5219,8 +5271,6 @@ SOFTWARE.</translation>
         <translation>모두 선택</translation>
     </message>
 </context>
-
-
 
 <context>
     <name>UndoCommands</name>
@@ -5392,6 +5442,10 @@ SOFTWARE.</translation>
         <source>Insert image</source>
         <translation>이미지 삽입</translation>
     </message>
+    <message>
+        <source>Recognize text</source>
+        <translation>텍스트 인식</translation>
+    </message>
 </context>
 
 <context>
@@ -5426,7 +5480,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-<!-- ========== 权限缺失提示（PermissionPrompt） ========== -->
 <context>
     <name>PermissionPrompt</name>
     <message>
@@ -5463,7 +5516,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-<!-- ========== Formula Result ========== -->
 <context>
     <name>FormulaResult</name>
     <message>
@@ -5480,8 +5532,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== OcrResultDialog ========== -->
 <context>
     <name>OcrResultDialog</name>
     <message>
@@ -5548,8 +5598,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== 截图历史 ========== -->
 <context>
     <name>HistoryWindow</name>
     <message>
@@ -5646,8 +5694,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== 第二批标注工具面板 ========== -->
 <context>
     <name>AnnotationSettingsPanel</name>
     <message>
@@ -5748,8 +5794,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== 表格编辑器 ========== -->
 <context>
     <name>TableEditor</name>
     <message>
@@ -6011,6 +6055,42 @@ SOFTWARE.</translation>
     <message>
         <source>This page could not be created.</source>
         <translation>이 페이지를 만들 수 없습니다.</translation>
+    </message>
+</context>
+
+<context>
+    <name>TextRecognitionWindow</name>
+    <message>
+        <source>Text recognition</source>
+        <translation>텍스트 인식</translation>
+    </message>
+    <message>
+        <source>Recognizing...</source>
+        <translation>인식 중...</translation>
+    </message>
+    <message>
+        <source>Recognized %1 characters</source>
+        <translation>%1자를 인식했습니다</translation>
+    </message>
+    <message>
+        <source>No text found in the selection.</source>
+        <translation>선택 영역에서 텍스트를 찾지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>This build does not include the text recognition engine.</source>
+        <translation>이 빌드에는 텍스트 인식 엔진이 포함되어 있지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Text recognition failed.</source>
+        <translation>텍스트 인식에 실패했습니다.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>복사됨</translation>
     </message>
 </context>
 

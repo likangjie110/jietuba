@@ -63,7 +63,7 @@ class TestNormalizeLayout:
         assert dict(layout)["scan_code"] == MORE
 
     def test_locked_buttons_are_always_shown(self):
-        assert {"arrow", "number", "rect"} <= LOCKED
+        assert {"confirm"} <= LOCKED
         layout = dict(normalize_layout([
             (key, HIDE if index % 2 else MORE) for index, key in enumerate(LOCKED)
         ]))
@@ -83,7 +83,7 @@ class TestNormalizeLayout:
         stored = [(key, SHOW) for key in DEFAULT_ORDER if key != "scan_code"]
         layout = normalize_layout(stored)
         keys = [key for key, _mode in layout]
-        assert keys[keys.index("screenshot_translate") + 1] == "scan_code"
+        assert keys[keys.index("text_recognize") + 1] == "scan_code"
         assert dict(layout)["scan_code"] == MORE
 
 
@@ -121,23 +121,23 @@ class TestScreenshotToolbar:
         assert toolbar.more_btn.geometry().right() == toolbar.rect().right()
 
     def test_configured_layout_reorders_folds_and_hides(self, qapp):
-        # 基线用默认排布（新按钮的默认折叠状态跟着走），只改这条用例要改的几项
-        default_width = Toolbar().width()
-        layout = [("pin", SHOW)] + [
-            (key, mode) for key, mode in default_layout() if key != "pin"
-        ]
-        layout = [(key, {"mosaic": MORE, "text": HIDE, "scan_code": MORE}.get(key, mode))
-                  for key, mode in layout]
-        save_layout(layout)
+        # 基线用同一套「全都显示」的排布，只把这条用例要改的几项改掉：
+        # 这样比较的是「折叠+隐藏让行更窄」，不受默认折叠集合（DEFAULT_MORE）大小影响
+        save_layout(_layout_with(first="pin"))
+        baseline_width = Toolbar().width()
+
+        save_layout(_layout_with(
+            first="pin", mosaic=MORE, text=HIDE, scan_code=MORE, text_recognize=MORE))
 
         toolbar = Toolbar()
         row = _toolbar_row(toolbar)
         assert row[0] == "pin"
         assert row[-1] == "more"
         assert "mosaic" not in row and "text" not in row
+        # _layout_with 把没点名的按钮都设成 SHOW，所以只有显式点名的这几个会进「…」
         assert toolbar._folded_keys == [key for key in DEFAULT_ORDER
-                                        if key in (DEFAULT_MORE | {"mosaic"})]
-        assert toolbar.width() < default_width
+                                        if key in {"mosaic", "scan_code", "text_recognize"}]
+        assert toolbar.width() < baseline_width
 
     def test_hiding_a_tool_only_hides_its_button(self, qapp):
         save_layout(_layout_with(mosaic=HIDE))
@@ -238,10 +238,19 @@ class TestLayoutDialog:
         assert dialog._rows["pin"].combo.isEnabled()
         dialog.close()
 
-    def test_all_editable_rows_fit_without_a_scrollbar(self, qapp):
+    def test_rows_fit_the_screen_and_scroll_only_when_they_dont(self, qapp):
+        """锁定按钮变少后行数涨了不少：能整屏展示就不滚动，屏幕矮到放不下才滚动，但对话框不能超出屏幕"""
         dialog = self._dialog(default_layout())
-        assert dialog._scroll.viewport().height() >= dialog._card.sizeHint().height()
-        assert not dialog._scroll.verticalScrollBar().isVisible()
+        screen_height = QApplication.primaryScreen().availableGeometry().height()
+        # 对话框自己占的高度（标题、按钮、边距）+ 列表要完整展示的高度，就是它理想的高度；
+        # 生产规则按 available - 40 决定是否让列表滚动，这里用同一判据，不然行数一变就误判
+        chrome = dialog.height() - dialog._scroll.viewport().height()
+        full_card = dialog._card.sizeHint().height() + 2
+        if chrome + full_card <= screen_height - 40:
+            assert not dialog._scroll.verticalScrollBar().isVisible()
+        else:
+            assert dialog._scroll.viewport().height() < full_card
+        assert dialog.height() <= screen_height
         dialog.close()
 
     def test_restore_defaults_resets_order_and_modes(self, qapp):

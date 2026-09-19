@@ -68,7 +68,8 @@ class TestArrowPathStyles:
         assert item.path_style == "straight"
         assert item.uses_custom_heads() is False
         assert item.path().elementCount() > 0
-        assert item._head_marks == []
+        # 直线：中段是实心的箭杆
+        assert item.path().contains(QPointF(50, 0))
 
     def test_elbow_path_has_a_corner(self):
         item = ArrowItem(QPointF(20, 20), QPointF(120, 100), QPen(QColor("#FF0000"), 6),
@@ -77,7 +78,9 @@ class TestArrowPathStyles:
         bounds = item.path().boundingRect()
         # 折线（先横后竖）的包围盒与两端点围成的矩形一致
         assert bounds.width() >= 95 and bounds.height() >= 75
-        assert item._head_marks, "折线也要有端点（沿用 arrow_style 的语义）"
+        # 横段上有墨、被折线切掉的左下角没有：这就是「L 形」而不是直连
+        assert item.path().contains(QPointF(80, 20))
+        assert not item.path().contains(QPointF(40, 90))
 
     def test_curve_uses_the_control_point(self):
         item = ArrowItem(QPointF(0, 0), QPointF(100, 0), QPen(QColor("#FF0000"), 6))
@@ -111,15 +114,20 @@ class TestArrowHeads:
         item = ArrowItem(QPointF(0, 0), QPointF(100, 0), QPen(QColor("#FF0000"), 6),
                          head_start="circle", head_end="triangle")
         assert item.uses_custom_heads() is True
-        styles = {mark[2] for mark in item._head_marks}
-        assert styles == {"circle", "triangle"}
+        assert (item.head_start, item.head_end) == ("circle", "triangle")
         assert item.path_style == "straight"
+        # 定制的两端真的进了几何：与「两端都不画头」的轮廓不一样
+        headless = ArrowItem(QPointF(0, 0), QPointF(100, 0), QPen(QColor("#FF0000"), 6),
+                             head_start="none", head_end="none")
+        assert item.path().boundingRect() != headless.path().boundingRect()
 
     def test_head_none_draws_nothing(self):
         item = ArrowItem(QPointF(0, 0), QPointF(100, 0), QPen(QColor("#FF0000"), 6),
                          head_start="none", head_end="none")
         assert item.uses_custom_heads() is True
-        assert item._head_marks == []
+        # 两端都不画头：轮廓不会越过端点（没有凸出来的端头）
+        bounds = item.path().boundingRect()
+        assert bounds.left() >= -1 and bounds.right() <= 101
 
     def test_unknown_head_is_rejected(self):
         item = ArrowItem(QPointF(0, 0), QPointF(100, 0), QPen(QColor("#FF0000"), 6))

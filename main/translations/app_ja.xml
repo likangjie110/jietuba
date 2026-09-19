@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="ja_JP">
-<!--
-    日本語翻訳ファイル (デフォルト言語)
-    注意: 日本語がデフォルトなので translation は source と同じ
--->
-
-<!-- ========== Settings Navigation ========== -->
+<TS version="2.1" language="zh_CN">
 <context>
     <name>SettingsDialog</name>
     <message>
@@ -549,7 +543,7 @@ Replace it?</source>
     </message>
     <message>
         <source>Retention Period</source>
-        <translation>保存期間</translation>
+        <translation>保持期間</translation>
     </message>
     <message>
         <source>Auto-delete old logs after the selected period</source>
@@ -2671,8 +2665,11 @@ SOFTWARE.</translation>
         <source>Manage…</source>
         <translation>管理…</translation>
     </message>
+    <message>
+        <source>Recognize Text</source>
+        <translation>文字認識</translation>
+    </message>
 </context>
-
 
 <context>
     <name>ActionTools</name>
@@ -2706,7 +2703,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
 <context>
     <name>PinTranslationHelper</name>
     <message>
@@ -2719,8 +2715,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Toolbar ========== -->
 <context>
     <name>Toolbar</name>
     <message>
@@ -2883,10 +2877,12 @@ SOFTWARE.</translation>
         <source>Record</source>
         <translation>録画</translation>
     </message>
+    <message>
+        <source>Recognize text (OCR)</source>
+        <translation>文字認識（OCR）</translation>
+    </message>
 </context>
 
-
-<!-- ========== Pin Window ========== -->
 <context>
     <name>PinWindow</name>
     <message>
@@ -3071,8 +3067,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
 <context>
     <name>FloatingToolbar</name>
     <message>
@@ -3137,8 +3131,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== System Tray ========== -->
 <context>
     <name>SystemTray</name>
     <message>
@@ -3287,8 +3279,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Main App (Tray Menu) ========== -->
 <context>
     <name>MainApp</name>
     <message>
@@ -3403,10 +3393,20 @@ SOFTWARE.</translation>
         <source>Main Window</source>
         <translation>メインウィンドウ</translation>
     </message>
+    <message>
+        <source>Screenshot (2)</source>
+        <translation>スクリーンショット (2)</translation>
+    </message>
+    <message>
+        <source>Translation (2)</source>
+        <translation>翻訳 (2)</translation>
+    </message>
+    <message>
+        <source>Clipboard (2)</source>
+        <translation>クリップボード (2)</translation>
+    </message>
 </context>
 
-
-<!-- ========== Translation Dialog ========== -->
 <context>
     <name>TranslationDialog</name>
     <message>
@@ -3571,8 +3571,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Clipboard Window ========== -->
 <context>
     <name>ClipboardWindow</name>
     <message>
@@ -3863,8 +3861,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Clipboard Management Dialog ========== -->
 <context>
     <name>ManageDialog</name>
     <message>
@@ -4261,7 +4257,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
 <context>
     <name>ArrowSettingsPanel</name>
     <message>
@@ -4420,8 +4415,43 @@ SOFTWARE.</translation>
         <source>Bar</source>
         <translation>横棒</translation>
     </message>
+    <message>
+        <source>Solid Arrow</source>
+        <translation>塗りつぶし矢印</translation>
+    </message>
+    <message>
+        <source>Solid Double Arrow</source>
+        <translation>塗りつぶし両矢印</translation>
+    </message>
+    <message>
+        <source>Outlined Arrow</source>
+        <translation>中抜き矢印</translation>
+    </message>
+    <message>
+        <source>Line Arrow</source>
+        <translation>線の矢印</translation>
+    </message>
+    <message>
+        <source>Line Double Arrow</source>
+        <translation>線の両矢印</translation>
+    </message>
+    <message>
+        <source>Thin Arrow</source>
+        <translation>細軸矢印</translation>
+    </message>
+    <message>
+        <source>Thin Double Arrow</source>
+        <translation>細軸両矢印</translation>
+    </message>
+    <message>
+        <source>Dimension Line</source>
+        <translation>寸法線</translation>
+    </message>
+    <message>
+        <source>Dimension Arrow</source>
+        <translation>寸法両矢印</translation>
+    </message>
 </context>
-
 
 <context>
     <name>TextSettingsPanel</name>
@@ -4481,8 +4511,43 @@ SOFTWARE.</translation>
         <source>Yellow</source>
         <translation>黄</translation>
     </message>
+    <message>
+        <source>Text Outline</source>
+        <translation>文字の縁取り</translation>
+    </message>
+    <message>
+        <source>Text Shadow</source>
+        <translation>文字の影</translation>
+    </message>
+    <message>
+        <source>Custom Outline Color</source>
+        <translation>カスタム縁取り色</translation>
+    </message>
+    <message>
+        <source>Custom Shadow Color</source>
+        <translation>カスタム影の色</translation>
+    </message>
+    <message>
+        <source>Shadow Opacity</source>
+        <translation>影の不透明度</translation>
+    </message>
+    <message>
+        <source>Outline: Thin</source>
+        <translation>縁取り：細</translation>
+    </message>
+    <message>
+        <source>Outline: Medium</source>
+        <translation>縁取り：中</translation>
+    </message>
+    <message>
+        <source>Outline: Thick</source>
+        <translation>縁取り：太</translation>
+    </message>
+    <message>
+        <source>Outline: Extra Thick</source>
+        <translation>縁取り：極太</translation>
+    </message>
 </context>
-
 
 <context>
     <name>MagnifierOverlay</name>
@@ -4492,8 +4557,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Welcome Wizard ========== -->
 <context>
     <name>WelcomeWizard</name>
     <message>
@@ -4992,8 +5055,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== GIF Record Toolbar ========== -->
 <context>
     <name>GifRecordToolbar</name>
     <message>
@@ -5046,8 +5107,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== GIF Playback Toolbar ========== -->
 <context>
     <name>GifPlaybackToolbar</name>
     <message>
@@ -5080,8 +5139,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Selection Info Panel ========== -->
 <context>
     <name>SelectionInfoPanel</name>
     <message>
@@ -5102,8 +5159,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Border Shadow Popup ========== -->
 <context>
     <name>BorderShadowPopup</name>
     <message>
@@ -5131,7 +5186,6 @@ SOFTWARE.</translation>
         <translation>いつも有効にする</translation>
     </message>
 </context>
-
 
 <context>
     <name>GroupBar</name>
@@ -5181,7 +5235,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
 <context>
     <name>StandardDialog</name>
     <message>
@@ -5198,8 +5251,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Clipboard Preview ========== -->
 <context>
     <name>ClipboardPreview</name>
     <message>
@@ -5212,8 +5263,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Standard Text Editor Context Menu ========== -->
 <context>
     <name>TextEditContextMenu</name>
     <message>
@@ -5245,8 +5294,6 @@ SOFTWARE.</translation>
         <translation>すべて選択</translation>
     </message>
 </context>
-
-
 
 <context>
     <name>UndoCommands</name>
@@ -5418,6 +5465,10 @@ SOFTWARE.</translation>
         <source>Insert image</source>
         <translation>画像を挿入</translation>
     </message>
+    <message>
+        <source>Recognize text</source>
+        <translation>文字認識</translation>
+    </message>
 </context>
 
 <context>
@@ -5452,7 +5503,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-<!-- ========== 权限缺失提示（PermissionPrompt） ========== -->
 <context>
     <name>PermissionPrompt</name>
     <message>
@@ -5489,7 +5539,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-<!-- ========== Formula Result ========== -->
 <context>
     <name>FormulaResult</name>
     <message>
@@ -5506,8 +5555,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== OcrResultDialog ========== -->
 <context>
     <name>OcrResultDialog</name>
     <message>
@@ -5574,8 +5621,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== 截图历史 ========== -->
 <context>
     <name>HistoryWindow</name>
     <message>
@@ -5672,8 +5717,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== 第二批标注工具面板 ========== -->
 <context>
     <name>AnnotationSettingsPanel</name>
     <message>
@@ -5774,8 +5817,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== 表格编辑器 ========== -->
 <context>
     <name>TableEditor</name>
     <message>
@@ -6037,6 +6078,42 @@ SOFTWARE.</translation>
     <message>
         <source>This page could not be created.</source>
         <translation>このページを作成できませんでした。</translation>
+    </message>
+</context>
+
+<context>
+    <name>TextRecognitionWindow</name>
+    <message>
+        <source>Text recognition</source>
+        <translation>文字認識</translation>
+    </message>
+    <message>
+        <source>Recognizing...</source>
+        <translation>認識中...</translation>
+    </message>
+    <message>
+        <source>Recognized %1 characters</source>
+        <translation>%1 文字を認識しました</translation>
+    </message>
+    <message>
+        <source>No text found in the selection.</source>
+        <translation>選択範囲から文字が見つかりませんでした。</translation>
+    </message>
+    <message>
+        <source>This build does not include the text recognition engine.</source>
+        <translation>このビルドには文字認識エンジンが含まれていません。</translation>
+    </message>
+    <message>
+        <source>Text recognition failed.</source>
+        <translation>文字認識に失敗しました。</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>コピー</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>コピーしました</translation>
     </message>
 </context>
 

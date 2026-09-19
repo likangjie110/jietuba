@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="en_US">
-<!--
-    English Translation File
--->
-
-<!-- ========== Settings Navigation ========== -->
+<TS version="2.1" language="zh_CN">
 <context>
     <name>SettingsDialog</name>
     <message>
@@ -2706,8 +2701,11 @@ SOFTWARE.</translation>
         <source>Manage…</source>
         <translation>Manage…</translation>
     </message>
+    <message>
+        <source>Recognize Text</source>
+        <translation>Recognize Text</translation>
+    </message>
 </context>
-
 
 <context>
     <name>ActionTools</name>
@@ -2741,7 +2739,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
 <context>
     <name>PinTranslationHelper</name>
     <message>
@@ -2754,8 +2751,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Toolbar ========== -->
 <context>
     <name>Toolbar</name>
     <message>
@@ -2914,10 +2909,12 @@ SOFTWARE.</translation>
         <source>Record</source>
         <translation>Record</translation>
     </message>
+    <message>
+        <source>Recognize text (OCR)</source>
+        <translation>Recognize text (OCR)</translation>
+    </message>
 </context>
 
-
-<!-- ========== Pin Window ========== -->
 <context>
     <name>PinWindow</name>
     <message>
@@ -3102,8 +3099,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
 <context>
     <name>FloatingToolbar</name>
     <message>
@@ -3168,8 +3163,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== System Tray ========== -->
 <context>
     <name>SystemTray</name>
     <message>
@@ -3318,8 +3311,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Main App (Tray Menu) ========== -->
 <context>
     <name>MainApp</name>
     <message>
@@ -3474,10 +3465,20 @@ SOFTWARE.</translation>
         <source>Main Window</source>
         <translation>Main Window</translation>
     </message>
+    <message>
+        <source>Screenshot (2)</source>
+        <translation>Screenshot (2)</translation>
+    </message>
+    <message>
+        <source>Translation (2)</source>
+        <translation>Translation (2)</translation>
+    </message>
+    <message>
+        <source>Clipboard (2)</source>
+        <translation>Clipboard (2)</translation>
+    </message>
 </context>
 
-
-<!-- ========== Translation Dialog ========== -->
 <context>
     <name>TranslationDialog</name>
     <message>
@@ -3622,7 +3623,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-<!-- ========== Clipboard Window ========== -->
 <context>
     <name>ClipboardWindow</name>
     <message>
@@ -3914,8 +3914,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Clipboard Management Dialog ========== -->
 <context>
     <name>ManageDialog</name>
     <message>
@@ -4312,7 +4310,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
 <context>
     <name>ArrowSettingsPanel</name>
     <message>
@@ -4471,8 +4468,43 @@ SOFTWARE.</translation>
         <source>Bar</source>
         <translation>Bar</translation>
     </message>
+    <message>
+        <source>Solid Arrow</source>
+        <translation>Solid Arrow</translation>
+    </message>
+    <message>
+        <source>Solid Double Arrow</source>
+        <translation>Solid Double Arrow</translation>
+    </message>
+    <message>
+        <source>Outlined Arrow</source>
+        <translation>Outlined Arrow</translation>
+    </message>
+    <message>
+        <source>Line Arrow</source>
+        <translation>Line Arrow</translation>
+    </message>
+    <message>
+        <source>Line Double Arrow</source>
+        <translation>Line Double Arrow</translation>
+    </message>
+    <message>
+        <source>Thin Arrow</source>
+        <translation>Thin Arrow</translation>
+    </message>
+    <message>
+        <source>Thin Double Arrow</source>
+        <translation>Thin Double Arrow</translation>
+    </message>
+    <message>
+        <source>Dimension Line</source>
+        <translation>Dimension Line</translation>
+    </message>
+    <message>
+        <source>Dimension Arrow</source>
+        <translation>Dimension Arrow</translation>
+    </message>
 </context>
-
 
 <context>
     <name>TextSettingsPanel</name>
@@ -4532,8 +4564,43 @@ SOFTWARE.</translation>
         <source>Yellow</source>
         <translation>Yellow</translation>
     </message>
+    <message>
+        <source>Text Outline</source>
+        <translation>Text Outline</translation>
+    </message>
+    <message>
+        <source>Text Shadow</source>
+        <translation>Text Shadow</translation>
+    </message>
+    <message>
+        <source>Custom Outline Color</source>
+        <translation>Custom Outline Color</translation>
+    </message>
+    <message>
+        <source>Custom Shadow Color</source>
+        <translation>Custom Shadow Color</translation>
+    </message>
+    <message>
+        <source>Shadow Opacity</source>
+        <translation>Shadow Opacity</translation>
+    </message>
+    <message>
+        <source>Outline: Thin</source>
+        <translation>Outline: Thin</translation>
+    </message>
+    <message>
+        <source>Outline: Medium</source>
+        <translation>Outline: Medium</translation>
+    </message>
+    <message>
+        <source>Outline: Thick</source>
+        <translation>Outline: Thick</translation>
+    </message>
+    <message>
+        <source>Outline: Extra Thick</source>
+        <translation>Outline: Extra Thick</translation>
+    </message>
 </context>
-
 
 <context>
     <name>MagnifierOverlay</name>
@@ -4543,8 +4610,6 @@ SOFTWARE.</translation>
     </message>
 </context>
 
-
-<!-- ========== Welcome Wizard ========== -->
 <context>
     <name>WelcomeWizard</name>
     <message>
@@ -5043,8 +5108,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== GIF Record Toolbar ========== -->
 <context>
     <name>GifRecordToolbar</name>
     <message>
@@ -5097,8 +5160,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== GIF Playback Toolbar ========== -->
 <context>
     <name>GifPlaybackToolbar</name>
     <message>
@@ -5131,8 +5192,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== Selection Info Panel ========== -->
 <context>
     <name>SelectionInfoPanel</name>
     <message>
@@ -5153,8 +5212,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== Border Shadow Popup ========== -->
 <context>
     <name>BorderShadowPopup</name>
     <message>
@@ -5182,7 +5239,6 @@ You can tweak more options in Settings anytime.</translation>
         <translation>Keep enabled for every screenshot</translation>
     </message>
 </context>
-
 
 <context>
     <name>GroupBar</name>
@@ -5232,7 +5288,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
 <context>
     <name>StandardDialog</name>
     <message>
@@ -5249,8 +5304,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== Clipboard Preview ========== -->
 <context>
     <name>ClipboardPreview</name>
     <message>
@@ -5263,8 +5316,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== Standard Text Editor Context Menu ========== -->
 <context>
     <name>TextEditContextMenu</name>
     <message>
@@ -5296,8 +5347,6 @@ You can tweak more options in Settings anytime.</translation>
         <translation>Select All</translation>
     </message>
 </context>
-
-
 
 <context>
     <name>UndoCommands</name>
@@ -5469,6 +5518,10 @@ You can tweak more options in Settings anytime.</translation>
         <source>Insert image</source>
         <translation>Insert image</translation>
     </message>
+    <message>
+        <source>Recognize text</source>
+        <translation>Recognize text</translation>
+    </message>
 </context>
 
 <context>
@@ -5503,7 +5556,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-<!-- ========== 权限缺失提示（PermissionPrompt） ========== -->
 <context>
     <name>PermissionPrompt</name>
     <message>
@@ -5540,7 +5592,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-<!-- ========== Formula Result ========== -->
 <context>
     <name>FormulaResult</name>
     <message>
@@ -5557,8 +5608,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== OcrResultDialog ========== -->
 <context>
     <name>OcrResultDialog</name>
     <message>
@@ -5625,8 +5674,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== 截图历史 ========== -->
 <context>
     <name>HistoryWindow</name>
     <message>
@@ -5723,8 +5770,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== 第二批标注工具面板 ========== -->
 <context>
     <name>AnnotationSettingsPanel</name>
     <message>
@@ -5825,8 +5870,6 @@ You can tweak more options in Settings anytime.</translation>
     </message>
 </context>
 
-
-<!-- ========== 表格编辑器 ========== -->
 <context>
     <name>TableEditor</name>
     <message>
@@ -6088,6 +6131,42 @@ You can tweak more options in Settings anytime.</translation>
     <message>
         <source>This page could not be created.</source>
         <translation>This page could not be created.</translation>
+    </message>
+</context>
+
+<context>
+    <name>TextRecognitionWindow</name>
+    <message>
+        <source>Text recognition</source>
+        <translation>Text recognition</translation>
+    </message>
+    <message>
+        <source>Recognizing...</source>
+        <translation>Recognizing...</translation>
+    </message>
+    <message>
+        <source>Recognized %1 characters</source>
+        <translation>Recognized %1 characters</translation>
+    </message>
+    <message>
+        <source>No text found in the selection.</source>
+        <translation>No text found in the selection.</translation>
+    </message>
+    <message>
+        <source>This build does not include the text recognition engine.</source>
+        <translation>This build does not include the text recognition engine.</translation>
+    </message>
+    <message>
+        <source>Text recognition failed.</source>
+        <translation>Text recognition failed.</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>Copy</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>Copied</translation>
     </message>
 </context>
 

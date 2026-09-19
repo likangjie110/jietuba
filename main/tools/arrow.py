@@ -24,11 +24,11 @@ class ArrowTool(Tool):
         self.drawing = False
         self.start_pos = None
         self.current_item = None
-        # 箭头样式：single（单头）或 double（双头）
-        self.arrow_style = "single"
-        self.path_style = "straight"
-        self.head_start = "inherit"
-        self.head_end = "inherit"
+        # 箭头样式，取值见 ArrowItem.STYLES；路径与两端端点见下面的默认值
+        self.arrow_style = ArrowItem.STYLE_SINGLE
+        self.path_style = ArrowItem.PATH_STRAIGHT
+        self.head_start = ArrowItem.HEAD_INHERIT
+        self.head_end = ArrowItem.HEAD_INHERIT
     
     def on_press(self, pos: QPointF, button, ctx: ToolContext):
         if button == Qt.MouseButton.LeftButton:
@@ -38,10 +38,10 @@ class ArrowTool(Tool):
             # 从设置管理器获取箭头样式
             if ctx.settings_manager:
                 settings = ctx.settings_manager.get_tool_settings("arrow")
-                self.arrow_style = settings.get("arrow_style", "single")
-                self.path_style = settings.get("path_style", "straight")
-                self.head_start = settings.get("head_start", "inherit")
-                self.head_end = settings.get("head_end", "inherit")
+                self.arrow_style = ArrowItem.normalize_style(settings.get("arrow_style"))
+                self.path_style = settings.get("path_style", ArrowItem.PATH_STRAIGHT)
+                self.head_start = settings.get("head_start", ArrowItem.HEAD_INHERIT)
+                self.head_end = settings.get("head_end", ArrowItem.HEAD_INHERIT)
             
             pen_color = color_with_opacity(ctx.color, ctx.opacity)
             pen = QPen(pen_color, ctx.stroke_width)

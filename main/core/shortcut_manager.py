@@ -1050,7 +1050,8 @@ def parse_shortcut_to_qt(text: str):
             mods |= _MOD_MAP[p]
         elif p in key_map:
             key = _Qt.Key(key_map[p])
-        elif len(p) == 1 and p.isalpha():
+        elif len(p) == 1 and (p.isalpha() or p.isdigit()):
+            # Qt.Key_0..Key_9 数值上等于 ord('0')..ord('9')，和字母走同一套技巧
             key = _Qt.Key(ord(p.upper()))
         elif p.startswith("f") and p[1:].isdigit():
             fn = int(p[1:])
@@ -1087,6 +1088,7 @@ def load_inapp_bindings(keys_of_interest: Optional[List[str]] = None) -> Dict:
             "inapp_pin_opacity_up", "inapp_pin_opacity_down",
             "inapp_pin_copy_all_text", "inapp_pin_copy_and_close",
             "inapp_zoom_in", "inapp_zoom_out", "inapp_translate",
+            "inapp_text_recognize",
         ]
 
     result = {}

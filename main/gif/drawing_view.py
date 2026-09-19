@@ -156,7 +156,7 @@ class GifDrawingScene(QGraphicsScene):
 
     @property
     def scene_rect(self) -> QRectF:
-        """CanvasView._get_smart_selection_rect 等访问的属性"""
+        """CanvasView._get_ui_detection_rect 等访问的属性"""
         return self.sceneRect()
 
     def resize_scene(self, width: int, height: int):

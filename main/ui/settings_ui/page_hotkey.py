@@ -33,6 +33,7 @@ SCREENSHOT_KEYS = [
     ("inapp_zoom_in",   "Magnifier Zoom In",      "pageup"),
     ("inapp_zoom_out",  "Magnifier Zoom Out",     "pagedown"),
     ("inapp_translate", "Screenshot Translate",    "shift+c"),
+    ("inapp_text_recognize", "Recognize Text",   "shift+t"),
 ]
 
 # 标注元素的层级与对齐（画布内快捷键；默认都带修饰键，避免与单键工具快捷方式撞车）
