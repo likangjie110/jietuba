@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """动作注册表：应用里「能做哪些事」的唯一出处，以及全局鼠标手势的执行入口。
 
 全局鼠标动作（修饰键 + 鼠标手势）从这里取动作表，后面的「快捷键/动作页」与托盘菜单
@@ -53,12 +53,15 @@ ACTIONS = (
     Action("screenshot_copy_text", "Screenshot and Copy Text", silent_capture=True),
     Action("copy_table_markdown", "Copy Table as Markdown", silent_capture=True),
     Action("recognize_table", "Table Recognition", silent_capture=True, tray=True),
+    Action("auto_recognize", "Auto Recognize", silent_capture=True, tray=True),
     Action("convert_image_markdown", "Convert Image to Markdown", silent_capture=True,
            tray=True),
     Action("read_image_ai", "Read Image with AI", silent_capture=True, tray=True),
+    Action("solve_problem", "Solve Problem", silent_capture=True),
     Action("translate_image_in_place", "Translate Image in Place", silent_capture=True,
            tray=True),
     Action("mask_sensitive_info", "Mask Sensitive Info", silent_capture=True, tray=True),
+    Action("extract_colors", "Extract Palette", silent_capture=True, tray=True),
     Action("beautify_export", "Beautify and Export", silent_capture=True, tray=True),
     Action("recognize_formula", "Recognize Formula as LaTeX", silent_capture=True),
     Action("screenshot_translate", "Screenshot and Translate",
@@ -419,29 +422,166 @@ def _open_table_editor(result, opener) -> bool:
     return True
 
 
+class _AutoRouteSink(QObject):
+    """自动分流的接收端：拿到本地 OCR 结果后决定走哪条路。
+
+    判断本身在 ``ocr.auto_route``（纯函数、可穷举测试），这里只负责把结论接到既有的
+    实现上——每条路由都复用对应动作已经在用的函数，不另写一套识别。
+    """
+
+    #: (本地结果, 截图图像, 配置管理器)
+    def __init__(self, image, config_manager):
+        super().__init__()
+        self._image = image
+        self._config = config_manager
+
+    def on_result(self, result) -> None:
+        from ocr.auto_route import (
+            ROUTE_FORMULA, ROUTE_TABLE, ROUTE_TEXT, ROUTE_VISION_DESCRIBE,
+            ROUTE_VISION_TEXT, choose_route,
+        )
+
+        options = _ocr_text_options()
+        route = choose_route(
+            result,
+            threshold=options.get("threshold", 0.6),
+            has_formula=_formula_ready(),
+            has_vision=bool(options.get("vision_ready")),
+        )
+        log_debug(T("自动分流结果: {route}", route=route), "Action")
+        if route == ROUTE_TABLE:
+            _recognize_table_from_result(result)
+        elif route == ROUTE_TEXT:
+            _copy_ocr_text_from_result(result, options)
+        elif route == ROUTE_FORMULA:
+            _recognize_formula(self._image)
+        elif route == ROUTE_VISION_TEXT:
+            recognize_image_with_vision(self._image, self._config,
+                                        task="text")
+        elif route == ROUTE_VISION_DESCRIBE:
+            recognize_image_with_vision(self._image, self._config,
+                                        task="general")
+        else:
+            _report_auto_route_miss(options)
+
+    def on_finished(self) -> None:
+        _ocr_thread_refs[:] = [ref for ref in _ocr_thread_refs if ref[1] is not self]
+
+
+def _formula_ready() -> bool:
+    """本机有没有可用的公式引擎（探测失败按「没有」处理）。"""
+    try:
+        from ocr.formula import is_formula_available
+
+        return bool(is_formula_available())
+    except Exception as e:
+        log_exception(e, T("探测公式引擎可用性"))
+        return False
+
+
+def _recognize_table_from_result(result) -> bool:
+    from ocr.table_editor import open_table_editor
+
+    return _open_table_editor(result, open_table_editor)
+
+
+def _copy_ocr_text_from_result(result, options) -> bool:
+    """把本地 OCR 结果按设置排版后复制，并按需带上置信度提示。"""
+    from ocr import format_ocr_result_text
+    from ocr.quality import low_confidence_hint
+
+    text = format_ocr_result_text(
+        result,
+        layout=options.get("layout", "auto"),
+        punctuation=options.get("punctuation", "none"),
+    )
+    if not text:
+        _report_auto_route_miss(options)
+        return False
+
+    _copy_to_clipboard_text(text, T("识别到的文字已复制到剪贴板（{count} 字）", count=len(text)))
+    hint = ""
+    try:
+        hint = low_confidence_hint(result, threshold=options.get("threshold", 0.6),
+                                   vision_ready=bool(options.get("vision_ready")))
+    except Exception as e:
+        log_exception(e, T("判断识别置信度"))
+    from ocr.result_dialog import maybe_show_ocr_result
+
+    maybe_show_ocr_result(text, "copy_all", hint=hint)
+    return True
+
+
+def _report_auto_route_miss(options) -> None:
+    """什么都没识别到：如实说明，并告诉用户下一步能做什么（可操作，不是一句失败）。"""
+    from core.i18n import make_tr
+    from ui.dialogs import show_warning_dialog
+
+    _tr = make_tr("AutoRecognize")
+    message = (_tr("Nothing was recognized in this area. Configure a vision model in "
+                   "the settings to have an AI read it.")
+               if not options.get("vision_ready")
+               else _tr("Nothing was recognized in this area."))
+    log_warning(T("自动分流没有识别到内容"), "Action")
+    show_warning_dialog(None, _tr("Auto Recognize"), message)
+
+
+def _auto_recognize(image, app) -> bool:
+    """静默截取 → 本地 OCR → 按内容自动分流（表格/文字/公式，最后才考虑视觉模型）。
+
+    分流规则见 ``ocr.auto_route``：本地能取到结果就不联网，这既是成本考虑，也是
+    「截图不该因为我们想图省事就上传」这条底线的落地。
+    """
+    thread = _OcrRawThread(image)
+    sink = _AutoRouteSink(image, getattr(app, "config_manager", None))
+    thread.recognized.connect(sink.on_result)
+    thread.finished.connect(sink.on_finished)
+    _ocr_thread_refs.append((thread, sink))
+    thread.start()
+    log_debug(T("开始自动识别并分流"), "Action")
+    return True
+
+
 def _convert_image_markdown(image, app) -> bool:
     """静默截取 → 交给配置的视觉模型转 Markdown/HTML → 复制并展示结果。"""
-    return _convert_image_with_vision(image, app, task="table")
+    return recognize_image_with_vision(image, getattr(app, "config_manager", None),
+                                       task="table")
 
 
 def _read_image_with_ai(image, app) -> bool:
     """静默截取 → 按**设置里选的任务模板**交给视觉模型 → 复制并展示结果。
 
     与「转 Markdown」那条的区别只有任务模板：那条固定按表格转，这条跟随用户在设置里
-    选的模板（精确取字 / 代码解释 / 表格 / 公式 / 通用识图）。
+    选的模板（精确取字 / 代码解释 / 表格 / 公式 / 通用识图 / 解题）。
     """
-    return _convert_image_with_vision(image, app, task=None)
+    return recognize_image_with_vision(image, getattr(app, "config_manager", None))
 
 
-def _convert_image_with_vision(image, app, task=None) -> bool:
-    """共享实现：``task`` 为 None 时用配置里的任务模板，否则用指定的那个。"""
+def _solve_problem(image, app) -> bool:
+    """静默截取 → 视觉模型的「解题」模板 → 复制并展示结果。
+
+    单独一条动作而不是只留在设置的任务下拉里：解题是"看一眼就要答案"的用法，去设置里
+    改模板再回来触发太绕。模板本身仍写在 ``vision_models.TASKS``（单一出处）。
+    """
+    return recognize_image_with_vision(image, getattr(app, "config_manager", None),
+                                       task="solve")
+
+
+def recognize_image_with_vision(image, config_manager=None, *, task=None,
+                                show_window=False) -> bool:
+    """共享实现：``task`` 为 None 时用配置里的任务模板，否则用指定的那个。
+
+    ``show_window=True`` 用于「用户就是想在窗口里看结果」的入口（截图工具栏的 AI 解读）：
+    那条路径不看去设置里配的弹窗时机，直接开窗。
+    """
     from ocr.vision_models import DEFAULT_TASK, TASKS_BY_ID, convert_image, selected_model
 
-    config = getattr(app, "config_manager", None)
-    model = selected_model(config)
-    target = config.get_ocr_vision_target() if config is not None else "markdown"
+    model = selected_model(config_manager)
+    target = (config_manager.get_ocr_vision_target()
+              if config_manager is not None else "markdown")
     if task is None:
-        task = config.get_ocr_vision_task() if config is not None else DEFAULT_TASK
+        task = (config_manager.get_ocr_vision_task()
+                if config_manager is not None else DEFAULT_TASK)
     if model is None:
         log_warning(T("没有配置可用的视觉模型，无法转换图片"), "Action")
         return False
@@ -457,9 +597,19 @@ def _convert_image_with_vision(image, app, task=None) -> bool:
     log_debug(T("图片已按「{task}」转换为 {target}（{count} 字）",
                 task=TASKS_BY_ID.get(task).label if task in TASKS_BY_ID else task,
                 target=target, count=len(result.text)), "Action")
-    from ocr.result_dialog import maybe_show_ocr_result
 
-    maybe_show_ocr_result(result.text, "copy_all")
+    # 按设置弹结果窗（默认不弹）：这里弹的是**可重跑**的视觉模型窗口，留着图与模板，
+    # 用户能就地换个模板再读一次，不用回去重新截图
+    from ocr.result_dialog import should_show
+
+    if show_window or should_show("copy_all"):
+        try:
+            from ocr.vision_result_window import show_vision_result
+
+            show_vision_result(image, model, task=task, target=target,
+                               initial_text=result.text)
+        except Exception as e:
+            log_exception(e, T("显示视觉模型结果窗口"))
     return True
 
 
@@ -880,8 +1030,50 @@ def _copy_to_clipboard_text(text: str, log_message) -> None:
     log_debug(log_message, "Action")
 
 
+def _extract_colors(image) -> bool:
+    """静默截取 → 本地聚类取主色 → 复制色值并打开配色窗口。
+
+    这一步完全在本地做（见 ``core.palette``）：不联网、不需要用户配任何模型。
+    提取不到颜色时**先提示再返回 False**——一张纯透明或坏掉的图配上静默失败，
+    用户只会以为功能坏了。
+    """
+    from core.palette import extract_palette, palette_text
+
+    colors = extract_palette(image)
+    if not colors:
+        log_warning(T("配色提取没有得到任何颜色，动作未完成"), "Action")
+        from core.i18n import make_tr
+        from ui.dialogs import show_warning_dialog
+
+        _tr = make_tr("PaletteWindow")
+        show_warning_dialog(None, _tr("Palette"),
+                            _tr("No color could be extracted from this image."))
+        return False
+
+    _copy_to_clipboard_text(
+        palette_text(colors),
+        T("已复制 {count} 个配色色值", count=len(colors)),
+    )
+    from ui.palette_window import show_palette_result
+
+    show_palette_result(colors)
+    return True
+
+
 def _show_formula_result(latex: str) -> None:
-    """展示识别到的 LaTeX：复用既有的可选中文本对话框，不另造窗口。"""
+    """展示识别到的 LaTeX：排版预览 + 可改的源码（渲染器见 ``ocr.latex_render``）。
+
+    窗口起不来时退回纯文本对话框——识别本身已经成功，不该因为显示层的问题让用户
+    看不到结果。复制到剪贴板那一步在调用方，早就做完了。
+    """
+    try:
+        from ui.formula_window import show_formula_result
+
+        show_formula_result(latex)
+        return
+    except Exception as e:
+        log_exception(e, T("显示公式结果窗口"))
+
     from core.i18n import make_tr
     from ui.dialogs import show_text_dialog
 
@@ -1105,14 +1297,20 @@ def run_action(action_id: str, app) -> bool:
         return _copy_table_markdown(image)
     if action_id == "recognize_table":
         return _recognize_table(image)
+    if action_id == "auto_recognize":
+        return _auto_recognize(image, app)
     if action_id == "mask_sensitive_info":
         return mask_sensitive_info(image)
     if action_id == "beautify_export":
         return beautify_export(image, getattr(app, "config_manager", None))
+    if action_id == "extract_colors":
+        return _extract_colors(image)
     if action_id == "translate_image_in_place":
         return translate_image_in_place(image, getattr(app, "config_manager", None))
     if action_id == "read_image_ai":
         return _read_image_with_ai(image, app)
+    if action_id == "solve_problem":
+        return _solve_problem(image, app)
     if action_id == "convert_image_markdown":
         return _convert_image_markdown(image, app)
     if action_id == "recognize_formula":

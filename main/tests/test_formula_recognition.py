@@ -134,14 +134,14 @@ class TestFormulaAction:
         engine = _StubEngine("\\int_0^1 x^2 dx")
         formula.register_formula_engine(engine)
         shown = []
-        monkeypatch.setattr("ui.dialogs.show_text_dialog",
-                            lambda parent, title, content: shown.append((title, content)))
+        monkeypatch.setattr("ui.formula_window.show_formula_result",
+                            lambda latex, parent=None: shown.append(latex))
         clipboard = qapp.clipboard()
         previous = clipboard.text()
         try:
             clipboard.clear()
             assert actions.run_action("recognize_formula", _FakeApp()) is True
-            assert shown == [("Formula Result", "\\int_0^1 x^2 dx")]
+            assert shown == ["\\int_0^1 x^2 dx"]
             assert clipboard.text() == "\\int_0^1 x^2 dx"
         finally:
             clipboard.setText(previous)
@@ -161,3 +161,63 @@ class TestFormulaAction:
         action = actions.ACTIONS_BY_ID["recognize_formula"]
         assert action.silent_capture is True
         assert "recognize_formula" in actions.GESTURE_ACTION_IDS
+
+
+class TestFormulaWindow:
+    def _window(self, latex=r"\frac{a}{b}"):
+        from ui.formula_window import FormulaWindow
+
+        return FormulaWindow(latex)
+
+    def test_window_shows_the_latex_in_the_preview_and_the_source(self, qapp):
+        window = self._window()
+        try:
+            assert window.preview.latex() == r"\frac{a}{b}"
+            assert window.latex() == r"\frac{a}{b}"
+        finally:
+            window.deleteLater()
+
+    def test_editing_the_source_refreshes_the_preview(self, qapp):
+        window = self._window()
+        try:
+            window.source_edit.setPlainText(r"\sqrt{x+1}")
+            assert window._refresh_preview() is True
+            assert window.preview.latex() == r"\sqrt{x+1}"
+        finally:
+            window.deleteLater()
+
+    def test_copy_latex_puts_the_edited_source_on_the_clipboard(self, qapp):
+        window = self._window()
+        try:
+            window.source_edit.setPlainText(r"E = mc^2")
+            assert window.copy_latex() is True
+            assert qapp.clipboard().text() == r"E = mc^2"
+        finally:
+            window.deleteLater()
+
+    def test_copy_as_image_puts_a_non_empty_image_on_the_clipboard(self, qapp):
+        window = self._window()
+        try:
+            assert window.copy_image() is True
+            image = qapp.clipboard().image()
+            assert image is not None and not image.isNull()
+            assert image.width() > 10 and image.height() > 10
+        finally:
+            window.deleteLater()
+
+    def test_empty_latex_is_not_copied(self, qapp):
+        window = self._window("")
+        try:
+            assert window.copy_latex() is False
+            assert window.copy_image() is False
+        finally:
+            window.deleteLater()
+
+    def test_broken_latex_still_opens_and_copies(self, qapp):
+        """渲染器不抛异常；即使解析出怪东西，窗口也要能开、源码也要能复制。"""
+        window = self._window(r"\frac{a}{")
+        try:
+            assert window._refresh_preview() is True
+            assert window.copy_latex() is True
+        finally:
+            window.deleteLater()
