@@ -1,4 +1,4 @@
-"""main/ocr/ 目录下 log_* 调用的中→英翻译表。"""
+﻿"""main/ocr/ 目录下 log_* 调用的中→英翻译表。"""
 
 TRANSLATIONS: dict[str, str] = {
     "高精度引擎可用 (Rust FFI)": "High-precision engine available (Rust FFI)",
@@ -64,4 +64,17 @@ TRANSLATIONS: dict[str, str] = {
     "查询系统密钥库": "Querying the system key store",
     "已把视觉模型的密钥迁移到系统密钥库":
         "Vision model keys migrated to the system key store",
+
+    # 2026-09-19 配色提取 / 自动分流 / AI 解读窗口
+    "自动分流: 本地文字识别（置信度 {percent}%）": "Auto route: local OCR text ({percent}% confidence)",
+    "自动分流: 本地置信度偏低，交给视觉模型重读":
+        "Auto route: local confidence is low, asking the vision model to read it again",
+    "调用视觉模型": "Calling the vision model",
+    "调用视觉模型失败: {e}": "Calling the vision model failed: {e}",
+    "没有配置可用的视觉模型，无法转换图片": "No usable vision model is configured, cannot convert the image",
+    "视觉模型窗口请求: {task}": "Vision window request: {task}",
+    "视觉模型失败: {error}": "Vision model failed: {error}",
+    "视觉模型返回结果: {count} 字符": "Vision model returned {count} characters",
+    "自动分流: 本地置信度偏低且没有视觉模型，交给公式引擎":
+        "Auto route: low local confidence and no vision model, using the formula engine",
 }

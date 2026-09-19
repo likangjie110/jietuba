@@ -687,12 +687,75 @@ FORMULA_RESULT_SOURCES = (
     "Formula Recognition Unavailable",
     "No formula engine is available on this machine: jietuba does not ship a formula "
     "model. Install a formula engine plugin and try again.",
+    "Edit the LaTeX below if the preview is wrong.",
+    "Copy LaTeX",
+    "Copy as Image",
+    "Copied",
 )
 
 
 @pytest.mark.parametrize("language", ["en", "ja", "ko", "zh"])
 def test_formula_result_texts_are_compiled(language):
     _assert_sources_in_context(language, "FormulaResult", FORMULA_RESULT_SOURCES)
+
+
+#: 2026-09-19 补的三项能力里，界面文案集中在自己模块里的那些：逐文件对上下文检查。
+#: 这三份文件的所有 ``_tr(...)`` 都只属于一个上下文，所以不用逐条手抄清单。
+AI_FEATURE_SOURCES = {
+    "main/ui/palette_window.py": "PaletteWindow",
+    "main/ocr/vision_result_window.py": "VisionResultWindow",
+    "main/ui/formula_window.py": "FormulaResult",
+}
+
+#: 自动分流的文案写在 core/actions.py 里（那份文件横跨多个上下文），所以单列清单。
+AUTO_ROUTE_SOURCES = (
+    "Auto Recognize",
+    "Nothing was recognized in this area. Configure a vision model in the settings "
+    "to have an AI read it.",
+    "Nothing was recognized in this area.",
+)
+
+#: 本轮新增的动作名：动作标签由各入口 ``self.tr(action.label)`` 翻，因此每个入口的
+#: 上下文都要有（托盘、热键失败提示、设置页的动作下拉、工具栏与工具栏排布界面）
+NEW_ACTION_LABEL_CONTEXTS = {
+    "Extract Palette": ("SettingsDialog", "SystemTray", "MainApp"),
+    "Solve Problem": ("SettingsDialog", "SystemTray", "MainApp"),
+    "Auto Recognize": ("SettingsDialog", "SystemTray", "MainApp"),
+    "Read with AI (vision model)": ("Toolbar",),
+    "Read with AI": ("ToolbarLayoutDialog",),
+}
+
+
+def _context_sources(language: str) -> dict:
+    from core.i18n import I18nManager
+
+    translations_dir = I18nManager.get_translations_dir()
+    contexts = ET.parse(translations_dir / f"app_{language}.xml").getroot().findall("context")
+    return {
+        context.findtext("name"): {message.findtext("source")
+                                   for message in context.findall("message")}
+        for context in contexts
+    }
+
+
+@pytest.mark.parametrize("language", ["en", "ja", "ko", "zh"])
+def test_new_ai_ui_texts_are_compiled(language):
+    """新增界面模块里的每条字面量都要在它自己的上下文里有译文。"""
+    by_context = _context_sources(language)
+
+    missing = {}
+    for path, context in AI_FEATURE_SOURCES.items():
+        absent = _literal_tr_sources(path) - by_context.get(context, set())
+        if absent:
+            missing[path] = sorted(absent)
+    assert not missing, (language, missing)
+
+    for source in AUTO_ROUTE_SOURCES:
+        assert source in by_context.get("AutoRecognize", set()), (language, source)
+
+    for source, contexts in NEW_ACTION_LABEL_CONTEXTS.items():
+        for context in contexts:
+            assert source in by_context.get(context, set()), (language, source, context)
 
 
 #: 2026-09-19 按参考清单补的设置所在的文件（其它页 / 截图页 / 剪贴板页 + 识别结果对话框）
@@ -705,9 +768,10 @@ NEW_SETTINGS_SOURCES = (
 
 
 def _literal_tr_sources(path: str) -> set:
-    """把一份文件里 ``.tr("字面量")`` / ``make_tr(...)("字面量")`` 的源串抠出来。
+    """把一份文件里 ``.tr("字面量")`` / ``_tr("字面量")`` 的源串抠出来。
 
-    手抄清单会漏（新加一条卡片忘了补清单就测不出来），所以直接读源码。
+    手抄清单会漏（新加一条卡片忘了补清单就测不出来），所以直接读源码。``_tr`` 是
+    模块级 ``make_tr("Ctx")`` 的常见别名，界面模块里普遍这么用。
     """
     import ast
 
@@ -717,7 +781,7 @@ def _literal_tr_sources(path: str) -> set:
         if not isinstance(node, ast.Call) or not node.args:
             continue
         name = getattr(node.func, "attr", None) or getattr(node.func, "id", None)
-        if name not in ("tr", "translate"):
+        if name not in ("tr", "translate", "_tr"):
             continue
         arg = node.args[0]
         if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and arg.value.strip():

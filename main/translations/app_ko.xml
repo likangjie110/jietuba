@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN">
 <context>
@@ -2873,6 +2873,22 @@ SOFTWARE.</translation>
             <source>Which API the endpoint speaks; Azure needs its api-version.</source>
             <translation>엔드포인트가 사용하는 API 종류입니다. Azure는 api-version도 필요합니다.</translation>
         </message>
+    <message>
+        <source>Solve the problem</source>
+        <translation>문제 풀기</translation>
+    </message>
+    <message>
+        <source>Extract Palette</source>
+        <translation>팔레트 추출</translation>
+    </message>
+    <message>
+        <source>Solve Problem</source>
+        <translation>문제 풀기</translation>
+    </message>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>자동 인식</translation>
+    </message>
 </context>
 
 <context>
@@ -3080,6 +3096,10 @@ SOFTWARE.</translation>
     <message>
         <source>Recognize text (OCR)</source>
         <translation>텍스트 인식(OCR)</translation>
+    </message>
+    <message>
+        <source>Read with AI (vision model)</source>
+        <translation>AI로 읽기(비전 모델)</translation>
     </message>
 </context>
 
@@ -3501,6 +3521,18 @@ SOFTWARE.</translation>
             <source>Beautify and Export</source>
             <translation>꾸미고 내보내기</translation>
         </message>
+    <message>
+        <source>Extract Palette</source>
+        <translation>팔레트 추출</translation>
+    </message>
+    <message>
+        <source>Solve Problem</source>
+        <translation>문제 풀기</translation>
+    </message>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>자동 인식</translation>
+    </message>
 </context>
 
 <context>
@@ -3645,6 +3677,18 @@ SOFTWARE.</translation>
             <source>Beautify and Export</source>
             <translation>꾸미고 내보내기</translation>
         </message>
+    <message>
+        <source>Extract Palette</source>
+        <translation>팔레트 추출</translation>
+    </message>
+    <message>
+        <source>Solve Problem</source>
+        <translation>문제 풀기</translation>
+    </message>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>자동 인식</translation>
+    </message>
 </context>
 
 <context>
@@ -5698,6 +5742,10 @@ SOFTWARE.</translation>
             <source>Magnify a detail</source>
             <translation>부분 확대</translation>
         </message>
+    <message>
+        <source>Read with AI</source>
+        <translation>AI로 읽기</translation>
+    </message>
 </context>
 
 <context>
@@ -5781,6 +5829,22 @@ SOFTWARE.</translation>
     <message>
         <source>No formula engine is available on this machine: jietuba does not ship a formula model. Install a formula engine plugin and try again.</source>
         <translation>이 환경에서 사용할 수 있는 수식 엔진이 없습니다. jietuba는 수식 모델을 포함하지 않으므로 수식 엔진 플러그인을 설치한 뒤 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Edit the LaTeX below if the preview is wrong.</source>
+        <translation>미리보기가 잘못되면 아래 LaTeX를 수정하세요.</translation>
+    </message>
+    <message>
+        <source>Copy LaTeX</source>
+        <translation>LaTeX 복사</translation>
+    </message>
+    <message>
+        <source>Copy as Image</source>
+        <translation>이미지로 복사</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>복사됨</translation>
     </message>
 </context>
 
@@ -6347,6 +6411,114 @@ SOFTWARE.</translation>
     <message>
         <source>Copied</source>
         <translation>복사됨</translation>
+    </message>
+</context>
+
+<context>
+    <name>PaletteWindow</name>
+    <message>
+        <source>Palette</source>
+        <translation>팔레트 추출</translation>
+    </message>
+    <message>
+        <source>%1 colors</source>
+        <translation>%1개 색상</translation>
+    </message>
+    <message>
+        <source>Copy %1</source>
+        <translation>%1 복사</translation>
+    </message>
+    <message>
+        <source>Copy All</source>
+        <translation>모두 복사</translation>
+    </message>
+    <message>
+        <source>Copied %1</source>
+        <translation>%1 복사됨</translation>
+    </message>
+    <message>
+        <source>Copied %1 colors</source>
+        <translation>%1개 색상 복사됨</translation>
+    </message>
+    <message>
+        <source>No color could be extracted from this image.</source>
+        <translation>이 이미지에서 색상을 추출할 수 없습니다.</translation>
+    </message>
+</context>
+
+<context>
+    <name>AutoRecognize</name>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>자동 인식</translation>
+    </message>
+    <message>
+        <source>Nothing was recognized in this area. Configure a vision model in the settings to have an AI read it.</source>
+        <translation>이 영역에서 아무것도 인식하지 못했습니다. 설정에서 비전 모델을 구성하면 AI가 읽을 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Nothing was recognized in this area.</source>
+        <translation>이 영역에서 아무것도 인식하지 못했습니다.</translation>
+    </message>
+</context>
+
+<context>
+    <name>VisionResultWindow</name>
+    <message>
+        <source>Read with AI</source>
+        <translation>AI로 읽기</translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation>실행</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Reading...</source>
+        <translation>읽는 중…</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>복사됨</translation>
+    </message>
+    <message>
+        <source>%1 characters</source>
+        <translation>%1자</translation>
+    </message>
+    <message>
+        <source>No vision model is configured. Add one in the OCR settings.</source>
+        <translation>비전 모델이 구성되지 않았습니다. OCR 설정에서 추가하세요.</translation>
+    </message>
+    <message>
+        <source>The vision model failed.</source>
+        <translation>비전 모델 호출에 실패했습니다.</translation>
+    </message>
+    <message>
+        <source>Precise text extraction</source>
+        <translation>정확한 텍스트 추출</translation>
+    </message>
+    <message>
+        <source>Explain the code</source>
+        <translation>코드 설명</translation>
+    </message>
+    <message>
+        <source>Table to Markdown</source>
+        <translation>표를 Markdown으로</translation>
+    </message>
+    <message>
+        <source>Formula to LaTeX</source>
+        <translation>수식을 LaTeX로</translation>
+    </message>
+    <message>
+        <source>Describe the image</source>
+        <translation>이미지 설명</translation>
+    </message>
+    <message>
+        <source>Solve the problem</source>
+        <translation>문제 풀기</translation>
     </message>
 </context>
 

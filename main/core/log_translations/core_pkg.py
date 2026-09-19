@@ -1,4 +1,4 @@
-"""main/core/ 目录下 log_* 调用的中→英翻译表。"""
+﻿"""main/core/ 目录下 log_* 调用的中→英翻译表。"""
 
 TRANSLATIONS: dict[str, str] = {
     # core/logger.py 自身的启动/关闭诊断信息
@@ -283,4 +283,17 @@ TRANSLATIONS: dict[str, str] = {
         "Writing to the system key store failed ({status}): {name}",
     "删除系统密钥库条目失败（{status}）: {name}":
         "Deleting from the system key store failed ({status}): {name}",
+
+    # 2026-09-19 配色提取 / 自动分流 / AI 解读窗口
+    "导入 Pillow": "Importing Pillow",
+    "提取图片配色": "Extracting the image palette",
+    "配色提取没有得到任何颜色": "Color extraction produced no color",
+    "配色提取没有得到任何颜色，动作未完成": "Color extraction produced no color, action not completed",
+    "已复制 {count} 个配色色值": "Copied {count} palette colors",
+    "自动分流结果: {route}": "Auto route: {route}",
+    "自动分流没有识别到内容": "Auto route recognized nothing",
+    "开始自动识别并分流": "Starting auto recognition",
+    "探测公式引擎可用性": "Probing formula engine availability",
+    "显示公式结果窗口": "Showing the formula result window",
+    "显示视觉模型结果窗口": "Showing the vision model result window",
 }

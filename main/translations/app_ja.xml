@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN">
 <context>
@@ -2873,6 +2873,22 @@ SOFTWARE.</translation>
             <source>Which API the endpoint speaks; Azure needs its api-version.</source>
             <translation>エンドポイントが話す API の種類。Azure は api-version も必要です。</translation>
         </message>
+    <message>
+        <source>Solve the problem</source>
+        <translation>問題を解く</translation>
+    </message>
+    <message>
+        <source>Extract Palette</source>
+        <translation>配色を抽出</translation>
+    </message>
+    <message>
+        <source>Solve Problem</source>
+        <translation>問題を解く</translation>
+    </message>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>自動認識</translation>
+    </message>
 </context>
 
 <context>
@@ -3084,6 +3100,10 @@ SOFTWARE.</translation>
     <message>
         <source>Recognize text (OCR)</source>
         <translation>文字認識（OCR）</translation>
+    </message>
+    <message>
+        <source>Read with AI (vision model)</source>
+        <translation>AI で読み取る（視覚モデル）</translation>
     </message>
 </context>
 
@@ -3505,6 +3525,18 @@ SOFTWARE.</translation>
             <source>Beautify and Export</source>
             <translation>美化して書き出し</translation>
         </message>
+    <message>
+        <source>Extract Palette</source>
+        <translation>配色を抽出</translation>
+    </message>
+    <message>
+        <source>Solve Problem</source>
+        <translation>問題を解く</translation>
+    </message>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>自動認識</translation>
+    </message>
 </context>
 
 <context>
@@ -3649,6 +3681,18 @@ SOFTWARE.</translation>
             <source>Beautify and Export</source>
             <translation>美化して書き出し</translation>
         </message>
+    <message>
+        <source>Extract Palette</source>
+        <translation>配色を抽出</translation>
+    </message>
+    <message>
+        <source>Solve Problem</source>
+        <translation>問題を解く</translation>
+    </message>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>自動認識</translation>
+    </message>
 </context>
 
 <context>
@@ -5721,6 +5765,10 @@ SOFTWARE.</translation>
             <source>Magnify a detail</source>
             <translation>一部を拡大</translation>
         </message>
+    <message>
+        <source>Read with AI</source>
+        <translation>AI で読み取る</translation>
+    </message>
 </context>
 
 <context>
@@ -5804,6 +5852,22 @@ SOFTWARE.</translation>
     <message>
         <source>No formula engine is available on this machine: jietuba does not ship a formula model. Install a formula engine plugin and try again.</source>
         <translation>この環境で使える数式エンジンがありません。jietuba は数式モデルを同梱していないため、数式エンジンのプラグインを入れてから再試行してください。</translation>
+    </message>
+    <message>
+        <source>Edit the LaTeX below if the preview is wrong.</source>
+        <translation>プレビューが違う場合は下の LaTeX を修正してください。</translation>
+    </message>
+    <message>
+        <source>Copy LaTeX</source>
+        <translation>LaTeX をコピー</translation>
+    </message>
+    <message>
+        <source>Copy as Image</source>
+        <translation>画像としてコピー</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>コピーしました</translation>
     </message>
 </context>
 
@@ -6370,6 +6434,114 @@ SOFTWARE.</translation>
     <message>
         <source>Copied</source>
         <translation>コピーしました</translation>
+    </message>
+</context>
+
+<context>
+    <name>PaletteWindow</name>
+    <message>
+        <source>Palette</source>
+        <translation>配色の抽出</translation>
+    </message>
+    <message>
+        <source>%1 colors</source>
+        <translation>%1 色</translation>
+    </message>
+    <message>
+        <source>Copy %1</source>
+        <translation>%1 をコピー</translation>
+    </message>
+    <message>
+        <source>Copy All</source>
+        <translation>すべてコピー</translation>
+    </message>
+    <message>
+        <source>Copied %1</source>
+        <translation>%1 をコピーしました</translation>
+    </message>
+    <message>
+        <source>Copied %1 colors</source>
+        <translation>%1 色をコピーしました</translation>
+    </message>
+    <message>
+        <source>No color could be extracted from this image.</source>
+        <translation>この画像から色を抽出できませんでした。</translation>
+    </message>
+</context>
+
+<context>
+    <name>AutoRecognize</name>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>自動認識</translation>
+    </message>
+    <message>
+        <source>Nothing was recognized in this area. Configure a vision model in the settings to have an AI read it.</source>
+        <translation>この範囲からは何も認識できませんでした。設定で視覚モデルを構成すると AI に読ませられます。</translation>
+    </message>
+    <message>
+        <source>Nothing was recognized in this area.</source>
+        <translation>この範囲からは何も認識できませんでした。</translation>
+    </message>
+</context>
+
+<context>
+    <name>VisionResultWindow</name>
+    <message>
+        <source>Read with AI</source>
+        <translation>AI で読み取る</translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation>実行</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>コピー</translation>
+    </message>
+    <message>
+        <source>Reading...</source>
+        <translation>読み取り中…</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>コピーしました</translation>
+    </message>
+    <message>
+        <source>%1 characters</source>
+        <translation>%1 文字</translation>
+    </message>
+    <message>
+        <source>No vision model is configured. Add one in the OCR settings.</source>
+        <translation>視覚モデルが構成されていません。OCR 設定で追加してください。</translation>
+    </message>
+    <message>
+        <source>The vision model failed.</source>
+        <translation>視覚モデルの呼び出しに失敗しました。</translation>
+    </message>
+    <message>
+        <source>Precise text extraction</source>
+        <translation>文字を正確に抽出</translation>
+    </message>
+    <message>
+        <source>Explain the code</source>
+        <translation>コードを説明</translation>
+    </message>
+    <message>
+        <source>Table to Markdown</source>
+        <translation>表を Markdown に</translation>
+    </message>
+    <message>
+        <source>Formula to LaTeX</source>
+        <translation>数式を LaTeX に</translation>
+    </message>
+    <message>
+        <source>Describe the image</source>
+        <translation>画像を説明</translation>
+    </message>
+    <message>
+        <source>Solve the problem</source>
+        <translation>問題を解く</translation>
     </message>
 </context>
 

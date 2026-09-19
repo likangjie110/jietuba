@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.1" language="zh_CN">
 <context>
@@ -2909,6 +2909,22 @@ SOFTWARE.</translation>
             <source>Which API the endpoint speaks; Azure needs its api-version.</source>
             <translation>端点说的是哪套接口；Azure 还要填 api-version。</translation>
         </message>
+    <message>
+        <source>Solve the problem</source>
+        <translation>解题</translation>
+    </message>
+    <message>
+        <source>Extract Palette</source>
+        <translation>提取配色</translation>
+    </message>
+    <message>
+        <source>Solve Problem</source>
+        <translation>解题</translation>
+    </message>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>自动识别</translation>
+    </message>
 </context>
 
 <context>
@@ -3120,6 +3136,10 @@ SOFTWARE.</translation>
     <message>
         <source>Recognize text (OCR)</source>
         <translation>文字识别（OCR）</translation>
+    </message>
+    <message>
+        <source>Read with AI (vision model)</source>
+        <translation>让 AI 解读（视觉模型）</translation>
     </message>
 </context>
 
@@ -3541,6 +3561,18 @@ SOFTWARE.</translation>
             <source>Beautify and Export</source>
             <translation>美化并导出</translation>
         </message>
+    <message>
+        <source>Extract Palette</source>
+        <translation>提取配色</translation>
+    </message>
+    <message>
+        <source>Solve Problem</source>
+        <translation>解题</translation>
+    </message>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>自动识别</translation>
+    </message>
 </context>
 
 <context>
@@ -3685,6 +3717,18 @@ SOFTWARE.</translation>
             <source>Beautify and Export</source>
             <translation>美化并导出</translation>
         </message>
+    <message>
+        <source>Extract Palette</source>
+        <translation>提取配色</translation>
+    </message>
+    <message>
+        <source>Solve Problem</source>
+        <translation>解题</translation>
+    </message>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>自动识别</translation>
+    </message>
 </context>
 
 <context>
@@ -5761,6 +5805,10 @@ SOFTWARE.</translation>
             <source>Magnify a detail</source>
             <translation>局部放大</translation>
         </message>
+    <message>
+        <source>Read with AI</source>
+        <translation>AI 解读</translation>
+    </message>
 </context>
 
 <context>
@@ -5844,6 +5892,22 @@ SOFTWARE.</translation>
     <message>
         <source>No formula engine is available on this machine: jietuba does not ship a formula model. Install a formula engine plugin and try again.</source>
         <translation>这台机器上没有可用的公式引擎：jietuba 不带公式识别模型，装了公式引擎插件后再试。</translation>
+    </message>
+    <message>
+        <source>Edit the LaTeX below if the preview is wrong.</source>
+        <translation>预览不对就改下面的 LaTeX。</translation>
+    </message>
+    <message>
+        <source>Copy LaTeX</source>
+        <translation>复制 LaTeX</translation>
+    </message>
+    <message>
+        <source>Copy as Image</source>
+        <translation>复制为图片</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>已复制</translation>
     </message>
 </context>
 
@@ -6410,6 +6474,114 @@ SOFTWARE.</translation>
     <message>
         <source>Copied</source>
         <translation>已复制</translation>
+    </message>
+</context>
+
+<context>
+    <name>PaletteWindow</name>
+    <message>
+        <source>Palette</source>
+        <translation>配色提取</translation>
+    </message>
+    <message>
+        <source>%1 colors</source>
+        <translation>%1 个颜色</translation>
+    </message>
+    <message>
+        <source>Copy %1</source>
+        <translation>复制 %1</translation>
+    </message>
+    <message>
+        <source>Copy All</source>
+        <translation>全部复制</translation>
+    </message>
+    <message>
+        <source>Copied %1</source>
+        <translation>已复制 %1</translation>
+    </message>
+    <message>
+        <source>Copied %1 colors</source>
+        <translation>已复制 %1 个色值</translation>
+    </message>
+    <message>
+        <source>No color could be extracted from this image.</source>
+        <translation>这张图里没有可提取的颜色。</translation>
+    </message>
+</context>
+
+<context>
+    <name>AutoRecognize</name>
+    <message>
+        <source>Auto Recognize</source>
+        <translation>自动识别</translation>
+    </message>
+    <message>
+        <source>Nothing was recognized in this area. Configure a vision model in the settings to have an AI read it.</source>
+        <translation>这个区域里什么都没识别到。可以在设置里配置视觉模型，让 AI 来读。</translation>
+    </message>
+    <message>
+        <source>Nothing was recognized in this area.</source>
+        <translation>这个区域里什么都没识别到。</translation>
+    </message>
+</context>
+
+<context>
+    <name>VisionResultWindow</name>
+    <message>
+        <source>Read with AI</source>
+        <translation>AI 解读</translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation>重跑</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>复制</translation>
+    </message>
+    <message>
+        <source>Reading...</source>
+        <translation>识别中…</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>已复制</translation>
+    </message>
+    <message>
+        <source>%1 characters</source>
+        <translation>%1 个字符</translation>
+    </message>
+    <message>
+        <source>No vision model is configured. Add one in the OCR settings.</source>
+        <translation>还没有配置视觉模型，可以在截图设置的识别组里加一个。</translation>
+    </message>
+    <message>
+        <source>The vision model failed.</source>
+        <translation>视觉模型调用失败。</translation>
+    </message>
+    <message>
+        <source>Precise text extraction</source>
+        <translation>精确取字</translation>
+    </message>
+    <message>
+        <source>Explain the code</source>
+        <translation>解释代码</translation>
+    </message>
+    <message>
+        <source>Table to Markdown</source>
+        <translation>表格转 Markdown</translation>
+    </message>
+    <message>
+        <source>Formula to LaTeX</source>
+        <translation>公式转 LaTeX</translation>
+    </message>
+    <message>
+        <source>Describe the image</source>
+        <translation>描述图片</translation>
+    </message>
+    <message>
+        <source>Solve the problem</source>
+        <translation>解题</translation>
     </message>
 </context>
 

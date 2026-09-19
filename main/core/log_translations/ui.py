@@ -1,4 +1,4 @@
-"""main/ui/ 目录下 log_* 调用的中→英翻译表。"""
+﻿"""main/ui/ 目录下 log_* 调用的中→英翻译表。"""
 
 TRANSLATIONS: dict[str, str] = {
     # -- ui/magnifier.py --
@@ -136,4 +136,12 @@ TRANSLATIONS: dict[str, str] = {
     "按新语言重新初始化 OCR": "Re-initializing OCR with the new language",
     "刷新托盘图标": "Refreshing the tray icon",
     "托盘单击触发动作: {action_id}": "Tray click triggered action: {action_id}",
+
+    # 2026-09-19 配色提取 / 自动分流 / AI 解读窗口
+    "配色已复制: {hex_value}": "Palette color copied: {hex_value}",
+    "已复制 {count} 个配色色值": "Copied {count} palette colors",
+    "重排公式预览": "Re-laying out the formula preview",
+    "公式已复制到剪贴板（{count} 字）": "Formula copied to the clipboard ({count} chars)",
+    "渲染公式图片": "Rendering the formula image",
+    "公式图片已复制到剪贴板": "Formula image copied to the clipboard",
 }
