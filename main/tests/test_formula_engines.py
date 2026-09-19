@@ -144,7 +144,9 @@ class TestPPFormulaNetEngine:
         assert tokenizer.endswith(os.path.join("models", "formula", "tokenizer.json"))
 
     def test_frozen_build_finds_models_next_to_the_executable(self, monkeypatch, tmp_path):
-        """打包后模型在「可执行文件同级目录的 models/」下（build_macos_app.py 放的位置），
+        """打包后模型在「可执行文件同级目录的 models/」下（Windows 的
+        build_with_ocr_onefile.py 放的位置；macOS 的 build_macos_app.py 改走
+        --add-data 落到 Contents/Resources/models，命中下面的 _MEIPASS 那条），
         而 ResourceManager 走的是 _MEIPASS —— 两条路都要能找到，否则发行版里本地公式
         识别永远报「缺模型」。这条把「打包后的布局」造出来验一遍。
         """

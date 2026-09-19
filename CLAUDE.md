@@ -12,7 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     相关代码时不要写 `if sys.platform == "win32": ...`，而是往平台层补能力或后端；这两条
     由 `main/tests/test_platform_structure.py` 强制（第一道扫描带一份账本，现在只剩
     OCR 的 Windows 构建变体引擎一条）。
-  - **macOS 上可以开发调试**（`setup_macos.sh` 准备环境）：截图、标注、钉图、OCR、
+  - **macOS 上可以开发调试**（`setup_macos.sh` 准备环境，`setup_macos_signing.sh` 一次性
+    准备打包用的签名身份）：截图、标注、钉图、OCR、
     翻译、全局热键、剪贴板历史、窗口智能选区、GIF 录制都能跑（Windows 走 Rust 的
     GDI 抓屏，其它平台由 Python 用 mss 抓帧后喂进同一个 Rust FrameStore）。
   - 窗口智能选区在 macOS 上走 Quartz（`core/platform/window_macos.py`）：
@@ -44,10 +45,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     副本对不上辅助功能/录屏里的授权条目。`relaunch_application()` 让一个脱离父进程的 shell
     等本进程 pid 消失后 `open -a "<bundle>"`（等 pid 是因为新实例带单实例检查，本进程还
     活着时它一启动就会自己退出）。源码运行则重开同一个解释器和 argv。
-  - macOS 的 TCC 是按**代码签名**认应用的，而 `dist/Jietuba.app` 是 ad-hoc 签名（本机没有
-    可用的签名身份）：每次 `build_macos_app.py` 重打包后 cdhash 都会变，辅助功能/录屏里
-    的旧条目就失效了——列表里看着是勾上的，实际不生效。改完重新打包后要把旧条目用「−」
-    移除再重新添加当前这份；`tccutil reset Accessibility com.jietuba.app` 可以清掉旧条目。
+  - macOS 的 TCC 是按**代码签名**认应用的。`dist/Jietuba.app` 现在由
+    `build_macos_app.py` 用本机自签名身份签（身份由 `./setup_macos_signing.sh` 一次性创建，
+    存在 `~/Library/Keychains/jietuba-signing.keychain-db`）：designated requirement 是
+    `identifier + certificate leaf`，只要证书不变，重新打包不会让屏幕录制/辅助功能的授权
+    失效。**别再退回 ad-hoc 签名**——ad-hoc 的 requirement 是 cdhash，重打包即失效，
+    旧条目在系统设置里看着是勾上的、实际不生效；打包脚本会校验 requirement 并直接报错拦住。
+  - 签名这件事上几个实测过的坑：`codesign --keychain <路径>` 在 macOS 26 上找不到身份
+    （必须把该 keychain 放进用户 keychain 搜索列表且排在第一位）；身份放登录 keychain 会
+    弹系统授权框（codesign 实际由 `com.apple.CodeSigningHelper` 代签，ACL 里的 codesign
+    条目拦不住它，而 partition list 又必须先知道登录 keychain 密码才能改）；自签名证书不加
+    `add-trusted-cert -p codeSign` 就是 `no identity found`，而这一步改的是系统信任设置，
+    必然弹一次用户授权（脚本里只有这里是交互的，且只在首次创建时走）。keychain 空闲 5 分钟
+    /睡眠后会自锁，所以打包脚本每次签名前先 `security unlock-keychain -p ""`（空密码）。
+  - OCR 模型由 `--add-data` 交给 PyInstaller 收集，落在 `Contents/Resources/models/`（数据区），
+    打包后 `_MEIPASS/models`（= `Contents/Frameworks/models` 符号链接）正好命中代码里那条
+    回退路径，所以**不要**改回打包后再拷 `Contents/MacOS/models`：那是代码区，codesign 要求
+    目录里每个文件自带签名，`.onnx` 只能靠扩展属性承载 generic 签名，扩展属性一丢整包签名就
+    失效，刚授的权也跟着作废。
   - pynput 的键盘监听线程一启动就用 ctypes 读一次当前键盘布局，那组 Carbon 输入源接口
     在本进程是前台应用时要求在主线程调用；在监听线程上调用会被系统断言打死（崩溃报告是
     `EXC_BREAKPOINT`/`SIGTRAP`，线程停在 ctypes 里，不是可捕获的异常）。因此所有键盘监听
