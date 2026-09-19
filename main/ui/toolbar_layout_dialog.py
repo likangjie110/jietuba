@@ -33,6 +33,7 @@ BUTTON_NAMES = {
     "long_screenshot": "Long screenshot",
     "save": "Save",
     "screenshot_translate": "Screenshot translate",
+    "translate_in_place": "Translate image in place",
     "text_recognize": "Recognize text",
     "scan_code": "Scan code",
     "gif": "GIF recording",

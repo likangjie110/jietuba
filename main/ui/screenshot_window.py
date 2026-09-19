@@ -656,6 +656,7 @@ class ScreenshotWindow(QWidget):
         self.toolbar.pin_clicked.connect(self._handle_pin)
         self.toolbar.long_screenshot_clicked.connect(self.start_long_screenshot_mode)
         self.toolbar.screenshot_translate_clicked.connect(self._handle_screenshot_translate)
+        self.toolbar.translate_in_place_clicked.connect(self._handle_translate_in_place)
         self.toolbar.text_recognize_clicked.connect(self._handle_text_recognize)
         self.toolbar.scan_code_clicked.connect(self._handle_scan_code)
         self.toolbar.gif_record_clicked.connect(self.start_gif_record_mode)
@@ -693,6 +694,10 @@ class ScreenshotWindow(QWidget):
     def _handle_pin(self):
         if self.action_handler:
             self.action_handler.handle_pin()
+
+    def _handle_translate_in_place(self):
+        if self.action_handler:
+            self.action_handler.handle_translate_in_place()
 
     def _handle_screenshot_translate(self):
         if self.action_handler:

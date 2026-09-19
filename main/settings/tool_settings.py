@@ -428,6 +428,8 @@ class ToolSettingsManager(QObject):
         "azure_translate_endpoint": "",
         "translation_target_lang": "",         # 翻译目标语言（空为跟随系统语言）
         "local_model_id": "",                  # 离线引擎用的模型（空为第一个已安装的）
+        # 截图翻译的呈现：text 只给文本（老行为）/ replace 原图替换 / bilingual 下方双语
+        "translation_image_mode": "replace",
         "translation_split_sentences": True,   # 自动分句
         "translation_preserve_formatting": True,  # 保留格式
 
@@ -2100,6 +2102,16 @@ class ToolSettingsManager(QObject):
             "split_sentences": split_sentences,
             "preserve_formatting": preserve_formatting,
         }
+
+    #: 截图翻译的三种呈现
+    TRANSLATION_IMAGE_MODES = ("text", "replace", "bilingual")
+
+    def get_translation_image_mode(self) -> str:
+        """截图翻译怎么呈现：只给文本 / 原图替换 / 双语对照。"""
+        return self._choice("translation_image_mode", self.TRANSLATION_IMAGE_MODES, "replace")
+
+    def set_translation_image_mode(self, mode: str):
+        self.set_app_setting("translation_image_mode", str(mode or "replace"))
 
     def get_translation_request_params(self) -> dict:
         """获取与具体翻译厂商无关的调用参数。"""

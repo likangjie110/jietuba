@@ -2765,6 +2765,30 @@ SOFTWARE.</translation>
             <source>Read Image with AI</source>
             <translation>AI 读图</translation>
         </message>
+        <message>
+            <source>Screenshot translation</source>
+            <translation>截图翻译呈现</translation>
+        </message>
+        <message>
+            <source>How a translated screenshot is shown: text only, redrawn on the image, or a bilingual panel below it.</source>
+            <translation>翻译后的截图怎么给：只给文本、画回原图，或在下方加一段双语对照。</translation>
+        </message>
+        <message>
+            <source>Text only</source>
+            <translation>只给文本</translation>
+        </message>
+        <message>
+            <source>Redraw on the image</source>
+            <translation>画回原图（替换原文）</translation>
+        </message>
+        <message>
+            <source>Bilingual panel below</source>
+            <translation>下方加双语对照</translation>
+        </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>截图翻译并落图</translation>
+        </message>
 </context>
 
 <context>
@@ -3377,6 +3401,10 @@ SOFTWARE.</translation>
             <source>Read Image with AI</source>
             <translation>AI 读图</translation>
         </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>截图翻译并落图</translation>
+        </message>
 </context>
 
 <context>
@@ -3508,6 +3536,10 @@ SOFTWARE.</translation>
         <message>
             <source>Read Image with AI</source>
             <translation>AI 读图</translation>
+        </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>截图翻译并落图</translation>
         </message>
 </context>
 
@@ -5577,6 +5609,10 @@ SOFTWARE.</translation>
         <source>Recognize text</source>
         <translation>文字识别</translation>
     </message>
+        <message>
+            <source>Translate image in place</source>
+            <translation>翻译并落图</translation>
+        </message>
 </context>
 
 <context>

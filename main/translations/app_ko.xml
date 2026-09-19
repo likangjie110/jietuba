@@ -2729,6 +2729,30 @@ SOFTWARE.</translation>
             <source>Read Image with AI</source>
             <translation>AI로 이미지 읽기</translation>
         </message>
+        <message>
+            <source>Screenshot translation</source>
+            <translation>스크린샷 번역</translation>
+        </message>
+        <message>
+            <source>How a translated screenshot is shown: text only, redrawn on the image, or a bilingual panel below it.</source>
+            <translation>번역된 스크린샷 표시 방식: 텍스트만, 이미지에 다시 그리기, 아래에 이중 언어 영역 추가.</translation>
+        </message>
+        <message>
+            <source>Text only</source>
+            <translation>텍스트만</translation>
+        </message>
+        <message>
+            <source>Redraw on the image</source>
+            <translation>이미지에 다시 그리기</translation>
+        </message>
+        <message>
+            <source>Bilingual panel below</source>
+            <translation>아래에 이중 언어 영역</translation>
+        </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>번역 후 이미지에 반영</translation>
+        </message>
 </context>
 
 <context>
@@ -3337,6 +3361,10 @@ SOFTWARE.</translation>
             <source>Read Image with AI</source>
             <translation>AI로 이미지 읽기</translation>
         </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>번역 후 이미지에 반영</translation>
+        </message>
 </context>
 
 <context>
@@ -3468,6 +3496,10 @@ SOFTWARE.</translation>
         <message>
             <source>Read Image with AI</source>
             <translation>AI로 이미지 읽기</translation>
+        </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>번역 후 이미지에 반영</translation>
         </message>
 </context>
 
@@ -5514,6 +5546,10 @@ SOFTWARE.</translation>
         <source>Recognize text</source>
         <translation>텍스트 인식</translation>
     </message>
+        <message>
+            <source>Translate image in place</source>
+            <translation>번역 후 이미지에 반영</translation>
+        </message>
 </context>
 
 <context>

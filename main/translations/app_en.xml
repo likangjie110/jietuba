@@ -2765,6 +2765,30 @@ SOFTWARE.</translation>
             <source>Read Image with AI</source>
             <translation>Read Image with AI</translation>
         </message>
+        <message>
+            <source>Screenshot translation</source>
+            <translation>Screenshot translation</translation>
+        </message>
+        <message>
+            <source>How a translated screenshot is shown: text only, redrawn on the image, or a bilingual panel below it.</source>
+            <translation>How a translated screenshot is shown: text only, redrawn on the image, or a bilingual panel below it.</translation>
+        </message>
+        <message>
+            <source>Text only</source>
+            <translation>Text only</translation>
+        </message>
+        <message>
+            <source>Redraw on the image</source>
+            <translation>Redraw on the image</translation>
+        </message>
+        <message>
+            <source>Bilingual panel below</source>
+            <translation>Bilingual panel below</translation>
+        </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>Translate Image in Place</translation>
+        </message>
 </context>
 
 <context>
@@ -3373,6 +3397,10 @@ SOFTWARE.</translation>
             <source>Read Image with AI</source>
             <translation>Read Image with AI</translation>
         </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>Translate Image in Place</translation>
+        </message>
 </context>
 
 <context>
@@ -3544,6 +3572,10 @@ SOFTWARE.</translation>
         <message>
             <source>Read Image with AI</source>
             <translation>Read Image with AI</translation>
+        </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>Translate Image in Place</translation>
         </message>
 </context>
 
@@ -5590,6 +5622,10 @@ You can tweak more options in Settings anytime.</translation>
         <source>Recognize text</source>
         <translation>Recognize text</translation>
     </message>
+        <message>
+            <source>Translate image in place</source>
+            <translation>Translate image in place</translation>
+        </message>
 </context>
 
 <context>

@@ -220,6 +220,21 @@ class ActionTools:
             **params
         )
     
+    def handle_translate_in_place(self):
+        """截图翻译并落图：OCR → 逐行译文 → 按设置画回图上（替换 / 双语）。
+
+        与「截图翻译」的区别是成品是**图**：落在剪贴板与查看器里，可另存。
+        """
+        log_info(T("启动截图翻译落图"), "ScreenshotTranslate")
+
+        base_image = self._selection_base_image()
+        if base_image is None:
+            return
+
+        from core import actions
+
+        self._cleanup_and_close()
+        actions.translate_image_in_place(base_image, self.config_manager)
     def handle_text_recognize(self):
         """文字识别：识别选区里的文字，关掉截图界面后在结果窗口里显示
 

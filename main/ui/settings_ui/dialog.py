@@ -920,6 +920,11 @@ class SettingsDialog(FrostedFramelessDialog):
             index = self.translation_target_combo.findData(defaults["translation_target_lang"])
             if index >= 0:
                 self.translation_target_combo.setCurrentIndex(index)
+        if hasattr(self, 'translation_image_mode_combo'):
+            index = self.translation_image_mode_combo.findData(
+                defaults["translation_image_mode"])
+            if index >= 0:
+                self.translation_image_mode_combo.setCurrentIndex(index)
         if hasattr(self, 'split_sentences_toggle'):
             self.split_sentences_toggle.setChecked(defaults["translation_split_sentences"])
         if hasattr(self, 'preserve_formatting_toggle'):
@@ -1396,6 +1401,7 @@ class SettingsDialog(FrostedFramelessDialog):
         # 下拉框类
         for attr in ('screenshot_format_combo', 'ocr_engine_combo',
                       'translation_provider_combo', 'translation_target_combo',
+                      'translation_image_mode_combo',
                       'log_level_combo', 'ui_detection_combo',
                       'language_combo', 'engine_combo', 'cursor_move_combo',
                       'magnifier_color_format_combo', 'log_retention_combo',
@@ -1576,6 +1582,9 @@ class SettingsDialog(FrostedFramelessDialog):
             config.set_ocr_language(new_language)
         if hasattr(self, "ocr_tier_combo"):
             config.set_ocr_model_tier(self.ocr_tier_combo.currentData() or "")
+        if hasattr(self, "translation_image_mode_combo"):
+            config.set_translation_image_mode(
+                self.translation_image_mode_combo.currentData())
         if hasattr(self, "ocr_vision_target_combo"):
             config.set_ocr_vision_target(self.ocr_vision_target_combo.currentData())
         if hasattr(self, "ocr_vision_task_combo"):
@@ -1799,6 +1808,11 @@ class SettingsDialog(FrostedFramelessDialog):
             index = self.translation_target_combo.findData(self.config_manager.get_app_setting("translation_target_lang", ""))
             if index >= 0:
                 self.translation_target_combo.setCurrentIndex(index)
+        if hasattr(self, 'translation_image_mode_combo'):
+            index = self.translation_image_mode_combo.findData(
+                self.config_manager.get_translation_image_mode())
+            if index >= 0:
+                self.translation_image_mode_combo.setCurrentIndex(index)
         if hasattr(self, 'split_sentences_toggle'):
             self.split_sentences_toggle.setChecked(self.config_manager.get_translation_split_sentences())
         if hasattr(self, 'preserve_formatting_toggle'):

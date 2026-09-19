@@ -56,6 +56,7 @@ ACTIONS = (
     Action("convert_image_markdown", "Convert Image to Markdown", silent_capture=True,
            tray=True),
     Action("read_image_ai", "Read Image with AI", silent_capture=True, tray=True),
+    Action("translate_image_in_place", "Translate Image in Place", tray=True),
     Action("recognize_formula", "Recognize Formula as LaTeX", silent_capture=True),
     Action("screenshot_translate", "Screenshot and Translate",
            editor_mode=EDITOR_MODE_TRANSLATE),
@@ -459,6 +460,177 @@ def _convert_image_with_vision(image, app, task=None) -> bool:
     return True
 
 
+#: 落图结果先落在这里，查看器打开它（查看器支持「另存为」，产物因此可导出）
+def _rendered_dir():
+    from core.platform.paths import app_data_dir
+
+    path = app_data_dir() / "translated"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+class _ImageTranslationThread(QThread):
+    """OCR → 逐行取译文 → 落图。全过程在工作线程里跑，主线程只收成品。
+
+    网络与 OCR 都很慢（一次识别百毫秒级、一次翻译秒级），放在主线程会把界面卡住。
+    行数超过上限时不逐行翻译，改用双语模式——那是一次请求，代价可接受。
+    """
+
+    rendered = Signal(object, str, int)
+
+    def __init__(self, image, mode: str, params: dict):
+        super().__init__()
+        self._image = image
+        self._mode = mode
+        self._params = dict(params or {})
+
+    def run(self):
+        from ocr import is_ocr_available, recognize_text
+        from translation.image_translation import (
+            lines_from_ocr_result,
+            render_translated_image,
+            translate_lines,
+        )
+
+        try:
+            if not is_ocr_available():
+                log_warning(T("OCR 不可用，无法翻译截图"), "Action")
+                self.rendered.emit(None, self._mode, 0)
+                return
+            result = recognize_text(self._image, return_format="dict")
+            lines = lines_from_ocr_result(result)
+            if not lines:
+                log_warning(T("未识别到文字，无法落图翻译"), "Action")
+                self.rendered.emit(None, self._mode, 0)
+                return
+
+            mode = self._mode
+            failures = 0
+            service = None
+            try:
+                from translation.service import create_default_translation_service
+
+                service = create_default_translation_service(
+                    getattr(self, "_config", None))
+            except Exception as e:
+                log_exception(e, T("创建翻译服务"))
+            lines, failures = translate_lines(
+                service, lines, self._params.get("target_lang") or "ZH",
+                source_lang=self._params.get("source_lang"))
+            if service is None or failures == len(lines):
+                # 一行都没翻出来：落图没有内容可画，如实报出去
+                self.rendered.emit(None, mode, 0)
+                return
+
+            translated = [line for line in lines if line.translation.strip()]
+            if len(translated) < len(lines) and mode == "replace":
+                # 替换模式需要每行都有译文，缺行的框只能保持原文；缺太多时退回双语，
+                # 免得留下一张「一半中文一半原文」的图
+                if len(translated) * 2 < len(lines):
+                    log_warning(T("多数行没有译文，改用双语对照"), "Action")
+                    mode = "bilingual"
+
+            image = render_translated_image(self._image, lines, mode)
+            self.rendered.emit(image, mode, len(translated))
+        except Exception as e:
+            log_exception(e, T("截图翻译落图"))
+            self.rendered.emit(None, self._mode, 0)
+        finally:
+            self._image = None
+
+
+class _ImageTranslationSink(QObject):
+    """落图结果接收端：写文件、进剪贴板、打开查看器（主线程）。"""
+
+    def on_rendered(self, image, mode: str, count: int) -> None:
+        if image is None or image.isNull():
+            log_warning(T("没有可展示的落图结果"), "Action")
+            return
+        path = ""
+        try:
+            from PySide6.QtCore import QDateTime
+
+            stamp = QDateTime.currentDateTime().toString("yyyyMMdd_HHmmss_zzz")
+            path = str(_rendered_dir() / f"translated_{stamp}.png")
+            image.save(path, "PNG")
+        except Exception as e:
+            log_exception(e, T("保存落图结果"))
+            path = ""
+
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setImage(image)
+        log_debug(T("截图翻译落图完成（{mode}，{count} 行，{width}x{height}）",
+                    mode=mode, count=count, width=image.width(), height=image.height()),
+                  "Action")
+
+        if path:
+            try:
+                from ui.image_viewer import open_image_viewer
+
+                open_image_viewer(path=path)
+            except Exception as e:
+                log_exception(e, T("打开图片查看器"))
+
+    def on_finished(self) -> None:
+        _image_translation_refs[:] = [
+            ref for ref in _image_translation_refs if ref[1] is not self]
+
+
+#: 活着的落图线程与接收端（不持有引用的话线程对象会被回收）
+_image_translation_refs: list = []
+
+
+def _translation_image_mode(config_manager=None) -> str:
+    """落图模式：优先用传进来的配置管理器（工具栏那条路径只有它），否则取全局单例。
+
+    配置读不出来时按「双语对照」——它不遮挡原图，出错时代价最小。
+    """
+    try:
+        manager = config_manager
+        if manager is None:
+            from settings import get_tool_settings_manager
+
+            manager = get_tool_settings_manager()
+        return manager.get_translation_image_mode()
+    except Exception as e:
+        log_exception(e, T("读取落图模式"))
+        return "bilingual"
+
+
+def translate_image_in_place(image, config_manager=None) -> bool:
+    """截图 → OCR → 逐行翻译 → 按设置落图（替换/双语）→ 剪贴板 + 查看器。
+
+    公开入口：静默动作与截图工具栏的「翻译并落图」按钮都走这里。只依赖 config_manager，
+    不依赖 MainApp 实例——工具栏那条路径拿不到应用对象。
+    """
+    from PySide6.QtGui import QImage
+
+    qimage = image if isinstance(image, QImage) else image.toImage()
+    qimage = qimage.copy()
+    if qimage.isNull():
+        log_warning(T("截图内容为空，无法翻译并落图"), "Action")
+        return False
+
+    config = config_manager
+    try:
+        params = config.get_translation_request_params() if config is not None else {}
+    except Exception as e:
+        log_exception(e, T("读取翻译参数"))
+        params = {}
+
+    mode = _translation_image_mode(config)
+    thread = _ImageTranslationThread(qimage, mode, params)
+    thread._config = config
+    sink = _ImageTranslationSink()
+    thread.rendered.connect(sink.on_rendered)
+    thread.finished.connect(sink.on_finished)
+    _image_translation_refs.append((thread, sink))
+    thread.start()
+    log_debug(T("开始截图翻译落图（{mode}）", mode=mode), "Action")
+    return True
+
+
 class _TextClipboardSink(QObject):
     """OCR 结果的接收端：把识别到的文字写进剪贴板（按设置决定是否再弹一次结果窗）。
 
@@ -809,6 +981,8 @@ def run_action(action_id: str, app) -> bool:
         return _copy_table_markdown(image)
     if action_id == "recognize_table":
         return _recognize_table(image)
+    if action_id == "translate_image_in_place":
+        return translate_image_in_place(image, getattr(app, "config_manager", None))
     if action_id == "read_image_ai":
         return _read_image_with_ai(image, app)
     if action_id == "convert_image_markdown":

@@ -13,6 +13,13 @@ from ui.fluent_lite import (
 )
 from .components import SettingCardGroup, WhiteCard, adjust_button_width, apply_theme_text_style
 
+
+def _select_by_data(combo, value) -> None:
+    """按 userData 选中；找不到就保持当前项。"""
+    index = combo.findData(value)
+    if index >= 0:
+        combo.setCurrentIndex(index)
+
 from translation.languages import TRANSLATION_LANGUAGES
 from translation.service import create_default_translation_service
 
@@ -213,6 +220,30 @@ def create_translation_page(dialog) -> QWidget:
     )
     lang_card.hBoxLayout.addSpacing(16)
     grp_opts.addSettingCard(lang_card)
+
+    # 截图翻译的呈现方式
+    mode_card = FSettingCard(
+        FluentIcon.LANGUAGE,
+        dialog.tr("Screenshot translation"),
+        dialog.tr("How a translated screenshot is shown: text only, redrawn on the "
+                  "image, or a bilingual panel below it."),
+        parent=grp_opts,
+    )
+    dialog.translation_image_mode_combo = ComboBox(mode_card)
+    dialog.translation_image_mode_combo.setFixedWidth(180)
+    for mode, label in (
+        ("text", dialog.tr("Text only")),
+        ("replace", dialog.tr("Redraw on the image")),
+        ("bilingual", dialog.tr("Bilingual panel below")),
+    ):
+        dialog.translation_image_mode_combo.addItem(label, userData=mode)
+    _select_by_data(dialog.translation_image_mode_combo,
+                    dialog.config_manager.get_translation_image_mode())
+    mode_card.hBoxLayout.addWidget(
+        dialog.translation_image_mode_combo, 0, Qt.AlignmentFlag.AlignRight
+    )
+    mode_card.hBoxLayout.addSpacing(16)
+    grp_opts.addSettingCard(mode_card)
 
     # 忽略换行
     split_card = SwitchSettingCard(

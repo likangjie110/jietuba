@@ -2729,6 +2729,30 @@ SOFTWARE.</translation>
             <source>Read Image with AI</source>
             <translation>AI で画像を読む</translation>
         </message>
+        <message>
+            <source>Screenshot translation</source>
+            <translation>スクリーンショット翻訳</translation>
+        </message>
+        <message>
+            <source>How a translated screenshot is shown: text only, redrawn on the image, or a bilingual panel below it.</source>
+            <translation>翻訳したスクリーンショットの見せ方：テキストのみ、画像に描き戻す、下にバイリンガル欄を付ける。</translation>
+        </message>
+        <message>
+            <source>Text only</source>
+            <translation>テキストのみ</translation>
+        </message>
+        <message>
+            <source>Redraw on the image</source>
+            <translation>画像に描き戻す</translation>
+        </message>
+        <message>
+            <source>Bilingual panel below</source>
+            <translation>下にバイリンガル欄</translation>
+        </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>翻訳して画像に反映</translation>
+        </message>
 </context>
 
 <context>
@@ -3341,6 +3365,10 @@ SOFTWARE.</translation>
             <source>Read Image with AI</source>
             <translation>AI で画像を読む</translation>
         </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>翻訳して画像に反映</translation>
+        </message>
 </context>
 
 <context>
@@ -3472,6 +3500,10 @@ SOFTWARE.</translation>
         <message>
             <source>Read Image with AI</source>
             <translation>AI で画像を読む</translation>
+        </message>
+        <message>
+            <source>Translate Image in Place</source>
+            <translation>翻訳して画像に反映</translation>
         </message>
 </context>
 
@@ -5537,6 +5569,10 @@ SOFTWARE.</translation>
         <source>Recognize text</source>
         <translation>文字認識</translation>
     </message>
+        <message>
+            <source>Translate image in place</source>
+            <translation>翻訳して画像に反映</translation>
+        </message>
 </context>
 
 <context>

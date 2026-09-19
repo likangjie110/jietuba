@@ -264,6 +264,7 @@ class Toolbar(QWidget):
     redo_clicked = Signal()  # 重做
     long_screenshot_clicked = Signal()  # 长截图按钮
     screenshot_translate_clicked = Signal()  # 截图翻译按钮
+    translate_in_place_clicked = Signal()  # 翻译并落图按钮
     text_recognize_clicked = Signal()  # 文字识别按钮
     scan_code_clicked = Signal()  # 扫码按钮
     gif_record_clicked = Signal()  # GIF录制按钮
@@ -359,6 +360,9 @@ class Toolbar(QWidget):
         self.screenshot_translate_btn = self._add_button(
             "screenshot_translate", "svg/翻译.svg", "Screenshot translate (OCR + Translate)", wide,
             self.screenshot_translate_clicked.emit)
+        self.translate_in_place_btn = self._add_button(
+            "translate_in_place", "svg/翻译.svg", "Translate image in place", wide,
+            self.translate_in_place_clicked.emit)
         self.text_recognize_btn = self._add_button(
             "text_recognize", "svg/文字识别.svg", "Recognize text (OCR)", wide,
             self.text_recognize_clicked.emit)
