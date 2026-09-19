@@ -2705,6 +2705,66 @@ SOFTWARE.</translation>
         <source>Recognize Text</source>
         <translation>文字识别</translation>
     </message>
+        <message>
+            <source>OpenAI compatible</source>
+            <translation>OpenAI 兼容</translation>
+        </message>
+        <message>
+            <source>Azure OpenAI</source>
+            <translation>Azure OpenAI</translation>
+        </message>
+        <message>
+            <source>Anthropic Claude</source>
+            <translation>Anthropic Claude</translation>
+        </message>
+        <message>
+            <source>Google Gemini</source>
+            <translation>Google Gemini</translation>
+        </message>
+        <message>
+            <source>API version</source>
+            <translation>API 版本</translation>
+        </message>
+        <message>
+            <source>Task template</source>
+            <translation>任务模板</translation>
+        </message>
+        <message>
+            <source>What the vision model is asked to do with the image.</source>
+            <translation>让视觉模型对这张图做什么。</translation>
+        </message>
+        <message>
+            <source>Low confidence hint</source>
+            <translation>低置信度提示</translation>
+        </message>
+        <message>
+            <source>Suggests the vision model when local OCR confidence drops below this.</source>
+            <translation>本地识别置信度低于此值时，提示可以改用视觉模型。</translation>
+        </message>
+        <message>
+            <source>Precise text extraction</source>
+            <translation>精确取字</translation>
+        </message>
+        <message>
+            <source>Explain the code</source>
+            <translation>解释代码</translation>
+        </message>
+        <message>
+            <source>Table to Markdown</source>
+            <translation>表格转 Markdown</translation>
+        </message>
+        <message>
+            <source>Formula to LaTeX</source>
+            <translation>公式转 LaTeX</translation>
+        </message>
+        <message>
+            <source>Describe the image</source>
+            <translation>描述图片</translation>
+        </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>AI 读图</translation>
+        </message>
 </context>
 
 <context>
@@ -3313,6 +3373,10 @@ SOFTWARE.</translation>
         <source>Main Window</source>
         <translation>主窗口</translation>
     </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>AI 读图</translation>
+        </message>
 </context>
 
 <context>
@@ -3441,6 +3505,10 @@ SOFTWARE.</translation>
         <source>Clipboard (2)</source>
         <translation>剪贴板 (2)</translation>
     </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>AI 读图</translation>
+        </message>
 </context>
 
 <context>

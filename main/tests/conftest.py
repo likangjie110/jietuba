@@ -144,10 +144,75 @@ def isolated_tool_settings(tmp_path_factory):
     previous = tool_settings._tool_settings_manager
     tool_settings._tool_settings_manager = None
     tool_settings.get_tool_settings_manager(
-        QSettings(settings_file, QSettings.Format.IniFormat)
+        QSettings(settings_file, QSettings.Format.IniFormat),
+        secret_store=InMemorySecretStore(),
     )
     yield
     tool_settings._tool_settings_manager = previous
+
+
+#: 被隔离换掉的真实凭据 API 原件（`real_secret_api` 夹具把它交出去）
+_REAL_SECRET_API: dict = {}
+
+
+@pytest.fixture(scope="session", autouse=True)
+def isolated_secret_store():
+    """让整套测试用内存凭据存储，不去碰真实的系统钥匙串。
+
+    只给单例注入是不够的：大量用例自己 ``ToolSettingsManager(qsettings=...)`` 建管理器，
+    那条路径会回落到平台层的真实实现——本仓库就这样往开发机 Keychain 里塞进过 6 条测试
+    条目。所以这里把平台层的公开函数整个换掉，无论管理器怎么来的都落在内存里。
+
+    另外这也是稳定性问题：真实 Keychain 留下的 pyobjc 对象会让 pytest 拆除期 abort
+    （``test_smart_translation.py`` 整文件崩过，基线不崩、加了密钥库读写就崩）。
+    """
+    from core.platform import secrets
+
+    for name in ("is_available", "get_secret", "set_secret", "delete_secret"):
+        _REAL_SECRET_API[name] = getattr(secrets, name)
+    fake = InMemorySecretStore()
+    secrets.is_available = fake.is_available
+    secrets.get_secret = fake.get_secret
+    secrets.set_secret = fake.set_secret
+    secrets.delete_secret = fake.delete_secret
+    yield
+    for name, original in _REAL_SECRET_API.items():
+        setattr(secrets, name, original)
+
+
+@pytest.fixture
+def real_secret_api():
+    """真实系统密钥库的实现原件——专门验它自己的用例（test_platform_secrets）取回来用。"""
+    return dict(_REAL_SECRET_API)
+
+
+class InMemorySecretStore:
+    """测试用的凭据存储：接口与 core/platform/secrets 相同，只是不碰真实钥匙串。
+
+    为什么必须换掉：真实 Keychain 会让每条读凭据的用例都去问系统（污染开发机的钥匙串，
+    也把「本机存过什么 key」变成测试结果的一部分），而且它留下的 pyobjc 对象在 pytest
+    拆除期会偶发 abort——``test_smart_translation.py`` 就是这么整文件崩的。
+    """
+
+    def __init__(self, available: bool = True):
+        self.available = available
+        self.data: dict[str, str] = {}
+        self.deleted: list[str] = []
+
+    def is_available(self) -> bool:
+        return self.available
+
+    def get_secret(self, name: str) -> str:
+        return self.data.get(name, "")
+
+    def set_secret(self, name: str, value: str) -> bool:
+        self.data[name] = value
+        return True
+
+    def delete_secret(self, name: str) -> bool:
+        self.data.pop(name, None)
+        self.deleted.append(name)
+        return True
 
 
 @pytest.fixture

@@ -287,6 +287,7 @@ class ToolSettingsManager(QObject):
             "open_main_window": True,
             "recognize_table": True,
             "convert_image_markdown": True,
+            "read_image_ai": True,
             "clipboard": True,
             "open_translation": True,
             "open_save_folder": True,
@@ -356,6 +357,10 @@ class ToolSettingsManager(QObject):
         "ocr_vision_models": [],
         "ocr_vision_model": "",
         "ocr_vision_target": "markdown",
+        # 任务模板（id 见 ocr/vision_models.py 的 TASKS）：决定发给视觉模型的指令
+        "ocr_vision_task": "table",
+        # 本地 OCR 置信度低于它就提示「可改用视觉模型」；提示不发任何网络请求
+        "ocr_low_confidence_threshold": 0.6,
         # 公式识别（第 9 项）：ppocr_formula 走 Rust 侧 PP-FormulaNet 绑定；
         # external_service 走自建/第三方 HTTP 服务（要填 URL 与可选密钥）
         "formula_engine": "ppocr_formula",
@@ -488,11 +493,26 @@ class ToolSettingsManager(QObject):
         # “关于”页当前没有可持久化配置。
     }
     
-    def __init__(self, qsettings: Optional[QSettings] = None):
+    def __init__(self, qsettings: Optional[QSettings] = None, secret_store=None):
         super().__init__()
         self.qsettings = qsettings if qsettings is not None else QSettings("Jietuba", "ToolSettings")
+        self._secret_store = secret_store
         self._tool_settings: Dict[str, ToolSettings] = {}
         self._initialize_tools()
+
+    @property
+    def secret_store(self):
+        """凭据存储，默认是平台层的系统密钥库。
+
+        做成可注入的（与 ``qsettings`` 同一个理由）：测试必须能换成内存实现。真实
+        Keychain 在退出阶段会留下 pyobjc 对象，测试里碰它既是「污染开发机的钥匙串」，
+        也会让 pytest 拆除期偶发 abort——两件事都不该发生在单元测试里。
+        """
+        if self._secret_store is None:
+            from core.platform import secrets as platform_secrets
+
+            self._secret_store = platform_secrets
+        return self._secret_store
 
     @property
     def settings(self):
@@ -1577,6 +1597,31 @@ class ToolSettingsManager(QObject):
     def set_ocr_vision_target(self, target: str):
         self.set_app_setting("ocr_vision_target", str(target or "markdown"))
 
+    def get_ocr_vision_task(self) -> str:
+        """视觉模型的任务模板 id。合法清单来自 ocr.vision_models（单一出处）。"""
+        from ocr.vision_models import TASKS_BY_ID
+
+        return self._choice("ocr_vision_task", tuple(TASKS_BY_ID), "table")
+
+    def set_ocr_vision_task(self, task: str):
+        self.set_app_setting("ocr_vision_task", str(task or "").strip())
+
+    def get_ocr_low_confidence_threshold(self) -> float:
+        """置信度提示的阈值；范围外的值夹回 [0.05, 1.0]。"""
+        raw = self.get_app_setting("ocr_low_confidence_threshold", 0.6)
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            value = 0.6
+        return max(0.05, min(1.0, value))
+
+    def set_ocr_low_confidence_threshold(self, value) -> None:
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            number = 0.6
+        self.set_app_setting("ocr_low_confidence_threshold", max(0.05, min(1.0, number)))
+
     def get_ocr_text_layout(self) -> str:
         """识别结果的文本布局（见 OCR_TEXT_LAYOUTS）。"""
         return self._choice("ocr_text_layout", self.OCR_TEXT_LAYOUTS, "auto")
@@ -1733,13 +1778,15 @@ class ToolSettingsManager(QObject):
             timeout = 15
         return {
             "url": str(self.get_app_setting("formula_service_url", "") or "").strip(),
-            "api_key": str(self.get_app_setting("formula_service_api_key", "") or "").strip(),
+            "api_key": self._get_credential(
+                "formula_service_api_key", "app/formula_service_api_key",
+            ),
             "timeout": max(1, min(120, timeout)),
         }
 
     def set_formula_service_config(self, url: str, api_key: str, timeout: int = 15) -> None:
         self.set_app_setting("formula_service_url", url or "")
-        self.set_app_setting("formula_service_api_key", api_key or "")
+        self._set_credential("formula_service_api_key", "app/formula_service_api_key", api_key)
         self.set_app_setting("formula_service_timeout", int(timeout or 15))
 
     def get_update_source_url(self) -> str:
@@ -1812,13 +1859,65 @@ class ToolSettingsManager(QObject):
     def set_local_model_id(self, value: str):
         self.qsettings.setValue("translation/local_model_id", value or "")
     
+    def _get_credential(self, name: str, legacy_key: str) -> str:
+        """读一个凭据：系统密钥库优先，其次旧的明文键（读到就顺手迁移）。
+
+        迁移是**读时**做的：用户升级后第一次打开设置页/第一次翻译就会把明文挪走，不需要
+        另写一段一次性升级脚本，也不会因为用户从不打开设置页而永远留着明文。
+        密钥库不可用（Linux）时退回明文键，行为与改动前一致。
+        """
+        secret_store = self.secret_store
+        if not secret_store.is_available():
+            return str(self.qsettings.value(legacy_key, "", type=str) or "")
+
+        stored = secret_store.get_secret(name)
+        legacy = str(self.qsettings.value(legacy_key, "", type=str) or "").strip()
+
+        if legacy:
+            # 明文和密钥库同时有值且不一样时**以明文为准**：升级前设置页显示给用户的就是
+            # 这个值，迁移后应保持用户看到的那一份，而不是被一份来路不明的旧条目顶掉。
+            # 两份都在说明中间出过岔子（换了机器、并行装过一版），所以留一条日志。
+            from core.logger import T, log_info, log_warning
+
+            if stored and stored != legacy:
+                log_warning(
+                    T("密钥库里已有一份 {name}，以设置里的值为准", name=name), "Settings",
+                )
+            if secret_store.set_secret(name, legacy):
+                self.qsettings.remove(legacy_key)
+                log_info(T("已把凭据 {name} 迁移到系统密钥库", name=name), "Settings")
+            return legacy
+
+        return stored
+
+    def _set_credential(self, name: str, legacy_key: str, value: str) -> None:
+        """写一个凭据：进系统密钥库，并清掉可能残留的明文副本。空值 = 删除。"""
+        secret_store = self.secret_store
+        cleaned = (value or "").strip()
+        if not secret_store.is_available():
+            self.qsettings.setValue(legacy_key, cleaned)
+            return
+
+        if not cleaned:
+            secret_store.delete_secret(name)
+        elif not secret_store.set_secret(name, cleaned):
+            # 写不进密钥库时退回明文：用户刚填的 key 不能静默丢掉，但要留一条日志说明
+            from core.logger import T, log_warning
+
+            log_warning(
+                T("系统密钥库不可写，凭据 {name} 暂存为明文", name=name), "Settings",
+            )
+            self.qsettings.setValue(legacy_key, cleaned)
+            return
+        self.qsettings.remove(legacy_key)
+
     def get_deepl_api_key(self) -> str:
         """获取 DeepL API 密钥"""
-        return self.qsettings.value("app/deepl_api_key", self.APP_DEFAULT_SETTINGS["deepl_api_key"], type=str)
-    
+        return self._get_credential("deepl_api_key", "app/deepl_api_key")
+
     def set_deepl_api_key(self, value: str):
         """设置 DeepL API 密钥"""
-        self.qsettings.setValue("app/deepl_api_key", value)
+        self._set_credential("deepl_api_key", "app/deepl_api_key", value)
     
     def get_deepl_use_pro(self) -> bool:
         """获取是否使用 DeepL Pro API"""
@@ -1842,70 +1941,62 @@ class ToolSettingsManager(QObject):
         )
 
     def get_amazon_translate_access_key_id(self) -> str:
-        return self.qsettings.value(
+        return self._get_credential(
+            "amazon_translate_access_key_id",
             "translation/providers/amazon/access_key_id",
-            self.APP_DEFAULT_SETTINGS["amazon_translate_access_key_id"],
-            type=str,
         )
 
     def set_amazon_translate_access_key_id(self, value: str):
-        self.qsettings.setValue(
+        self._set_credential(
+            "amazon_translate_access_key_id",
             "translation/providers/amazon/access_key_id",
-            (value or "").strip(),
+            value,
         )
 
     def get_amazon_translate_secret_access_key(self) -> str:
-        return self.qsettings.value(
+        return self._get_credential(
+            "amazon_translate_secret_access_key",
             "translation/providers/amazon/secret_access_key",
-            self.APP_DEFAULT_SETTINGS[
-                "amazon_translate_secret_access_key"
-            ],
-            type=str,
         )
 
     def set_amazon_translate_secret_access_key(self, value: str):
-        self.qsettings.setValue(
+        self._set_credential(
+            "amazon_translate_secret_access_key",
             "translation/providers/amazon/secret_access_key",
-            (value or "").strip(),
+            value,
         )
 
     def get_amazon_translate_session_token(self) -> str:
-        return self.qsettings.value(
+        return self._get_credential(
+            "amazon_translate_session_token",
             "translation/providers/amazon/session_token",
-            self.APP_DEFAULT_SETTINGS["amazon_translate_session_token"],
-            type=str,
         )
 
     def set_amazon_translate_session_token(self, value: str):
-        self.qsettings.setValue(
+        self._set_credential(
+            "amazon_translate_session_token",
             "translation/providers/amazon/session_token",
-            (value or "").strip(),
+            value,
         )
 
     def get_google_translate_api_key(self) -> str:
-        return self.qsettings.value(
-            "translation/providers/google/api_key",
-            self.APP_DEFAULT_SETTINGS["google_translate_api_key"],
-            type=str,
+        return self._get_credential(
+            "google_translate_api_key", "translation/providers/google/api_key",
         )
 
     def set_google_translate_api_key(self, value: str):
-        self.qsettings.setValue(
-            "translation/providers/google/api_key",
-            (value or "").strip(),
+        self._set_credential(
+            "google_translate_api_key", "translation/providers/google/api_key", value,
         )
 
     def get_azure_translate_api_key(self) -> str:
-        return self.qsettings.value(
-            "translation/providers/azure/api_key",
-            self.APP_DEFAULT_SETTINGS["azure_translate_api_key"],
-            type=str,
+        return self._get_credential(
+            "azure_translate_api_key", "translation/providers/azure/api_key",
         )
 
     def set_azure_translate_api_key(self, value: str):
-        self.qsettings.setValue(
-            "translation/providers/azure/api_key",
-            (value or "").strip(),
+        self._set_credential(
+            "azure_translate_api_key", "translation/providers/azure/api_key", value,
         )
 
     def get_azure_translate_region(self) -> str:
@@ -2404,7 +2495,8 @@ class ToolSettingsManager(QObject):
 _tool_settings_manager = None
 
 
-def get_tool_settings_manager(qsettings: Optional[QSettings] = None) -> ToolSettingsManager:
+def get_tool_settings_manager(qsettings: Optional[QSettings] = None,
+                              secret_store=None) -> ToolSettingsManager:
     """
     获取全局工具设置管理器单例
     
@@ -2414,9 +2506,10 @@ def get_tool_settings_manager(qsettings: Optional[QSettings] = None) -> ToolSett
     Args:
         qsettings: 可选的 QSettings 实例，用于测试时注入隔离存储。
                    仅在首次创建单例时生效。
+        secret_store: 可选的凭据存储（默认平台层的系统密钥库），同样只在首次创建时生效。
     """
     global _tool_settings_manager
     if _tool_settings_manager is None:
-        _tool_settings_manager = ToolSettingsManager(qsettings=qsettings)
+        _tool_settings_manager = ToolSettingsManager(qsettings=qsettings, secret_store=secret_store)
     return _tool_settings_manager
 

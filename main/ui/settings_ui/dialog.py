@@ -1578,6 +1578,10 @@ class SettingsDialog(FrostedFramelessDialog):
             config.set_ocr_model_tier(self.ocr_tier_combo.currentData() or "")
         if hasattr(self, "ocr_vision_target_combo"):
             config.set_ocr_vision_target(self.ocr_vision_target_combo.currentData())
+        if hasattr(self, "ocr_vision_task_combo"):
+            config.set_ocr_vision_task(self.ocr_vision_task_combo.currentData())
+        if hasattr(self, "ocr_confidence_spin"):
+            config.set_ocr_low_confidence_threshold(self.ocr_confidence_spin.value())
         if hasattr(self, "ocr_vision_combo"):
             config.set_app_setting("ocr_vision_model",
                                    self.ocr_vision_combo.currentData() or "")
@@ -1929,6 +1933,10 @@ def _reset_integration_controls(dialog) -> None:
             _select_combo(dialog.ocr_tier_combo, defaults["ocr_model_tier"])
         if hasattr(dialog, "ocr_vision_target_combo"):
             _select_combo(dialog.ocr_vision_target_combo, defaults["ocr_vision_target"])
+        if hasattr(dialog, "ocr_vision_task_combo"):
+            _select_combo(dialog.ocr_vision_task_combo, defaults["ocr_vision_task"])
+        if hasattr(dialog, "ocr_confidence_spin"):
+            dialog.ocr_confidence_spin.setValue(defaults["ocr_low_confidence_threshold"])
         if hasattr(dialog, "ocr_dialog_checks"):
             enabled = set(defaults["ocr_dialog_triggers"])
             for trigger, check in dialog.ocr_dialog_checks.items():
@@ -2005,6 +2013,10 @@ def _refresh_integration_controls(dialog) -> None:
             _select_combo(dialog.ocr_tier_combo, config.get_ocr_model_tier())
         if hasattr(dialog, "ocr_vision_target_combo"):
             _select_combo(dialog.ocr_vision_target_combo, config.get_ocr_vision_target())
+        if hasattr(dialog, "ocr_vision_task_combo"):
+            _select_combo(dialog.ocr_vision_task_combo, config.get_ocr_vision_task())
+        if hasattr(dialog, "ocr_confidence_spin"):
+            dialog.ocr_confidence_spin.setValue(config.get_ocr_low_confidence_threshold())
         if hasattr(dialog, "ocr_dialog_checks"):
             enabled = set(config.get_ocr_dialog_triggers())
             for trigger, check in dialog.ocr_dialog_checks.items():
@@ -2049,7 +2061,8 @@ def _snapshot_integration_controls(dialog, snap: dict) -> None:
                      "ocr_punctuation_combo", "ocr_language_combo",
                      "formula_engine_combo", "ocr_tier_combo", "ocr_vision_combo",
                      "tray_scroll_combo", "pdf_page_combo",
-                     "ocr_vision_target_combo", "video_container_combo", "video_codec_combo",
+                     "ocr_vision_target_combo", "ocr_vision_task_combo",
+                     "ocr_vision_protocol_combo", "video_container_combo", "video_codec_combo",
                      "video_quality_combo", "video_fps_combo", "video_audio_combo",
                      "video_audio_device_combo"):
             widget = getattr(dialog, attr, None)
@@ -2057,7 +2070,8 @@ def _snapshot_integration_controls(dialog, snap: dict) -> None:
                 snap[attr] = widget.currentIndex()
         for attr in ("proxy_host_input", "update_source_input", "formula_url_input",
                      "formula_key_input", "video_save_path_input",
-                     "ocr_vision_url_input", "ocr_vision_model_input", "ocr_vision_key_input"):
+                     "ocr_vision_url_input", "ocr_vision_model_input", "ocr_vision_key_input",
+                     "ocr_vision_version_input"):
             widget = getattr(dialog, attr, None)
             if widget is not None:
                 snap[attr] = widget.text()

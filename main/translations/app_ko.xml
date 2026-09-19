@@ -2669,6 +2669,66 @@ SOFTWARE.</translation>
         <source>Recognize Text</source>
         <translation>텍스트 인식</translation>
     </message>
+        <message>
+            <source>OpenAI compatible</source>
+            <translation>OpenAI 호환</translation>
+        </message>
+        <message>
+            <source>Azure OpenAI</source>
+            <translation>Azure OpenAI</translation>
+        </message>
+        <message>
+            <source>Anthropic Claude</source>
+            <translation>Anthropic Claude</translation>
+        </message>
+        <message>
+            <source>Google Gemini</source>
+            <translation>Google Gemini</translation>
+        </message>
+        <message>
+            <source>API version</source>
+            <translation>API 버전</translation>
+        </message>
+        <message>
+            <source>Task template</source>
+            <translation>작업 템플릿</translation>
+        </message>
+        <message>
+            <source>What the vision model is asked to do with the image.</source>
+            <translation>이미지에 대해 비전 모델이 수행할 작업입니다.</translation>
+        </message>
+        <message>
+            <source>Low confidence hint</source>
+            <translation>낮은 신뢰도 안내</translation>
+        </message>
+        <message>
+            <source>Suggests the vision model when local OCR confidence drops below this.</source>
+            <translation>로컬 OCR 신뢰도가 이 값보다 낮으면 비전 모델 사용을 제안합니다.</translation>
+        </message>
+        <message>
+            <source>Precise text extraction</source>
+            <translation>정확한 텍스트 추출</translation>
+        </message>
+        <message>
+            <source>Explain the code</source>
+            <translation>코드 설명</translation>
+        </message>
+        <message>
+            <source>Table to Markdown</source>
+            <translation>표를 Markdown으로</translation>
+        </message>
+        <message>
+            <source>Formula to LaTeX</source>
+            <translation>수식을 LaTeX로</translation>
+        </message>
+        <message>
+            <source>Describe the image</source>
+            <translation>이미지 설명</translation>
+        </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>AI로 이미지 읽기</translation>
+        </message>
 </context>
 
 <context>
@@ -3273,6 +3333,10 @@ SOFTWARE.</translation>
         <source>Main Window</source>
         <translation>메인 창</translation>
     </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>AI로 이미지 읽기</translation>
+        </message>
 </context>
 
 <context>
@@ -3401,6 +3465,10 @@ SOFTWARE.</translation>
         <source>Clipboard (2)</source>
         <translation>클립보드 (2)</translation>
     </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>AI로 이미지 읽기</translation>
+        </message>
 </context>
 
 <context>

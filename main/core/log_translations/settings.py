@@ -15,4 +15,8 @@ TRANSLATIONS: dict[str, str] = {
         "Tray action config could not be parsed, using defaults",
     "忽略程序列表无法解析，按空列表处理":
         "Ignored-app list could not be parsed, treating it as empty",
+    "已把凭据 {name} 迁移到系统密钥库":
+        "Credential {name} migrated to the system key store",
+    "系统密钥库不可写，凭据 {name} 暂存为明文":
+        "System key store is not writable, {name} is kept in plain text for now",
 }

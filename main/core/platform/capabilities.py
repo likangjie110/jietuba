@@ -73,6 +73,9 @@ class Capability(str, Enum):
     PROCESS_CONTROL = "process_control"
     FOREGROUND_APP = "foreground_app"
 
+    # 凭据存储
+    SECRET_STORE = "secret_store"
+
 
 _W = "windows"
 _M = "macos"
@@ -227,6 +230,13 @@ _SUPPORT_TABLE: dict[Capability, dict[str, Support]] = {
         _M: Support.FULL,          # NSWorkspace.frontmostApplication
         _L: Support.NONE,          # 没有实现（需要 X11 _NET_ACTIVE_WINDOW + WM_CLASS）
     },
+    Capability.SECRET_STORE: {
+        # API key 这类凭据的存放处：有了它就不必把明文写进 QSettings（macOS 的 plist、
+        # Windows 的注册表都是人人可读的普通文件）
+        _W: Support.FULL,          # 凭据管理器 CredReadW/CredWriteW/CredDeleteW（未在实机验证）
+        _M: Support.FULL,          # Keychain generic password（Security.framework）
+        _L: Support.NONE,          # 要 libsecret 依赖，不做；调用方回退明文存储
+    },
 }
 
 # ── 各能力的后端名 ────────────────────────────────────
@@ -258,6 +268,7 @@ _BACKEND_NAMES: dict[Capability, dict[str, str]] = {
     Capability.DESKTOP_SHORTCUT: {_W: "powershell", _M: "", _L: ""},
     Capability.PROCESS_CONTROL: {_W: "win32", _M: "", _L: ""},
     Capability.FOREGROUND_APP: {_W: "win32", _M: "appkit", _L: ""},
+    Capability.SECRET_STORE: {_W: "credential-manager", _M: "keychain", _L: ""},
 }
 
 

@@ -145,6 +145,10 @@ class MockConfig:
     def get_ocr_dialog_triggers(self): return []
     def get_ocr_model_tier(self): return "v6_small"
     def get_ocr_vision_target(self): return "markdown"
+
+    def get_ocr_vision_task(self): return "table"
+
+    def get_ocr_low_confidence_threshold(self): return 0.6
     def set_ocr_upscale_factor(self, v): pass
     def get_pin_auto_toolbar(self): return True
     def set_pin_auto_toolbar(self, v): pass

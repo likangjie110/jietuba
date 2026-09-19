@@ -55,6 +55,7 @@ ACTIONS = (
     Action("recognize_table", "Table Recognition", silent_capture=True, tray=True),
     Action("convert_image_markdown", "Convert Image to Markdown", silent_capture=True,
            tray=True),
+    Action("read_image_ai", "Read Image with AI", silent_capture=True, tray=True),
     Action("recognize_formula", "Recognize Formula as LaTeX", silent_capture=True),
     Action("screenshot_translate", "Screenshot and Translate",
            editor_mode=EDITOR_MODE_TRANSLATE),
@@ -250,13 +251,24 @@ def _ocr_text_options() -> dict:
         from settings import get_tool_settings_manager
 
         config = get_tool_settings_manager()
+        threshold = config.get_ocr_low_confidence_threshold()
+        vision_ready = False
+        try:
+            from ocr.vision_models import selected_model
+
+            vision_ready = selected_model(config) is not None
+        except Exception as e:
+            log_exception(e, T("读取视觉模型配置"))
         return {
             "layout": config.get_ocr_text_layout(),
             "punctuation": config.get_ocr_punctuation(),
+            "threshold": threshold,
+            "vision_ready": vision_ready,
         }
     except Exception as e:
         log_exception(e, T("读取识别结果处理选项"))
-        return {"layout": "auto", "punctuation": "none"}
+        return {"layout": "auto", "punctuation": "none", "threshold": 0.6,
+                "vision_ready": False}
 
 
 class _OcrTextThread(QThread):
@@ -267,7 +279,8 @@ class _OcrTextThread(QThread):
     （没有表格特征时它自己也会退回纯文本）。
     """
 
-    recognized = Signal(str)
+    #: (识别文本, 置信度提示)；提示为空串表示这次识别不用提醒
+    recognized = Signal(str, str)
 
     def __init__(self, image, converter=None, options=None):
         super().__init__()
@@ -275,28 +288,53 @@ class _OcrTextThread(QThread):
         self._converter = converter
         self._options = dict(options or {})
 
+    def _low_confidence_hint(self, result, options) -> str:
+        """置信度偏低就返回一句提示；这里**不发任何网络请求**，只是建议改用视觉模型。"""
+        from core.logger import log_info
+
+        try:
+            from ocr.quality import low_confidence_hint
+
+            hint = low_confidence_hint(
+                result,
+                threshold=options.get("threshold", 0.6),
+                vision_ready=bool(options.get("vision_ready")),
+            )
+        except Exception as e:
+            log_exception(e, T("判断识别置信度"))
+            return ""
+        if hint:
+            log_info(hint, "Action")
+        return hint
+
     def run(self):
         try:
             from ocr import format_ocr_result_text, is_ocr_available, recognize_text
 
             converter = self._converter or format_ocr_result_text
             options = self._options or _ocr_text_options()
+            # 文本格式化只吃 layout / punctuation；threshold 与 vision_ready 是给置信度
+            # 判断用的，一起塞过去会被 format_ocr_result_text 拒掉
+            format_options = {key: options[key] for key in ("layout", "punctuation")
+                              if key in options}
 
             if not is_ocr_available():
                 log_warning(T("OCR 不可用，无法识别截图文字"), "Action")
-                self.recognized.emit("")
+                self.recognized.emit("", "")
                 return
             result = recognize_text(self._image, return_format="dict")
             text = ""
+            hint = ""
             if isinstance(result, dict) and result.get("code") == 100:
                 if self._converter is None:
-                    text = (format_ocr_result_text(result, **options) or "").strip()
+                    text = (format_ocr_result_text(result, **format_options) or "").strip()
                 else:
                     text = (converter(result) or "").strip()
-            self.recognized.emit(text)
+                hint = self._low_confidence_hint(result, options)
+            self.recognized.emit(text, hint)
         except Exception as e:
             log_exception(e, T("识别截图文字"))
-            self.recognized.emit("")
+            self.recognized.emit("", "")
         finally:
             self._image = None
 
@@ -379,16 +417,32 @@ def _open_table_editor(result, opener) -> bool:
 
 def _convert_image_markdown(image, app) -> bool:
     """静默截取 → 交给配置的视觉模型转 Markdown/HTML → 复制并展示结果。"""
-    from ocr.vision_models import convert_image, selected_model
+    return _convert_image_with_vision(image, app, task="table")
+
+
+def _read_image_with_ai(image, app) -> bool:
+    """静默截取 → 按**设置里选的任务模板**交给视觉模型 → 复制并展示结果。
+
+    与「转 Markdown」那条的区别只有任务模板：那条固定按表格转，这条跟随用户在设置里
+    选的模板（精确取字 / 代码解释 / 表格 / 公式 / 通用识图）。
+    """
+    return _convert_image_with_vision(image, app, task=None)
+
+
+def _convert_image_with_vision(image, app, task=None) -> bool:
+    """共享实现：``task`` 为 None 时用配置里的任务模板，否则用指定的那个。"""
+    from ocr.vision_models import DEFAULT_TASK, TASKS_BY_ID, convert_image, selected_model
 
     config = getattr(app, "config_manager", None)
     model = selected_model(config)
     target = config.get_ocr_vision_target() if config is not None else "markdown"
+    if task is None:
+        task = config.get_ocr_vision_task() if config is not None else DEFAULT_TASK
     if model is None:
         log_warning(T("没有配置可用的视觉模型，无法转换图片"), "Action")
         return False
 
-    result = convert_image(image, model, target=target)
+    result = convert_image(image, model, target=target, task=task)
     if not result:
         log_warning(T("图片转换失败: {error}", error=result.error), "Action")
         return False
@@ -396,8 +450,9 @@ def _convert_image_markdown(image, app) -> bool:
     clipboard = QApplication.clipboard()
     if clipboard is not None:
         clipboard.setText(result.text)
-    log_debug(T("图片已转换为 {target}（{count} 字）", target=target,
-                count=len(result.text)), "Action")
+    log_debug(T("图片已按「{task}」转换为 {target}（{count} 字）",
+                task=TASKS_BY_ID.get(task).label if task in TASKS_BY_ID else task,
+                target=target, count=len(result.text)), "Action")
     from ocr.result_dialog import maybe_show_ocr_result
 
     maybe_show_ocr_result(result.text, "copy_all")
@@ -411,7 +466,7 @@ class _TextClipboardSink(QObject):
     跑，而剪贴板只能在主线程碰。
     """
 
-    def on_text(self, text: str) -> None:
+    def on_text(self, text: str, hint: str = "") -> None:
         if not text:
             log_warning(T("未识别到文字"), "Action")
             return
@@ -423,7 +478,7 @@ class _TextClipboardSink(QObject):
 
         from ocr.result_dialog import maybe_show_ocr_result
 
-        maybe_show_ocr_result(text, "copy_all")
+        maybe_show_ocr_result(text, "copy_all", hint=hint)
 
     def on_finished(self) -> None:
         """线程跑完就放开引用（信号回到主线程，这里单线程改列表）。"""
@@ -754,6 +809,8 @@ def run_action(action_id: str, app) -> bool:
         return _copy_table_markdown(image)
     if action_id == "recognize_table":
         return _recognize_table(image)
+    if action_id == "read_image_ai":
+        return _read_image_with_ai(image, app)
     if action_id == "convert_image_markdown":
         return _convert_image_markdown(image, app)
     if action_id == "recognize_formula":

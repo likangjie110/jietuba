@@ -272,4 +272,15 @@ TRANSLATIONS: dict[str, str] = {
     "公式已复制到剪贴板（{count} 字）": "Formula copied to the clipboard ({count} characters)",
     "设置的公式引擎不可用，改用 {engine}: {configured}": "Configured formula engine is unavailable, using {engine} instead: {configured}",
     "未识别到公式": "No formula recognized",
+
+    # core/platform/secrets.py
+    "从系统密钥库读取 {name}": "Reading {name} from the system key store",
+    "写入系统密钥库 {name}": "Writing {name} to the system key store",
+    "删除系统密钥库条目 {name}": "Deleting {name} from the system key store",
+    "读取系统密钥库失败（{status}）: {name}":
+        "Reading from the system key store failed ({status}): {name}",
+    "写入系统密钥库失败（{status}）: {name}":
+        "Writing to the system key store failed ({status}): {name}",
+    "删除系统密钥库条目失败（{status}）: {name}":
+        "Deleting from the system key store failed ({status}): {name}",
 }

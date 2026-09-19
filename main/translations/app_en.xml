@@ -2705,6 +2705,66 @@ SOFTWARE.</translation>
         <source>Recognize Text</source>
         <translation>Recognize Text</translation>
     </message>
+        <message>
+            <source>OpenAI compatible</source>
+            <translation>OpenAI compatible</translation>
+        </message>
+        <message>
+            <source>Azure OpenAI</source>
+            <translation>Azure OpenAI</translation>
+        </message>
+        <message>
+            <source>Anthropic Claude</source>
+            <translation>Anthropic Claude</translation>
+        </message>
+        <message>
+            <source>Google Gemini</source>
+            <translation>Google Gemini</translation>
+        </message>
+        <message>
+            <source>API version</source>
+            <translation>API version</translation>
+        </message>
+        <message>
+            <source>Task template</source>
+            <translation>Task template</translation>
+        </message>
+        <message>
+            <source>What the vision model is asked to do with the image.</source>
+            <translation>What the vision model is asked to do with the image.</translation>
+        </message>
+        <message>
+            <source>Low confidence hint</source>
+            <translation>Low confidence hint</translation>
+        </message>
+        <message>
+            <source>Suggests the vision model when local OCR confidence drops below this.</source>
+            <translation>Suggests the vision model when local OCR confidence drops below this.</translation>
+        </message>
+        <message>
+            <source>Precise text extraction</source>
+            <translation>Precise text extraction</translation>
+        </message>
+        <message>
+            <source>Explain the code</source>
+            <translation>Explain the code</translation>
+        </message>
+        <message>
+            <source>Table to Markdown</source>
+            <translation>Table to Markdown</translation>
+        </message>
+        <message>
+            <source>Formula to LaTeX</source>
+            <translation>Formula to LaTeX</translation>
+        </message>
+        <message>
+            <source>Describe the image</source>
+            <translation>Describe the image</translation>
+        </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>Read Image with AI</translation>
+        </message>
 </context>
 
 <context>
@@ -3309,6 +3369,10 @@ SOFTWARE.</translation>
         <source>Main Window</source>
         <translation>Main Window</translation>
     </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>Read Image with AI</translation>
+        </message>
 </context>
 
 <context>
@@ -3477,6 +3541,10 @@ SOFTWARE.</translation>
         <source>Clipboard (2)</source>
         <translation>Clipboard (2)</translation>
     </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>Read Image with AI</translation>
+        </message>
 </context>
 
 <context>

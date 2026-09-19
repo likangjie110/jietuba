@@ -59,4 +59,9 @@ TRANSLATIONS: dict[str, str] = {
     "外部公式服务没有返回 LaTeX": "External formula service returned no LaTeX",
     "外部公式服务请求失败: {e}\n{tb}": "External formula service request failed: {e}\n{tb}",
     "外部公式服务连接失败: {e}": "External formula service connection failed: {e}",
+
+    # ocr/vision_models.py
+    "查询系统密钥库": "Querying the system key store",
+    "已把视觉模型的密钥迁移到系统密钥库":
+        "Vision model keys migrated to the system key store",
 }

@@ -2669,6 +2669,66 @@ SOFTWARE.</translation>
         <source>Recognize Text</source>
         <translation>文字認識</translation>
     </message>
+        <message>
+            <source>OpenAI compatible</source>
+            <translation>OpenAI 互換</translation>
+        </message>
+        <message>
+            <source>Azure OpenAI</source>
+            <translation>Azure OpenAI</translation>
+        </message>
+        <message>
+            <source>Anthropic Claude</source>
+            <translation>Anthropic Claude</translation>
+        </message>
+        <message>
+            <source>Google Gemini</source>
+            <translation>Google Gemini</translation>
+        </message>
+        <message>
+            <source>API version</source>
+            <translation>API バージョン</translation>
+        </message>
+        <message>
+            <source>Task template</source>
+            <translation>タスクテンプレート</translation>
+        </message>
+        <message>
+            <source>What the vision model is asked to do with the image.</source>
+            <translation>この画像に対して視覚モデルに何をさせるか。</translation>
+        </message>
+        <message>
+            <source>Low confidence hint</source>
+            <translation>低信頼度のヒント</translation>
+        </message>
+        <message>
+            <source>Suggests the vision model when local OCR confidence drops below this.</source>
+            <translation>ローカル OCR の信頼度がこれを下回ると、視覚モデルの利用を提案します。</translation>
+        </message>
+        <message>
+            <source>Precise text extraction</source>
+            <translation>文字を正確に抽出</translation>
+        </message>
+        <message>
+            <source>Explain the code</source>
+            <translation>コードを説明</translation>
+        </message>
+        <message>
+            <source>Table to Markdown</source>
+            <translation>表を Markdown に</translation>
+        </message>
+        <message>
+            <source>Formula to LaTeX</source>
+            <translation>数式を LaTeX に</translation>
+        </message>
+        <message>
+            <source>Describe the image</source>
+            <translation>画像を説明</translation>
+        </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>AI で画像を読む</translation>
+        </message>
 </context>
 
 <context>
@@ -3277,6 +3337,10 @@ SOFTWARE.</translation>
         <source>Main Window</source>
         <translation>メインウィンドウ</translation>
     </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>AI で画像を読む</translation>
+        </message>
 </context>
 
 <context>
@@ -3405,6 +3469,10 @@ SOFTWARE.</translation>
         <source>Clipboard (2)</source>
         <translation>クリップボード (2)</translation>
     </message>
+        <message>
+            <source>Read Image with AI</source>
+            <translation>AI で画像を読む</translation>
+        </message>
 </context>
 
 <context>

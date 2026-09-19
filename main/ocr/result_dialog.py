@@ -32,11 +32,14 @@ def should_show(trigger: str) -> bool:
     return trigger in dialog_triggers()
 
 
-def maybe_show_ocr_result(text: str, trigger: str) -> bool:
+def maybe_show_ocr_result(text: str, trigger: str, hint: str = "") -> bool:
     """命中设置的时机就弹出识别结果（可选中、可复制）；返回是否真的弹了。
 
     文本为空、或该时机没启用时什么都不做——调用方（复制路径）已经在做复制，
     这里只是展示，不能因为它失败而影响复制结果。
+
+    ``hint`` 是识别质量之类的补充提醒（例如置信度偏低可以用视觉模型再读一次）：它**只加在
+    窗口里**，不进剪贴板——用户复制的应当是识别结果本身，不该被我们的说明污染。
     """
     if not text or not should_show(trigger):
         return False
@@ -45,7 +48,8 @@ def maybe_show_ocr_result(text: str, trigger: str) -> bool:
         from ui.dialogs import show_text_dialog
 
         log_debug(T("按设置显示识别结果对话框: {trigger}", trigger=trigger), "OCR")
-        show_text_dialog(None, make_tr("OcrResultDialog")("Recognition Result"), text)
+        body = f"{text}\n\n{hint}" if hint else text
+        show_text_dialog(None, make_tr("OcrResultDialog")("Recognition Result"), body)
         return True
     except Exception as e:
         log_exception(e, T("显示识别结果对话框"))

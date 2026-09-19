@@ -59,7 +59,7 @@ def _build_ocr_engine_rows(dialog, group) -> None:
     档位下拉**按文件是否存在现算**：没放的模型不出现，避免用户选到一个点了就报错的档位。
     """
     from ocr.model_tiers import available_tiers
-    from ocr.vision_models import load_models, selected_model
+    from ocr.vision_models import TASKS, load_models, selected_model
 
     tier_card = FSettingCard(
         FluentIcon.SEARCH,
@@ -105,14 +105,32 @@ def _build_ocr_engine_rows(dialog, group) -> None:
     dialog.ocr_vision_key_input = LineEdit(vision_card)
     dialog.ocr_vision_key_input.setFixedWidth(160)
     dialog.ocr_vision_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+    dialog.ocr_vision_protocol_combo = ComboBox(vision_card)
+    dialog.ocr_vision_protocol_combo.setFixedWidth(140)
+    _VISION_PROTOCOLS = (
+        ("openai", dialog.tr("OpenAI compatible")),
+        ("azure", dialog.tr("Azure OpenAI")),
+        ("anthropic", dialog.tr("Anthropic Claude")),
+        ("gemini", dialog.tr("Google Gemini")),
+    )
+    for protocol_id, label in _VISION_PROTOCOLS:
+        dialog.ocr_vision_protocol_combo.addItem(label, userData=protocol_id)
+    dialog.ocr_vision_version_input = LineEdit(vision_card)
+    dialog.ocr_vision_version_input.setFixedWidth(120)
+    dialog.ocr_vision_version_input.setPlaceholderText(dialog.tr("API version"))
     if current is not None:
         dialog.ocr_vision_url_input.setText(current.base_url)
         dialog.ocr_vision_model_input.setText(current.model_id)
         dialog.ocr_vision_key_input.setText(current.api_key)
+        _select_combo(dialog.ocr_vision_protocol_combo, current.protocol_id)
+        dialog.ocr_vision_version_input.setText(current.api_version)
+    else:
+        _select_combo(dialog.ocr_vision_protocol_combo, "openai")
     save_btn = PushButton(dialog.tr("Save"), vision_card)
     save_btn.clicked.connect(lambda: _save_vision_model(dialog))
-    for widget in (dialog.ocr_vision_combo, dialog.ocr_vision_url_input,
-                   dialog.ocr_vision_model_input, dialog.ocr_vision_key_input, save_btn):
+    for widget in (dialog.ocr_vision_combo, dialog.ocr_vision_protocol_combo,
+                   dialog.ocr_vision_url_input, dialog.ocr_vision_model_input,
+                   dialog.ocr_vision_key_input, dialog.ocr_vision_version_input, save_btn):
         vision_card.hBoxLayout.addWidget(widget, 0, Qt.AlignmentFlag.AlignRight)
         vision_card.hBoxLayout.addSpacing(6)
     group.addSettingCard(vision_card)
@@ -133,6 +151,40 @@ def _build_ocr_engine_rows(dialog, group) -> None:
     target_card.hBoxLayout.addSpacing(16)
     group.addSettingCard(target_card)
 
+    task_card = FSettingCard(
+        FluentIcon.EDIT,
+        dialog.tr("Task template"),
+        dialog.tr("What the vision model is asked to do with the image."),
+        parent=group,
+    )
+    dialog.ocr_vision_task_combo = ComboBox(task_card)
+    dialog.ocr_vision_task_combo.setFixedWidth(180)
+    for task in TASKS:
+        dialog.ocr_vision_task_combo.addItem(dialog.tr(task.label), userData=task.id)
+    _select_combo(dialog.ocr_vision_task_combo, dialog.config_manager.get_ocr_vision_task())
+    task_card.hBoxLayout.addWidget(
+        dialog.ocr_vision_task_combo, 0, Qt.AlignmentFlag.AlignRight)
+    task_card.hBoxLayout.addSpacing(16)
+    group.addSettingCard(task_card)
+
+    threshold_card = FSettingCard(
+        FluentIcon.EDIT,
+        dialog.tr("Low confidence hint"),
+        dialog.tr("Suggests the vision model when local OCR confidence drops below this."),
+        parent=group,
+    )
+    dialog.ocr_confidence_spin = DoubleSpinBox(threshold_card)
+    dialog.ocr_confidence_spin.setRange(0.05, 1.0)
+    dialog.ocr_confidence_spin.setSingleStep(0.05)
+    dialog.ocr_confidence_spin.setDecimals(2)
+    dialog.ocr_confidence_spin.setFixedWidth(120)
+    dialog.ocr_confidence_spin.setValue(
+        float(dialog.config_manager.get_ocr_low_confidence_threshold()))
+    threshold_card.hBoxLayout.addWidget(
+        dialog.ocr_confidence_spin, 0, Qt.AlignmentFlag.AlignRight)
+    threshold_card.hBoxLayout.addSpacing(16)
+    group.addSettingCard(threshold_card)
+
 
 def _save_vision_model(dialog) -> bool:
     """把当前输入存的视觉模型保存下来（同名覆盖）。"""
@@ -147,7 +199,9 @@ def _save_vision_model(dialog) -> bool:
         return False
     upsert_model(dialog.config_manager, VisionModel(
         name=name, base_url=url, model_id=model_id,
-        api_key=dialog.ocr_vision_key_input.text().strip()))
+        api_key=dialog.ocr_vision_key_input.text().strip(),
+        protocol=str(dialog.ocr_vision_protocol_combo.currentData() or "openai"),
+        api_version=dialog.ocr_vision_version_input.text().strip()))
     dialog.config_manager.set_app_setting("ocr_vision_model", name)
     index = dialog.ocr_vision_combo.findData(name)
     if index < 0:
