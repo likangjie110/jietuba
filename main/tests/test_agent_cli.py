@@ -13,6 +13,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 
 import pytest
 from PySide6.QtGui import QColor, QFont, QImage, QPainter
@@ -252,15 +253,24 @@ class TestNoWindowOrFocusSideEffects:
         return len(windows or []), front.processIdentifier() if front else 0
 
     def test_capture_does_not_open_windows_or_steal_focus(self):
-        before = self._probe()
-        if before is None:
+        if self._probe() is None:
             pytest.skip("本机读不到窗口列表（需要 Quartz）")
 
+        # 环境本身就在动（别的进程开开关关窗口），所以先量一次「什么都不做」的漂移当基线，
+        # 再量带 CLI 调用的漂移：只有后者明显更大才说明是调用方弹了东西。
+        idle_before = self._probe()
+        time.sleep(1.0)
+        idle_after = self._probe()
+        idle_drift = idle_after[0] - idle_before[0]
+
+        before = self._probe()
         _code, out, _err = run_cli("--json", "capture")
         data = parse_stdout(out)
         after = self._probe()
 
         assert data["ok"] is True
         assert after[1] == before[1], "CLI 调用改变了前台进程"
-        # 允许 ±1 的噪声（系统可能顺手开关某个状态栏项），但不能多出一批窗口
-        assert abs(after[0] - before[0]) <= 1, f"窗口数变化过大: {before} → {after}"
+        assert idle_after[1] == idle_before[1], "空转期间前台进程就变了，测不出结论"
+        added = after[0] - before[0]
+        assert added <= max(idle_drift, 1), (
+            f"CLI 调用多出了窗口: 基线漂移 {idle_drift}，调用前后 {before} → {after}")

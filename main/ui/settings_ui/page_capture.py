@@ -105,35 +105,49 @@ def _build_ocr_engine_rows(dialog, group) -> None:
     dialog.ocr_vision_key_input = LineEdit(vision_card)
     dialog.ocr_vision_key_input.setFixedWidth(160)
     dialog.ocr_vision_key_input.setEchoMode(QLineEdit.EchoMode.Password)
-    dialog.ocr_vision_protocol_combo = ComboBox(vision_card)
-    dialog.ocr_vision_protocol_combo.setFixedWidth(140)
-    _VISION_PROTOCOLS = (
-        ("openai", dialog.tr("OpenAI compatible")),
-        ("azure", dialog.tr("Azure OpenAI")),
-        ("anthropic", dialog.tr("Anthropic Claude")),
-        ("gemini", dialog.tr("Google Gemini")),
-    )
-    for protocol_id, label in _VISION_PROTOCOLS:
-        dialog.ocr_vision_protocol_combo.addItem(label, userData=protocol_id)
-    dialog.ocr_vision_version_input = LineEdit(vision_card)
-    dialog.ocr_vision_version_input.setFixedWidth(120)
-    dialog.ocr_vision_version_input.setPlaceholderText(dialog.tr("API version"))
     if current is not None:
         dialog.ocr_vision_url_input.setText(current.base_url)
         dialog.ocr_vision_model_input.setText(current.model_id)
         dialog.ocr_vision_key_input.setText(current.api_key)
-        _select_combo(dialog.ocr_vision_protocol_combo, current.protocol_id)
-        dialog.ocr_vision_version_input.setText(current.api_version)
-    else:
-        _select_combo(dialog.ocr_vision_protocol_combo, "openai")
     save_btn = PushButton(dialog.tr("Save"), vision_card)
     save_btn.clicked.connect(lambda: _save_vision_model(dialog))
-    for widget in (dialog.ocr_vision_combo, dialog.ocr_vision_protocol_combo,
-                   dialog.ocr_vision_url_input, dialog.ocr_vision_model_input,
-                   dialog.ocr_vision_key_input, dialog.ocr_vision_version_input, save_btn):
+    for widget in (dialog.ocr_vision_combo, dialog.ocr_vision_url_input,
+                   dialog.ocr_vision_model_input, dialog.ocr_vision_key_input,
+                   save_btn):
         vision_card.hBoxLayout.addWidget(widget, 0, Qt.AlignmentFlag.AlignRight)
         vision_card.hBoxLayout.addSpacing(6)
     group.addSettingCard(vision_card)
+
+    # 协议与 API 版本单独一张卡：并到上面那张里会把说明文字挤成竖条（实测过）
+    protocol_card = FSettingCard(
+        FluentIcon.LANGUAGE,
+        dialog.tr("Protocol"),
+        dialog.tr("Which API the endpoint speaks; Azure needs its api-version."),
+        parent=group,
+    )
+    dialog.ocr_vision_protocol_combo = ComboBox(protocol_card)
+    dialog.ocr_vision_protocol_combo.setFixedWidth(150)
+    for protocol_id, label in (
+        ("openai", dialog.tr("OpenAI compatible")),
+        ("azure", dialog.tr("Azure OpenAI")),
+        ("anthropic", dialog.tr("Anthropic Claude")),
+        ("gemini", dialog.tr("Google Gemini")),
+    ):
+        dialog.ocr_vision_protocol_combo.addItem(label, userData=protocol_id)
+    _select_combo(dialog.ocr_vision_protocol_combo,
+                  current.protocol_id if current is not None else "openai")
+    dialog.ocr_vision_version_input = LineEdit(protocol_card)
+    dialog.ocr_vision_version_input.setFixedWidth(140)
+    dialog.ocr_vision_version_input.setPlaceholderText(dialog.tr("API version"))
+    if current is not None:
+        dialog.ocr_vision_version_input.setText(current.api_version)
+    protocol_card.hBoxLayout.addWidget(
+        dialog.ocr_vision_protocol_combo, 0, Qt.AlignmentFlag.AlignRight)
+    protocol_card.hBoxLayout.addSpacing(8)
+    protocol_card.hBoxLayout.addWidget(
+        dialog.ocr_vision_version_input, 0, Qt.AlignmentFlag.AlignRight)
+    protocol_card.hBoxLayout.addSpacing(16)
+    group.addSettingCard(protocol_card)
 
     target_card = FSettingCard(
         FluentIcon.EDIT,

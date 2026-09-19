@@ -2865,6 +2865,14 @@ SOFTWARE.</translation>
             <source>Magnify a detail</source>
             <translation>一部を拡大</translation>
         </message>
+        <message>
+            <source>Protocol</source>
+            <translation>プロトコル</translation>
+        </message>
+        <message>
+            <source>Which API the endpoint speaks; Azure needs its api-version.</source>
+            <translation>エンドポイントが話す API の種類。Azure は api-version も必要です。</translation>
+        </message>
 </context>
 
 <context>

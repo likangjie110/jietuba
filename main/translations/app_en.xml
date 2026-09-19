@@ -2901,6 +2901,14 @@ SOFTWARE.</translation>
             <source>Magnify a detail</source>
             <translation>Magnify a detail</translation>
         </message>
+        <message>
+            <source>Protocol</source>
+            <translation>Protocol</translation>
+        </message>
+        <message>
+            <source>Which API the endpoint speaks; Azure needs its api-version.</source>
+            <translation>Which API the endpoint speaks; Azure needs its api-version.</translation>
+        </message>
 </context>
 
 <context>

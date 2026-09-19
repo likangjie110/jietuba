@@ -138,13 +138,14 @@ class MainApp(QObject):
             self._on_ui_theme_changed
         )
         
-        # Agent bridge：常驻时开一个本机套接字，外部 Agent 通过它复用应用里的 OCR/权限
-        self.agent_bridge = None
-        self._start_agent_bridge()
-
         # Logger - 日志初始化，
         setup_logger(self.config_manager)
         self._logger = get_logger()
+
+        # Agent bridge：常驻时开一个本机套接字，外部 Agent 通过它复用应用里的 OCR/权限。
+        # 放在日志初始化之后：启动失败要能在日志里看到原因，而不是被"日志还没起来"吞掉
+        self.agent_bridge = None
+        self._start_agent_bridge()
         self.app.aboutToQuit.connect(self._on_about_to_quit)
         
         # 初始化翻译系统
@@ -273,7 +274,9 @@ class MainApp(QObject):
 
     def _on_about_to_quit(self):
         """应用退出前收尾"""
-        self._stop_agent_bridge()
+        stop_bridge = getattr(self, "_stop_agent_bridge", None)
+        if stop_bridge is not None:
+            stop_bridge()
         try:
             # 会话要在贴图被销毁之前存：cleanup() 之后管理器里就没有贴图了
             self.save_pin_session_if_enabled()

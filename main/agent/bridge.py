@@ -12,7 +12,7 @@
 import json
 import os
 
-from core.logger import T, log_debug, log_exception, log_warning
+from core.logger import T, log_debug, log_exception, log_info, log_warning
 
 #: 套接字文件名（放在应用数据目录里，按用户隔离）
 SOCKET_NAME = "agent.sock"
@@ -60,7 +60,7 @@ class AgentBridgeServer:
         server.newConnection.connect(self._on_connection)
         self._server = server
         self._listening = True
-        log_debug(T("Agent bridge 已启动: {path}", path=path), "Agent")
+        log_info(T("Agent bridge 已启动: {path}", path=path), "Agent")
         return True
 
     def stop(self) -> None:

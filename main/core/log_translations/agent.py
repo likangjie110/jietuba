@@ -35,6 +35,8 @@ TRANSLATIONS: dict[str, str] = {
     "清理旧的 bridge 套接字": "Cleaning up the stale bridge socket",
     "Agent bridge 监听失败: {error}": "Agent bridge failed to listen: {error}",
     "Agent bridge 已启动: {path}": "Agent bridge started: {path}",
+    "停止 Agent bridge": "Stopping the agent bridge",
+    "启动 Agent bridge": "Starting the agent bridge",
     "请求不是合法 JSON": "The request is not valid JSON",
     "Agent bridge 收到调用: {method}": "Agent bridge received a call: {method}",
     "Agent bridge 连不上，改由本进程执行: {method}":

@@ -2901,6 +2901,14 @@ SOFTWARE.</translation>
             <source>Magnify a detail</source>
             <translation>局部放大</translation>
         </message>
+        <message>
+            <source>Protocol</source>
+            <translation>接口协议</translation>
+        </message>
+        <message>
+            <source>Which API the endpoint speaks; Azure needs its api-version.</source>
+            <translation>端点说的是哪套接口；Azure 还要填 api-version。</translation>
+        </message>
 </context>
 
 <context>
