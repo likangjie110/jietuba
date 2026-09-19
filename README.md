@@ -1,4 +1,4 @@
-[中文](README_zh-CN.md) | **[English](README.md)** | [日本語](README_JA.md)
+﻿[中文](README_zh-CN.md) | **[English](README.md)** | [日本語](README_JA.md)
 
 # jietuba — Screenshot, OCR, Pin, Translation & Clipboard Tool for Windows
 
@@ -10,7 +10,7 @@
 
 ## Overview
 
-jietuba is a free, open-source screenshot tool for Windows: region and window capture, scrolling (long) screenshots, annotation, OCR text recognition, translation, image pinning, GIF recording, QR code and barcode scanning, PDF export, and a full clipboard history manager. Everything runs locally.
+jietuba is a free, open-source screenshot tool for Windows: region and window capture, scrolling (long) screenshots, annotation, OCR text recognition, translation, image pinning, GIF recording, QR code and barcode scanning, PDF export, a full clipboard history manager, and palette extraction. Everything runs locally; the optional AI features are off by default.
 
 The interface is built with PySide6; image processing, clipboard access, and OCR are implemented in Rust. Runs on Windows x86_64 and ARM64.
 
@@ -32,7 +32,22 @@ A smooth, three-way "screenshot ⇄ clipboard ⇄ pin" workflow.
 
 - **Smooth UI** — demanding scenarios are optimized and CPU usage reduced, so even low-end machines run smoothly
 
-- **Data safety** — everything runs entirely on your machine: no data collection, no silent network calls, all data stays local. Translation is the one feature that needs the internet, and only when you actively use it, calling whichever third-party translation API you've chosen
+- **Data safety** — by default everything runs entirely on your machine: no data collection, no background network calls, all data stays local. Two optional features use the network, and both send the image or text only when you trigger them, to an endpoint **you** configure: translation (a third-party translation API of your choice) and AI reading (your own vision model — see *Optional AI features*). API keys live in the system key store
+
+---
+
+## Optional AI features (off by default)
+
+These features need an endpoint and a key that **you** configure (Settings → Screenshot →
+OCR → Vision Model). Until you do, no AI entry point is shown and no request is ever sent.
+
+- **Vision model protocols** — OpenAI-compatible, Azure OpenAI, Anthropic Claude and Google Gemini; keep several models and switch between them. Keys are stored in the system key store (Keychain / Credential Manager), not in the settings file
+- **Six task templates** — precise text extraction, explain the code, table to Markdown/HTML, formula to LaTeX, describe the image, solve the problem
+- **AI result window** — keep the selection and read it again with another template, without taking a new screenshot (screenshot toolbar → "Read with AI")
+- **Formula typesetting** — formula results are rendered in the window by a built-in LaTeX layout engine (no browser engine, no extra dependency). Edit the source, copy the LaTeX, or copy it as an image
+- **Auto recognize** — decide locally first (table → editable table, text → copy, low-confidence symbols → the formula engine); only when the local path finds nothing *and* you configured a vision model is the image sent to it for a description
+
+Palette extraction is local too and needs no model at all: it clusters the dominant colors of the selection and copies them as `#RRGGBB` values.
 
 ---
 
@@ -352,7 +367,8 @@ core/
 ├── privacy.py               # Privacy masking — find sensitive spans and mosaic their areas
 ├── settings_archive.py      # Settings archive — export/import as a zip with rollback on failure
 ├── size_format.py           # Size formatting — one implementation for human-readable byte sizes
-└── updates.py               # Update check — compares GitHub Releases and opens the releases page
+├── updates.py               # Update check — compares GitHub Releases and opens the releases page
+└── palette.py               # Palette extraction (local color clustering)
 ```
 
 </details>
@@ -408,7 +424,10 @@ ocr/
 ├── result_dialog.py         # Recognition result dialog — shown for the configured triggers
 ├── table_document.py        # Editable table model — sparse cells, merges, Markdown/HTML export
 ├── table_editor.py          # Table editor — real QTableWidget with preview and undo
-└── vision_models.py         # Vision models — OpenAI-compatible, Azure, Anthropic and Gemini protocols
+├── vision_models.py         # Vision models — OpenAI-compatible, Azure, Anthropic and Gemini protocols
+├── auto_route.py            # Auto routing (table / text / formula, then the vision model)
+├── latex_render.py          # LaTeX layout and painting (no QtWebEngine / matplotlib)
+└── vision_result_window.py  # Vision result window (task switch and re-run)
 ```
 
 </details>
@@ -613,6 +632,9 @@ ui/
 ├── permission_actions.py         # Permission actions — open the settings and jump to the panel
 ├── permission_prompt.py          # Permission prompt — show the missing permission once per process
 ├── save_paths_dialog.py          # Save paths dialog — edit the multi-path list with a real preview
+├── formula_window.py             # Formula result window (rendered preview + editable LaTeX)
+├── latex_view.py                 # Widget that paints a formula
+├── palette_window.py             # Palette result window (click a swatch to copy)
 │
 ├── fluent_lite/             # Fluent-style lightweight component library
 │   ├── buttons.py / cards.py / icons.py / inputs.py  # buttons, cards, icons, inputs

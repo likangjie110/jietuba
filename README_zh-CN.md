@@ -1,4 +1,4 @@
-**[中文](README_zh-CN.md)** | [English](README.md) | [日本語](README_JA.md)
+﻿**[中文](README_zh-CN.md)** | [English](README.md) | [日本語](README_JA.md)
 
 # 截图吧 — Windows 截图、OCR、钉图、翻译与剪贴板工具
 
@@ -10,7 +10,7 @@
 
 ## 项目简介
 
-截图吧是一款免费开源的 Windows 截图工具：区域与窗口截图、滚动长截图拼接、标注、OCR 文字识别、翻译、钉图、GIF 录制、二维码/条形码识别、PDF 导出，以及完整的剪贴板历史管理。所有功能本地运行。
+截图吧是一款免费开源的 Windows 截图工具：区域与窗口截图、滚动长截图拼接、标注、OCR 文字识别、翻译、钉图、GIF 录制、二维码/条形码识别、PDF 导出、配色提取，以及完整的剪贴板历史管理。默认所有功能本地运行，可选的 AI 能力默认关闭。
 
 界面使用 PySide6 构建，图像处理、剪贴板操作和 OCR 由 Rust 实现，支持 Windows x86_64 与 ARM64。
 
@@ -33,7 +33,22 @@
 
 - **流畅 UI**：优化各种吃配置的场景，减少cpu占用让低配电脑也可以流畅使用
 
-- **数据安全**：功能完全本地运行，无数据收集、无偷偷联网，数据全部保存在本地；翻译是唯一需要联网的功能，仅在你主动使用时调用你自己选择的第三方翻译 API
+- **数据安全**：默认完全本地运行，无数据收集、无后台联网，数据全部保存在本地。有两类可选功能会用到网络，而且都只在你主动触发时，把那张图或那段文字发往**你自己配置**的地址：翻译（你选的第三方翻译 API）与 AI 解读（你自己的视觉模型，见下「可选 AI 能力」）。API 密钥存在系统密钥库里，不写进配置文件
+
+---
+
+## 可选 AI 能力（默认关闭）
+
+这些能力需要你自己配一个服务地址与密钥（设置 → 截图设定 → OCR 组的「视觉模型」）。没配之前，
+界面不显示 AI 入口，也不会发出任何请求。
+
+- **视觉模型接入**：OpenAI 兼容 / Azure OpenAI / Anthropic Claude / Google Gemini 四种协议，可存多个模型随时切换。密钥存进系统密钥库（钥匙串 / 凭据管理器），不写进配置文件
+- **六种任务模板**：精确取字、解释代码、表格转 Markdown/HTML、公式转 LaTeX、描述图像、解题
+- **AI 解读窗口**：留着选区与模板，换一种解读再读一次，不必重新截图（截图工具栏 →「AI 解读」）
+- **公式排版**：公式结果在窗口里直接排版出来（自带的 LaTeX 排版器，不依赖浏览器内核，也不新增依赖），可改源码、复制 LaTeX 或复制成图片
+- **自动识别**：本地先判（表格 → 可编辑表格、文字 → 复制、认不准的符号串 → 公式引擎）；只有本地什么都取不到、并且你配了视觉模型时，才把这张图交给模型描述
+
+配色提取同样是本地能力，不需要任何模型：对选区做颜色聚类，把主色以 `#RRGGBB` 复制走。
 
 ---
 
@@ -371,7 +386,8 @@ core/
 ├── privacy.py               # 隐私遮挡 —— 找出敏感片段并对其区域打码
 ├── settings_archive.py      # 设置归档 —— zip 导入导出，失败整体回滚
 ├── size_format.py           # 体积文案 —— 人类可读字节数的单一实现
-└── updates.py               # 更新检查 —— 比对 GitHub Releases 并打开发布页
+├── updates.py               # 更新检查 —— 比对 GitHub Releases 并打开发布页
+└── palette.py               # 配色提取（本地聚类，不联网）
 ```
 
 </details>
@@ -445,7 +461,10 @@ ocr/
 ├── result_dialog.py         # 识别结果对话框 —— 按设置的时机弹出
 ├── table_document.py        # 可编辑表格模型 —— 稀疏格子、合并、Markdown/HTML 导出
 ├── table_editor.py          # 表格编辑器 —— 真 QTableWidget，带预览与撤销
-└── vision_models.py         # 视觉模型 —— OpenAI 兼容、Azure、Anthropic、Gemini 四种协议
+├── vision_models.py         # 视觉模型 —— OpenAI 兼容、Azure、Anthropic、Gemini 四种协议
+├── auto_route.py            # 自动分流（表格/文字/公式，最后才用视觉模型）
+├── latex_render.py          # LaTeX 排版与绘制（不依赖 QtWebEngine / matplotlib）
+└── vision_result_window.py  # 视觉模型结果窗口（换模板重跑）
 ```
 
 </details>
@@ -689,6 +708,9 @@ ui/
 ├── permission_actions.py         # 权限动作 —— 打开设置并跳到对应面板
 ├── permission_prompt.py          # 权限提示 —— 每条权限每进程只提示一次
 ├── save_paths_dialog.py          # 保存路径对话框 —— 用真实编码预览来编辑多路径
+├── formula_window.py             # 公式结果窗口（排版预览 + 可改的 LaTeX）
+├── latex_view.py                 # 显示公式的控件
+├── palette_window.py             # 配色结果窗口（点色块即复制）
 │
 ├── fluent_lite/             # Fluent 风格轻量组件库
 │   ├── buttons.py / cards.py / icons.py / inputs.py  # 按钮、卡片、图标、输入框
