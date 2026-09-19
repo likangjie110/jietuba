@@ -16,7 +16,7 @@ import sys
 import time
 
 import pytest
-from PySide6.QtGui import QColor, QFont, QImage, QPainter
+from PySide6.QtGui import QColor, QFont, QFontMetricsF, QImage, QPainter
 from PySide6.QtWidgets import QApplication
 
 MAIN_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,18 +46,42 @@ def qapp():
     yield app
 
 
+def _dark_pixels(image: QImage) -> int:
+    return sum(1 for y in range(image.height()) for x in range(image.width())
+               if image.pixelColor(x, y).lightness() < 128)
+
+
 @pytest.fixture
 def text_image(tmp_path):
-    """一张画着大号文字的图，给 ocr 命令当输入。"""
-    image = QImage(600, 160, QImage.Format.Format_ARGB32)
-    image.fill(QColor("white"))
-    painter = QPainter(image)
-    painter.setPen(QColor("black"))
-    painter.setFont(QFont("Helvetica", 44))
-    painter.drawText(20, 100, "jietuba 1234")
-    painter.end()
+    """一张**确认画上了字**的图，给 ocr 命令当输入。
+
+    这一步带自检：字体族在本机解析不到时（换机器、字体缓存刚被清），画出来的会是一张
+    白图，OCR 于是合法地返回 0 行——那样红的是测试的前提而不是产品，而且现象很难查。
+    所以这里逐个试字体族，直到暗像素足够多；一个都画不出来就直接报清楚。
+    """
+    text = "jietuba 1234"
+    rendered = None
+    for family in ("Helvetica", "Arial", "Menlo", ".AppleSystemUIFont"):
+        font = QFont(family, 44)
+        metrics = QFontMetricsF(font)
+        # 「暗像素够多」还不够：字体缺字形时会画出一堆豆腐块，像素一样多但认不出来。
+        # 所以先问字体有没有这些字形，再渲染。
+        if not all(metrics.inFont(char) for char in text if char.strip()):
+            continue
+        image = QImage(600, 160, QImage.Format.Format_ARGB32)
+        image.fill(QColor("white"))
+        painter = QPainter(image)
+        painter.setPen(QColor("black"))
+        painter.setFont(font)
+        painter.drawText(20, 100, text)
+        painter.end()
+        if _dark_pixels(image) > 200:
+            rendered = image
+            break
+    assert rendered is not None, "本机没有能渲染出这段文字的字体，OCR 用例的前提不成立"
+
     path = tmp_path / "agent-input.png"
-    image.save(str(path), "PNG")
+    rendered.save(str(path), "PNG")
     return str(path)
 
 
@@ -101,9 +125,9 @@ class TestCliOutput:
         data = parse_stdout(out)
         assert code == 0 and data["ok"] is True, data
         assert data["source"] == text_image
-        assert data["line_count"] >= 1
-        assert 0 < data["average_confidence"] <= 1
-        assert any(char.isalnum() for char in data["text"]), data["text"]
+        assert data["line_count"] >= 1, data          # 失败时把整份 JSON 打出来便于归因
+        assert 0 < data["average_confidence"] <= 1, data
+        assert any(char.isalnum() for char in data["text"]), data
 
     def test_ocr_can_write_the_text_out(self, text_image, tmp_path):
         target = tmp_path / "text.txt"
@@ -238,39 +262,77 @@ class TestBridge:
 
 
 class TestNoWindowOrFocusSideEffects:
-    """跑 CLI 的时候不能冒出窗口、不能抢焦点。"""
+    """跑 CLI 的时候不能冒出窗口、不能抢焦点。
 
-    def _probe(self):
-        """(在屏幕上的窗口数, 前台进程 pid)；取不到返回 None。"""
+    判据是**这个进程自己**有没有开窗（按 pid 过滤窗口列表），以及前台应用有没有变——
+    全局窗口数会被别的程序的开开关关搅动（本机实测过 30→28 这种噪声），拿它当判据只会得到
+    随机的红。同一文件里还有一条**正对照**：真开一个窗口时探针必须看得见，否则「没检测到」
+    说明不了任何事。
+    """
+
+    WINDOW_OWNER_POLL_S = 0.15
+
+    def _windows_of(self, pid: int) -> list:
+        """属于某个进程的窗口（本机 Quartz；取不到返回 None 表示探针不可用）。"""
         try:
             import Quartz
         except Exception:
             return None
-        windows = Quartz.CGWindowListCopyWindowInfo(
-            Quartz.kCGWindowListOptionOnScreenOnly | Quartz.kCGWindowListExcludeDesktopElements,
-            Quartz.kCGNullWindowID)
-        front = Quartz.NSWorkspace.sharedWorkspace().frontmostApplication()
-        return len(windows or []), front.processIdentifier() if front else 0
+        options = (Quartz.kCGWindowListOptionOnScreenOnly
+                   | Quartz.kCGWindowListExcludeDesktopElements)
+        windows = Quartz.CGWindowListCopyWindowInfo(options, Quartz.kCGNullWindowID) or []
+        return [win for win in windows if win.get("kCGWindowOwnerPID") == pid]
 
-    def test_capture_does_not_open_windows_or_steal_focus(self):
-        if self._probe() is None:
+    def _frontmost_pid(self):
+        try:
+            import Quartz
+        except Exception:
+            return None
+        app = Quartz.NSWorkspace.sharedWorkspace().frontmostApplication()
+        return app.processIdentifier() if app else None
+
+    def _run_tracked(self, argv):
+        """跑一个子进程，期间持续记录「它自己开的窗口」与前台应用的变化。"""
+        process = subprocess.Popen([sys.executable, *argv], cwd=MAIN_DIR,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   text=True)
+        front_before = self._frontmost_pid()
+        owned = []
+        fronts = {front_before}
+        while process.poll() is None:
+            found = self._windows_of(process.pid)
+            if found:
+                owned.extend(found)
+            fronts.add(self._frontmost_pid())
+            time.sleep(self.WINDOW_OWNER_POLL_S)
+        out, err = process.communicate(timeout=30)
+        fronts.add(self._frontmost_pid())
+        return process.returncode, out, err, owned, fronts
+
+    def test_the_probe_sees_a_window_when_one_really_opens(self):
+        """正对照：探针必须能抓到「真开了一个窗口」，否则下面的绿灯不成立。"""
+        if self._windows_of(os.getpid()) is None:
             pytest.skip("本机读不到窗口列表（需要 Quartz）")
 
-        # 环境本身就在动（别的进程开开关关窗口），所以先量一次「什么都不做」的漂移当基线，
-        # 再量带 CLI 调用的漂移：只有后者明显更大才说明是调用方弹了东西。
-        idle_before = self._probe()
-        time.sleep(1.0)
-        idle_after = self._probe()
-        idle_drift = idle_after[0] - idle_before[0]
+        code = ("import time;"
+                "from PySide6.QtWidgets import QApplication, QWidget;"
+                "app = QApplication([]);"
+                "w = QWidget(); w.resize(240, 140); w.show();"
+                "app.processEvents();"
+                "[app.processEvents() or time.sleep(0.05) for _ in range(40)]")
 
-        before = self._probe()
-        _code, out, _err = run_cli("--json", "capture")
+        _code, _out, _err, owned, _fronts = self._run_tracked(["-c", code])
+
+        assert owned, "探针没看见明明已经打开的窗口：这条正对照失败，说明判据无效"
+
+    def test_capture_does_not_open_windows_or_steal_focus(self):
+        if self._windows_of(os.getpid()) is None:
+            pytest.skip("本机读不到窗口列表（需要 Quartz）")
+
+        code, out, _err, owned, fronts = self._run_tracked(["main_app.py", "--json", "capture"])
         data = parse_stdout(out)
-        after = self._probe()
 
-        assert data["ok"] is True
-        assert after[1] == before[1], "CLI 调用改变了前台进程"
-        assert idle_after[1] == idle_before[1], "空转期间前台进程就变了，测不出结论"
-        added = after[0] - before[0]
-        assert added <= max(idle_drift, 1), (
-            f"CLI 调用多出了窗口: 基线漂移 {idle_drift}，调用前后 {before} → {after}")
+        assert code == 0 and data["ok"] is True, data
+        assert not owned, f"CLI 调用弹出了窗口: {owned}"
+        assert len(fronts) == 1, f"CLI 调用期间前台应用变过: {fronts}"
+

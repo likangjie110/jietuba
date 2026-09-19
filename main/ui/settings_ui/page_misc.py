@@ -70,7 +70,7 @@ def _verify_proxy(dialog) -> None:
         show_warning_dialog(
             dialog,
             dialog.tr("Proxy"),
-            dialog.tr("Cannot reach the proxy server: {reason}", reason=reason),
+            dialog.tr("Cannot reach the proxy server: {reason}").format(reason=reason),
         )
 
 
@@ -90,7 +90,7 @@ def _verify_formula_service(dialog) -> None:
     else:
         show_warning_dialog(
             dialog, dialog.tr("Formula Service"),
-            dialog.tr("Cannot use this service: {reason}", reason=reason),
+            dialog.tr("Cannot use this service: {reason}").format(reason=reason),
         )
 
 

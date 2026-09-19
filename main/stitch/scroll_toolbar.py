@@ -189,7 +189,9 @@ class FloatingToolbar(QWidget):
         self.seam_btn.setStyleSheet(self._icon_btn_style())
         self.seam_menu = QMenu(self.seam_btn)
         for delta, label in ((-10, "-10"), (-1, "-1"), (1, "+1"), (10, "+10")):
-            action = self.seam_menu.addAction(self.tr("Nudge seam {delta}px", delta=label))
+            # QObject.tr 不收关键字参数，只能先取模板再自己填
+            action = self.seam_menu.addAction(
+                self.tr("Nudge seam {delta}px").format(delta=label))
             action.triggered.connect(
                 lambda _checked=False, value=delta: self.seam_correct_requested.emit(value))
         self.seam_btn.clicked.connect(self._open_seam_menu)

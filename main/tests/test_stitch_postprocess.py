@@ -5,6 +5,9 @@
 逐像素相同。合成图是刻意造的——真机滚动截图有随机性，不适合当断言依据。
 """
 
+import pytest
+from types import SimpleNamespace
+
 from PIL import Image, ImageDraw
 
 from stitch import postprocess
@@ -267,7 +270,6 @@ class _SeamStub:
     scroll_locked_direction = "down"
 
     def __init__(self, result, frames=(), panel_height=100):
-        from types import SimpleNamespace
 
         from stitch.scroll_window import ScrollCaptureWindow
 
@@ -330,3 +332,66 @@ class TestSeamCorrectionEntry:
         stub = _SeamStub(None)
         assert stub.correct(5) is False
         assert stub.correct(0) is False
+
+
+class TestSeamToolbar:
+    """长截图工具栏本体：接缝修正菜单真的建得出来、也真的发得出信号。
+
+    这一条是「构造真控件」而不是「调私有方法」——本轮就是它漏掉了：工具栏里
+    ``self.tr("...{delta}...", delta=...)`` 会被 QObject.tr 拒掉（不收关键字参数），
+    于是 FloatingToolbar 一构造就抛 AttributeError，长截图窗口跟着起不来，
+    而当时的用例全在 _StubWindow 上跑，谁也没碰这个控件。
+    """
+
+    @pytest.fixture
+    def toolbar(self, qapp):
+        from stitch.scroll_toolbar import FloatingToolbar
+
+        bar = FloatingToolbar()
+        yield bar
+        bar.close()
+
+    def test_toolbar_constructs(self, toolbar):
+        assert toolbar.seam_btn is not None
+
+    def test_menu_offers_the_four_nudges(self, toolbar):
+        labels = [action.text() for action in toolbar.seam_menu.actions()]
+
+        assert len(labels) == 4
+        for delta in ("-10", "-1", "+1", "+10"):
+            assert any(delta in label for label in labels), (delta, labels)
+
+    def test_each_entry_emits_its_own_delta(self, toolbar):
+        emitted = []
+        toolbar.seam_correct_requested.connect(emitted.append)
+
+        for action in toolbar.seam_menu.actions():
+            action.trigger()
+
+        assert emitted == [-10, -1, 1, 10]
+
+    def test_the_real_window_builds_its_toolbar(self, qapp, monkeypatch):
+        """走 ScrollCaptureWindow 建工具栏那条路（不构造整个抓屏会话）。
+
+        真窗口要起抓屏会话才能构造，所以拿一个真 QWidget 当父窗口、把要连的槽挂上去——
+        被执行的仍是产品代码 ``_setup_floating_toolbar`` 本身（工具栏就是它 new 出来的）。
+        """
+        from PySide6.QtWidgets import QWidget
+
+        from stitch.scroll_window import ScrollCaptureWindow
+
+        holder = QWidget()
+        holder._toggle_direction = lambda: None
+        holder._on_manual_capture = lambda: None
+        holder._on_pin = lambda: None
+        holder._on_seam_correct = lambda _delta: None
+        holder._on_finish = lambda: None
+        holder._on_cancel = lambda: None
+        holder._position_floating_toolbar = lambda: None
+
+        ScrollCaptureWindow._setup_floating_toolbar(holder)
+
+        assert type(holder.toolbar).__name__ == "FloatingToolbar"
+        assert len(holder.toolbar.seam_menu.actions()) == 4
+        holder.toolbar.close()
+        holder.deleteLater()

@@ -13,6 +13,7 @@ TRANSLATIONS: dict[str, str] = {
     "OCR 不可用": "OCR is unavailable",
     "图片读不出来: {path}": "Could not read the image: {path}",
     "识别失败: {msg}": "Recognition failed: {msg}",
+    "没有识别到文字": "No text was recognised",
     "识别文本写入失败: {e}": "Failed to write the recognised text: {e}",
     "Agent 识别: {count} 行（置信度 {score}）":
         "Agent recognition: {count} line(s), confidence {score}",

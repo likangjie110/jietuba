@@ -4,6 +4,7 @@ I18n 翻译系统单元测试
 
 测试 XmlTranslator 的 XML 解析和翻译查找逻辑。
 """
+import ast
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -847,3 +848,37 @@ def test_layer_and_align_shortcut_labels_are_compiled(language):
 @pytest.mark.parametrize("language", ["en", "ja", "ko", "zh"])
 def test_insert_image_dialog_title_is_compiled(language):
     _assert_sources_in_context(language, "InsertImageTool", ("Insert Image",))
+
+
+def test_no_translation_call_passes_keyword_arguments():
+    """``tr("...{x}...", x=...)`` 一定会抛 AttributeError —— QObject.tr 不收关键字参数。
+
+    这条是本轮真机踩出来的：长截图工具栏里这么写，``FloatingToolbar`` 一构造就崩，
+    整个长截图窗口起不来；设置页里同款写法让「代理检测失败」和「公式服务不可用」
+    两条提示路径一点就炸。两个 bug 都是**只有真的执行到那一行**才会暴露，所以这里用
+    静态扫描把它们变成编译期就能发现的问题：占位符要么别用，要么自己 ``.format()``。
+
+    只扫 ``tr``（以及首参是字符串字面量的 ``translate``）：providers 里的
+    ``translate(request, target_lang=...)`` 是翻译接口本身，不是界面文案。
+    """
+    from core.i18n import make_tr  # noqa: F401  仅说明 tr 的来源，不参与判断
+
+    problems = []
+    for path in sorted(Path("main").rglob("*.py")):
+        if "tests" in path.parts:
+            continue
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8-sig"))
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call) or not node.args or not node.keywords:
+                continue
+            name = getattr(node.func, "attr", None) or getattr(node.func, "id", None)
+            first = node.args[0]
+            is_literal = isinstance(first, ast.Constant) and isinstance(first.value, str)
+            if name == "tr" or (name == "translate" and is_literal):
+                problems.append(f"{path}:{node.lineno} {name}({first.value!r}, "
+                                f"{[kw.arg for kw in node.keywords]})")
+
+    assert not problems, "tr()/translate() 不能带关键字参数，请改用 .format()：" + "\n".join(problems)
