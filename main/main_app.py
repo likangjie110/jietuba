@@ -23,7 +23,7 @@ from core.logger import (
 )
 
 # ── 全局版本号 ────────────────────────────────────────────
-APP_VERSION = "2.0.2"
+APP_VERSION = "2.0.3"
 
 # 当前 MainApp 实例。UI 侧需要「打开设置里的某一页」「重开本程序」这类应用级动作时
 # 从这里取（见 ui/permission_actions.py）；没有单独的 App 单例，进程内只有一个。
@@ -433,7 +433,6 @@ class MainApp(QObject):
 
         # 全局鼠标手势：绑定表跟着配置走，改一次重设一次（空表会停掉监听）
         self.hotkey_system.set_mouse_gestures(self.config_manager.get_mouse_gestures())
-
         if show_error and failed_hotkeys:
             self._show_hotkey_error(failed_hotkeys)
 
@@ -888,6 +887,16 @@ class MainApp(QObject):
 
         except Exception as e:
             log_exception(e, T("打开剪切板窗口失败"))
+
+    def pin_clipboard_image(self):
+        """把剪贴板里的图片钉到鼠标位置。"""
+        from PySide6.QtGui import QCursor
+        from clipboard.ui.windows.pin_window import pin_latest_clipboard_image
+
+        try:
+            pin_latest_clipboard_image(QCursor.pos())
+        except Exception as e:
+            log_exception(e, T("钉住剪贴板图片失败"))
         
     def quit_app(self):
         # 先把「未关闭的贴图」存下来：退出流程里贴图会被关闭，之后再存就只剩空列表了

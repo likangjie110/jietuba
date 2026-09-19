@@ -214,6 +214,8 @@ class ToolSettingsManager(QObject):
         "hotkey_2": "",                            # 截图备用热键
         "clipboard_hotkey": "ctrl+2",              # 剪贴板管理器的快捷键
         "clipboard_hotkey_2": "",                  # 剪贴板管理器的备用快捷键
+        "pin_clipboard_hotkey": "",                # 钉住剪贴板图片的快捷键（默认不占键，需手动设置）
+        "pin_clipboard_hotkey_2": "",              # 钉住剪贴板图片的备用快捷键
         "translation_hotkey": "",                  # 翻译主热键
         "translation_hotkey_2": "",                # 翻译备用热键
         "global_hotkeys_disabled": False,           # 是否禁用全局热键
@@ -446,6 +448,11 @@ class ToolSettingsManager(QObject):
         "azure_translate_api_key": "",
         "azure_translate_region": "",
         "azure_translate_endpoint": "",
+        "baidu_translate_appid": "",
+        "baidu_translate_secret_key": "",
+        "deepseek_api_key": "",
+        "deepseek_model": "",          # 空=用 provider 里的默认模型
+        "deepseek_base_url": "",       # 空=用官方地址
         "translation_target_lang": "",         # 翻译目标语言（空为跟随系统语言）
         "local_model_id": "",                  # 离线引擎用的模型（空为第一个已安装的）
         # 截图翻译的呈现：text 只给文本（老行为）/ replace 原图替换 / bilingual 下方双语
@@ -879,6 +886,30 @@ class ToolSettingsManager(QObject):
         """设置剪贴板管理器备用快捷键"""
         self._set_action_hotkey("clipboard", 1, value)
 
+    def get_pin_clipboard_hotkey(self) -> str:
+        """获取「钉住剪贴板图片」快捷键（旧键：动作表出现前它单独存一处）。"""
+        return self.qsettings.value(
+            "clipboard/pin_hotkey",
+            self.APP_DEFAULT_SETTINGS["pin_clipboard_hotkey"],
+            type=str,
+        )
+
+    def set_pin_clipboard_hotkey(self, value: str):
+        """设置「钉住剪贴板图片」快捷键"""
+        self.qsettings.setValue("clipboard/pin_hotkey", value)
+
+    def get_pin_clipboard_hotkey_2(self) -> str:
+        """获取「钉住剪贴板图片」备用快捷键"""
+        return self.qsettings.value(
+            "clipboard/pin_hotkey_2",
+            self.APP_DEFAULT_SETTINGS["pin_clipboard_hotkey_2"],
+            type=str,
+        )
+
+    def set_pin_clipboard_hotkey_2(self, value: str):
+        """设置「钉住剪贴板图片」备用快捷键"""
+        self.qsettings.setValue("clipboard/pin_hotkey_2", value)
+
     def get_translation_hotkey(self) -> str:
         """获取智能翻译全局快捷键。"""
         return self._action_hotkey_pair("open_translation")[0]
@@ -1013,6 +1044,9 @@ class ToolSettingsManager(QObject):
         ("screenshot", "app/hotkey", "app/hotkey_2"),
         ("clipboard", "clipboard/hotkey", "clipboard/hotkey_2"),
         ("open_translation", "app/translation_hotkey", "app/translation_hotkey_2"),
+        # 2.0.3 的「钉住剪贴板图片」热键：动作表出现前它是独立的一对键，搬进动作表后
+        # 老用户设过的绑定不会丢
+        ("pin_clipboard_image", "clipboard/pin_hotkey", "clipboard/pin_hotkey_2"),
     )
 
     def get_action_hotkeys(self) -> dict:
@@ -1060,10 +1094,15 @@ class ToolSettingsManager(QObject):
         table = {action_id: list(pair) for action_id, pair in defaults.items()}
         for action_id, primary_key, secondary_key in self._LEGACY_HOTKEY_KEYS:
             fallback = defaults.get(action_id, ["", ""])
-            table[action_id] = [
+            pair = [
                 self.qsettings.value(primary_key, fallback[0], type=str) or "",
                 self.qsettings.value(secondary_key, fallback[1], type=str) or "",
             ]
+            # 旧键里有值的动作才进表（比如 2.0.3 的钉图热键）：什么都没设过时凭空多出
+            # 一行空热键，等于把动作页默认清单改了
+            if action_id not in defaults and not any(pair):
+                continue
+            table[action_id] = pair
         return table
 
     def set_action_hotkeys(self, table: dict) -> None:
@@ -1866,6 +1905,19 @@ class ToolSettingsManager(QObject):
         if provider_id == "local":
             # 本地离线引擎没有密钥，只有"用哪个模型"（空 = 用第一个装好的）
             return {"model_id": self.get_local_model_id()}
+        if provider_id == "baidu":
+            return {
+                "appid": self.get_baidu_translate_appid(),
+                "secret_key": self.get_baidu_translate_secret_key(),
+            }
+        if provider_id == "deepseek":
+            # model/base_url 留空时由 provider 用自己的默认值，
+            # 所以这里原样传空串而不是在这边兜底
+            return {
+                "api_key": self.get_deepseek_api_key(),
+                "model": self.get_deepseek_model(),
+                "base_url": self.get_deepseek_base_url(),
+            }
         return {}
 
     # ==================== 本地离线引擎 ====================
@@ -2046,7 +2098,72 @@ class ToolSettingsManager(QObject):
             "translation/providers/azure/endpoint",
             (value or "").strip(),
         )
-    
+
+    def get_baidu_translate_appid(self) -> str:
+        return self.qsettings.value(
+            "translation/providers/baidu/appid",
+            self.APP_DEFAULT_SETTINGS["baidu_translate_appid"],
+            type=str,
+        )
+
+    def set_baidu_translate_appid(self, value: str):
+        self.qsettings.setValue(
+            "translation/providers/baidu/appid",
+            (value or "").strip(),
+        )
+
+    def get_baidu_translate_secret_key(self) -> str:
+        return self.qsettings.value(
+            "translation/providers/baidu/secret_key",
+            self.APP_DEFAULT_SETTINGS["baidu_translate_secret_key"],
+            type=str,
+        )
+
+    def set_baidu_translate_secret_key(self, value: str):
+        self.qsettings.setValue(
+            "translation/providers/baidu/secret_key",
+            (value or "").strip(),
+        )
+
+    def get_deepseek_api_key(self) -> str:
+        return self.qsettings.value(
+            "translation/providers/deepseek/api_key",
+            self.APP_DEFAULT_SETTINGS["deepseek_api_key"],
+            type=str,
+        )
+
+    def set_deepseek_api_key(self, value: str):
+        self.qsettings.setValue(
+            "translation/providers/deepseek/api_key",
+            (value or "").strip(),
+        )
+
+    def get_deepseek_model(self) -> str:
+        return self.qsettings.value(
+            "translation/providers/deepseek/model",
+            self.APP_DEFAULT_SETTINGS["deepseek_model"],
+            type=str,
+        )
+
+    def set_deepseek_model(self, value: str):
+        self.qsettings.setValue(
+            "translation/providers/deepseek/model",
+            (value or "").strip(),
+        )
+
+    def get_deepseek_base_url(self) -> str:
+        return self.qsettings.value(
+            "translation/providers/deepseek/base_url",
+            self.APP_DEFAULT_SETTINGS["deepseek_base_url"],
+            type=str,
+        )
+
+    def set_deepseek_base_url(self, value: str):
+        self.qsettings.setValue(
+            "translation/providers/deepseek/base_url",
+            (value or "").strip(),
+        )
+
     def get_translation_target_lang(self) -> str:
         """
         获取翻译目标语言

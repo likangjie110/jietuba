@@ -30,6 +30,7 @@ EDITOR_MODE_VIDEO = "video"
 
 #: 不走截图链路、直接调应用入口的动作 id
 APP_ENTRY_ACTIONS = ("clipboard", "open_translation", "pin_clipboard_text",
+                     "pin_clipboard_image",
                      "open_save_folder", "translate_clipboard_image", "check_updates",
                      "open_history", "open_image_viewer", "open_main_window")
 
@@ -75,6 +76,9 @@ ACTIONS = (
     Action("open_main_window", "Main Window", tray=True),
     Action("open_translation", "Translation", tray=True),
     Action("pin_clipboard_text", "Pin Clipboard Text", tray=True),
+    # 钉住剪贴板里的**图片**（2.0.3 远程带的新能力）：以前它在 main_app 里有一段独立的
+    # 热键注册，本分支统一成动作，热键/托盘/全局鼠标手势因此共用一份配置
+    Action("pin_clipboard_image", "Pin Clipboard Image"),
     Action("translate_clipboard_image", "Translate Clipboard Image", tray=True),
     # 托盘常用入口：直接打开截图保存目录（找不到目录时用平台层兜底打开）
     Action("open_save_folder", "Open Save Folder", tray=True),
@@ -1105,6 +1109,8 @@ def _run_app_entry(action_id: str, app) -> bool:
         return True
     if action_id == "pin_clipboard_text":
         return _pin_clipboard_text(app)
+    if action_id == "pin_clipboard_image":
+        return _pin_clipboard_image(app)
     if action_id == "open_save_folder":
         return _open_save_folder(app)
     if action_id == "translate_clipboard_image":
@@ -1214,6 +1220,15 @@ def clipboard_image():
         return None
     image = clipboard.image()
     return None if image is None or image.isNull() else image
+
+
+def _pin_clipboard_image(app) -> bool:
+    """把剪贴板里的图片钉到鼠标位置（实现留在 MainApp，动作层只做分发）。"""
+    handler = getattr(app, "pin_clipboard_image", None)
+    if not callable(handler):
+        log_warning(T("当前应用没有提供钉住剪贴板图片的入口"), "Action")
+        return False
+    return bool(handler())
 
 
 def _pin_clipboard_text(app) -> bool:

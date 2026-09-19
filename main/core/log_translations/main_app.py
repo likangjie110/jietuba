@@ -1,4 +1,4 @@
-"""main/main_app.py 里 log_* 调用的中→英翻译表。"""
+﻿"""main/main_app.py 里 log_* 调用的中→英翻译表。"""
 
 TRANSLATIONS: dict[str, str] = {
     "托盘图标资源不可用，改用占位图标: {icon_path}": "Tray icon resource unavailable, falling back to placeholder icon: {icon_path}",
@@ -20,6 +20,8 @@ TRANSLATIONS: dict[str, str] = {
     "前台程序在忽略列表里，跳过鼠标动作: {name}": "Foreground application is in the ignored list, skipping mouse action: {name}",
     "执行鼠标手势动作": "Running mouse gesture action",
     "保存贴图会话": "Saving the pin session",
+    # 2.0.3 远程带来的能力：钉住剪贴板里的图片（热键走动作表，见 core/actions.py）
+    "钉住剪贴板图片失败": "Failed to pin clipboard image",
     "全局热键已临时禁用（保留注册，仅忽略回调）": "Global hotkeys temporarily disabled (registration kept, callbacks ignored)",
     "全局热键已启用": "Global hotkeys enabled",
     "显示热键错误提示: {failed_hotkeys}": "Showing hotkey error prompt: {failed_hotkeys}",

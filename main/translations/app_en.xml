@@ -2925,6 +2925,7 @@ SOFTWARE.</translation>
         <source>Auto Recognize</source>
         <translation>Auto Recognize</translation>
     </message>
+    <message><source>Pin Clipboard Image</source><translation>Create Pin Image</translation></message>
 </context>
 
 <context>
@@ -3569,6 +3570,10 @@ SOFTWARE.</translation>
         <source>Auto Recognize</source>
         <translation>Auto Recognize</translation>
     </message>
+    <message>
+        <source>Pin Clipboard Image</source>
+        <translation>Pin Clipboard Image</translation>
+    </message>
 </context>
 
 <context>
@@ -3765,6 +3770,8 @@ SOFTWARE.</translation>
         <source>Auto Recognize</source>
         <translation>Auto Recognize</translation>
     </message>
+    <message><source>Pin Clipboard Image</source><translation>Create Pin Image</translation></message>
+    <message><source>Pin Clipboard Image (2)</source><translation>Create Pin Image (2)</translation></message>
 </context>
 
 <context>
@@ -3910,7 +3917,7 @@ SOFTWARE.</translation>
         <translation>Target</translation>
     </message>
 </context>
-
+<!-- ========== Clipboard Window ========== -->
 <context>
     <name>ClipboardWindow</name>
     <message>

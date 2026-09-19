@@ -2889,6 +2889,39 @@ SOFTWARE.</translation>
         <source>Auto Recognize</source>
         <translation>自動認識</translation>
     </message>
+    <message>
+        <source>Baidu APPID</source>
+        <translation>Baidu APPID</translation>
+    </message>
+    <message>
+        <source>Baidu Secret Key</source>
+        <translation>Baidu シークレットキー</translation>
+    </message>
+    <message>
+        <source>Paired with APPID in the Baidu console</source>
+        <translation>Baidu コンソールの「開発者情報」で APPID と対になっている鍵</translation>
+    </message>
+    <message>
+        <source>Baidu Translate Open Platform</source>
+        <translation>Baidu 翻訳オープンプラットフォーム</translation>
+    </message>
+    <message>
+        <source>DeepSeek API Key</source>
+        <translation>DeepSeek API キー</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>モデル</translation>
+    </message>
+    <message>
+        <source>API Base URL</source>
+        <translation>API ベース URL</translation>
+    </message>
+    <message>
+        <source>LLM translation: better with context and idioms, but slower, billed per token, and may refuse some content</source>
+        <translation>大規模言語モデル翻訳：文脈や慣用表現に強い一方、速度が遅く、トークン単位の課金で、内容によっては拒否されることがあります</translation>
+    </message>
+    <message><source>Pin Clipboard Image</source><translation>ピン画像を作成</translation></message>
 </context>
 
 <context>
@@ -3537,6 +3570,10 @@ SOFTWARE.</translation>
         <source>Auto Recognize</source>
         <translation>自動認識</translation>
     </message>
+    <message>
+        <source>Pin Clipboard Image</source>
+        <translation>ピン画像を作成</translation>
+    </message>
 </context>
 
 <context>
@@ -3564,6 +3601,26 @@ SOFTWARE.</translation>
     <message>
         <source>Exit</source>
         <translation>終了</translation>
+    </message>
+    <message>
+        <source>Screenshot (2)</source>
+        <translation>スクリーンショット (2)</translation>
+    </message>
+    <message>
+        <source>Translation (2)</source>
+        <translation>翻訳 (2)</translation>
+    </message>
+    <message>
+        <source>Clipboard (2)</source>
+        <translation>クリップボード (2)</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Image</source>
+        <translation>ピン画像を作成</translation>
+    </message>
+    <message>
+        <source>Pin Clipboard Image (2)</source>
+        <translation>ピン画像を作成 (2)</translation>
     </message>
     <message>
         <source>Hotkey Registration Failed</source>
@@ -3652,18 +3709,6 @@ SOFTWARE.</translation>
     <message>
         <source>Main Window</source>
         <translation>メインウィンドウ</translation>
-    </message>
-    <message>
-        <source>Screenshot (2)</source>
-        <translation>スクリーンショット (2)</translation>
-    </message>
-    <message>
-        <source>Translation (2)</source>
-        <translation>翻訳 (2)</translation>
-    </message>
-    <message>
-        <source>Clipboard (2)</source>
-        <translation>クリップボード (2)</translation>
     </message>
         <message>
             <source>Read Image with AI</source>
@@ -3762,10 +3807,6 @@ SOFTWARE.</translation>
         <translation>翻訳失敗:</translation>
     </message>
     <message>
-        <source>Translation failed: </source>
-        <translation>翻訳失敗: </translation>
-    </message>
-    <message>
         <source>Enter text to translate...</source>
         <translation>翻訳するテキストを入力...</translation>
     </message>
@@ -3859,6 +3900,7 @@ SOFTWARE.</translation>
     </message>
 </context>
 
+<!-- ========== Clipboard Window ========== -->
 <context>
     <name>ClipboardWindow</name>
     <message>
@@ -5337,9 +5379,37 @@ SOFTWARE.</translation>
         <source>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</source>
         <translation>この2つはシステム権限です。ないとホットキーが反応せず、スクリーンショットにはデスクトップの壁紙しか写りません。</translation>
     </message>
-    <message>
+        <message>
         <source>权限只对本机生效，随时可以在设置里复查。</source>
         <translation>権限はこの Mac にのみ適用されます。設定からいつでも確認できます。</translation>
+        </message>
+        <message>
+        <source>Baidu APPID</source>
+        <translation>Baidu APPID</translation>
+        </message>
+    <message>
+        <source>Baidu Secret Key</source>
+        <translation>Baidu シークレットキー</translation>
+    </message>
+    <message>
+        <source>Paired with APPID in the Baidu console</source>
+        <translation>Baidu コンソールの「開発者情報」で APPID と対になっている鍵</translation>
+    </message>
+    <message>
+        <source>Baidu Translate Open Platform</source>
+        <translation>Baidu 翻訳オープンプラットフォーム</translation>
+    </message>
+    <message>
+        <source>DeepSeek API Key</source>
+        <translation>DeepSeek API キー</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>モデル</translation>
+    </message>
+    <message>
+        <source>API Base URL</source>
+        <translation>API ベース URL</translation>
     </message>
 </context>
 
@@ -6545,4 +6615,11 @@ SOFTWARE.</translation>
     </message>
 </context>
 
+<context>
+    <name>InAppShortcut</name>
+    <message>
+        <source>Middle</source>
+        <translation>中ボタン</translation>
+    </message>
+</context>
 </TS>

@@ -553,7 +553,10 @@ translation/
 │   ├── google.py            # Google
 │   ├── azure.py             # Azure
 │   ├── amazon.py            # Amazon
-│   └── local.py             # ローカル翻訳プロバイダ — オフラインエンジンの薄いアダプタ
+│   ├── baidu.py             # Baidu
+│   ├── deepseek.py          # DeepSeek (LLM)
+│   ├── local.py             # ローカル翻訳プロバイダ — オフラインエンジンの薄いアダプタ
+│   └── openai_compatible.py # OpenAI 互換の基底クラス
 ├── smart_translation_controller.py # SmartTranslationController — ワンキー選択テキスト検出＆ポップアップルーティング
 ├── translation_popup.py     # TranslationPopup — コンパクト翻訳ポップアップ（選択テキスト/手入力）
 ├── deepl_service.py         # DeepLService / TranslationThread — 旧版 DeepL API 非同期翻訳
@@ -652,6 +655,7 @@ ui/
 │   ├── page_clipboard.py    # クリップボード設定
 │   ├── page_hotkey.py       # ホットキー設定
 │   ├── page_translation.py  # 翻訳設定
+│   ├── provider_fields.py   # 服务商字段的读写（按声明）
 │   ├── page_log.py          # ログ設定
 │   ├── page_developer.py    # 開発者設定
 │   ├── page_misc.py         # その他設定
