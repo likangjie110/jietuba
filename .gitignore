@@ -35,5 +35,7 @@ plugins/*
 .idea/
 .vscode/
 .orca/
+# spec 工作流的本地脚手架（模板与状态），不属于项目源码
+.spec-workflow/
 .DS_Store
 Thumbs.db
