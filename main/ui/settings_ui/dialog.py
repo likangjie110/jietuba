@@ -920,6 +920,12 @@ class SettingsDialog(FrostedFramelessDialog):
             index = self.translation_target_combo.findData(defaults["translation_target_lang"])
             if index >= 0:
                 self.translation_target_combo.setCurrentIndex(index)
+        if hasattr(self, 'stitch_fixed_bands_toggle'):
+            self.stitch_fixed_bands_toggle.setChecked(defaults["stitch_remove_fixed_bands"])
+        if hasattr(self, 'stitch_segment_combo'):
+            index = self.stitch_segment_combo.findData(defaults["stitch_max_segment_height"])
+            if index >= 0:
+                self.stitch_segment_combo.setCurrentIndex(index)
         if hasattr(self, 'translation_image_mode_combo'):
             index = self.translation_image_mode_combo.findData(
                 defaults["translation_image_mode"])
@@ -1394,14 +1400,15 @@ class SettingsDialog(FrostedFramelessDialog):
                       'preload_settings_toggle', 'preload_clipboard_toggle',
                       'pin_shadow_toggle', 'pin_close_confirm_toggle',
                       'pin_restore_toggle', 'screenshot_rounded_toggle',
-                      'screenshot_border_toggle', 'screenshot_border_persist_toggle'):
+                      'screenshot_border_toggle', 'screenshot_border_persist_toggle',
+                      'stitch_fixed_bands_toggle'):
             w = getattr(self, attr, None)
             if w is not None:
                 snap[attr] = w.isChecked()
         # 下拉框类
         for attr in ('screenshot_format_combo', 'ocr_engine_combo',
                       'translation_provider_combo', 'translation_target_combo',
-                      'translation_image_mode_combo',
+                      'translation_image_mode_combo', 'stitch_segment_combo',
                       'log_level_combo', 'ui_detection_combo',
                       'language_combo', 'engine_combo', 'cursor_move_combo',
                       'magnifier_color_format_combo', 'log_retention_combo',
@@ -1582,6 +1589,10 @@ class SettingsDialog(FrostedFramelessDialog):
             config.set_ocr_language(new_language)
         if hasattr(self, "ocr_tier_combo"):
             config.set_ocr_model_tier(self.ocr_tier_combo.currentData() or "")
+        if hasattr(self, "stitch_fixed_bands_toggle"):
+            config.set_stitch_remove_fixed_bands(self.stitch_fixed_bands_toggle.isChecked())
+        if hasattr(self, "stitch_segment_combo"):
+            config.set_stitch_max_segment_height(self.stitch_segment_combo.currentData())
         if hasattr(self, "translation_image_mode_combo"):
             config.set_translation_image_mode(
                 self.translation_image_mode_combo.currentData())

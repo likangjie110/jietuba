@@ -8,7 +8,7 @@ scroll_toolbar.py - 滚动截图浮动工具栏模块
 - FloatingToolbar : 可拖动的浮动工具栏，包含方向切换、手动截图、钉图、完成、取消等按钮
 """
 
-from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QMenu, QWidget, QPushButton, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt, QPoint, Signal
 from PySide6.QtGui import QPainter, QColor, QPainterPath
 from core.theme import get_theme
@@ -80,6 +80,7 @@ class FloatingToolbar(QWidget):
     pin_clicked = Signal()   # 钉图信号
     finish_clicked = Signal()
     cancel_clicked = Signal()
+    seam_correct_requested = Signal(int)   # 接缝人工修正：正数往下挪、负数往上挪（像素）
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -181,6 +182,19 @@ class FloatingToolbar(QWidget):
         self.pin_btn.clicked.connect(self.pin_clicked.emit)
         toolbar_layout.addWidget(self.pin_btn, 0, Qt.AlignmentFlag.AlignVCenter)
 
+        # 接缝修正按钮：点开一个小菜单选 ±1 / ±10
+        self.seam_btn = QPushButton("⇕")
+        self.seam_btn.setFixedSize(32, 32)
+        self.seam_btn.setToolTip(self.tr("Fix seam alignment"))
+        self.seam_btn.setStyleSheet(self._icon_btn_style())
+        self.seam_menu = QMenu(self.seam_btn)
+        for delta, label in ((-10, "-10"), (-1, "-1"), (1, "+1"), (10, "+10")):
+            action = self.seam_menu.addAction(self.tr("Nudge seam {delta}px", delta=label))
+            action.triggered.connect(
+                lambda _checked=False, value=delta: self.seam_correct_requested.emit(value))
+        self.seam_btn.clicked.connect(self._open_seam_menu)
+        toolbar_layout.addWidget(self.seam_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+
         # 完成按钮
         self.finish_btn = QPushButton()
         self.finish_btn.setIcon(ResourceManager.get_icon(ResourceManager.get_resource_path("svg/确定.svg")))
@@ -200,6 +214,11 @@ class FloatingToolbar(QWidget):
         self.cancel_btn.setStyleSheet(self._icon_btn_style())
         self.cancel_btn.clicked.connect(self.cancel_clicked.emit)
         toolbar_layout.addWidget(self.cancel_btn, 0, Qt.AlignmentFlag.AlignVCenter)
+
+    def _open_seam_menu(self) -> None:
+        """在按钮下方弹出修正菜单。"""
+        self.seam_menu.exec(self.seam_btn.mapToGlobal(
+            QPoint(0, self.seam_btn.height())))
 
     @staticmethod
     def _icon_btn_style() -> str:

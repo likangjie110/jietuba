@@ -148,6 +148,10 @@ class MockConfig:
 
     def get_ocr_vision_task(self): return "table"
 
+    def get_stitch_remove_fixed_bands(self): return False
+
+    def get_stitch_max_segment_height(self): return 0
+
     def get_ocr_low_confidence_threshold(self): return 0.6
     def set_ocr_upscale_factor(self, v): pass
     def get_pin_auto_toolbar(self): return True

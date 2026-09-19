@@ -2753,6 +2753,34 @@ SOFTWARE.</translation>
             <source>Translate Image in Place</source>
             <translation>번역 후 이미지에 반영</translation>
         </message>
+        <message>
+            <source>Long Screenshot Cleanup</source>
+            <translation>긴 스크린샷 후처리</translation>
+        </message>
+        <message>
+            <source>Remove fixed header and footer</source>
+            <translation>고정 헤더/푸터 제거</translation>
+        </message>
+        <message>
+            <source>Drops the title bar or footer that repeats in every frame.</source>
+            <translation>모든 프레임에서 반복되는 제목 표시줄이나 푸터를 결과에서 제거합니다.</translation>
+        </message>
+        <message>
+            <source>Split exported image</source>
+            <translation>긴 이미지 분할 저장</translation>
+        </message>
+        <message>
+            <source>Exports a very long screenshot as several files of this height.</source>
+            <translation>이 높이를 넘는 긴 스크린샷은 이 높이로 나누어 여러 파일로 저장합니다.</translation>
+        </message>
+        <message>
+            <source>Do not split</source>
+            <translation>분할 안 함</translation>
+        </message>
+        <message>
+            <source>{height} px</source>
+            <translation>{height} px</translation>
+        </message>
 </context>
 
 <context>
@@ -3209,6 +3237,14 @@ SOFTWARE.</translation>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
+        <message>
+            <source>Fix seam alignment</source>
+            <translation>이음새 보정</translation>
+        </message>
+        <message>
+            <source>Nudge seam {delta}px</source>
+            <translation>이음새 {delta}px 이동</translation>
+        </message>
 </context>
 
 <context>

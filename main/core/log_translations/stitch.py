@@ -98,4 +98,24 @@ TRANSLATIONS: dict[str, str] = {
     "[WARN] 关闭预览面板时出错: {e}": "[WARN] Error closing preview panel: {e}",
     "[OK] 全局滚轮监听器已停止": "[OK] Global mouse wheel listener stopped",
     "[WARN] 清理资源时出错: {e}": "[WARN] Error cleaning up resources: {e}",
+
+    # stitch/postprocess.py（后期处理）
+    "接缝修正: y={seam} 位移 {delta}px → {height}px":
+        "Seam corrected: y={seam}, shifted {delta}px → {height}px",
+    "检测到顶部固定条: {height}px": "Detected a fixed top band: {height}px",
+    "检测到底部固定条: {height}px": "Detected a fixed bottom band: {height}px",
+    "已消除固定条: 顶 {top}px / 底 {bottom}px → {height}px":
+        "Removed fixed bands: top {top}px / bottom {bottom}px → {height}px",
+    "固定条高度超过图片本身，跳过消除":
+        "Fixed band is taller than the image itself, skipping removal",
+    "长截图分段: {count} 段（每段上限 {limit}px）":
+        "Long screenshot split into {count} segment(s) (limit {limit}px each)",
+
+    # stitch/scroll_window.py（后期与保存）
+    "接缝修正: 预览中心 y={y}，位移 {delta}px → {height}px":
+        "Seam corrected at the preview centre y={y}, shifted {delta}px → {height}px",
+    "[WARN] 读取长截图后期设置失败: {e}":
+        "[WARN] Failed to read the long-screenshot post-processing settings: {e}",
+    "[WARN] 读取长截图分段设置失败: {e}":
+        "[WARN] Failed to read the long-screenshot split setting: {e}",
 }

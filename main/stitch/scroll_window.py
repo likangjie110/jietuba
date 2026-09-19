@@ -434,6 +434,7 @@ class ScrollCaptureWindow(QWidget):
         self.toolbar.direction_changed.connect(self._toggle_direction)
         self.toolbar.manual_capture.connect(self._on_manual_capture)
         self.toolbar.pin_clicked.connect(self._on_pin)
+        self.toolbar.seam_correct_requested.connect(self._on_seam_correct)
         self.toolbar.finish_clicked.connect(self._on_finish)
         self.toolbar.cancel_clicked.connect(self._on_cancel)
         
@@ -1379,23 +1380,76 @@ class ScrollCaptureWindow(QWidget):
         """设置保存目录"""
         self.save_directory = directory
     
+    def _postprocess_result(self) -> None:
+        """落盘前的后期：消除固定标题栏/底栏（按设置）。
+
+        分段留给保存那一步——分几段是保存策略，不是图像内容。
+        """
+        if self.stitched_result is None:
+            return
+        settings = {}
+        try:
+            from settings import get_tool_settings_manager
+
+            config = get_tool_settings_manager()
+            settings = {
+                "enabled": config.get_stitch_remove_fixed_bands(),
+                "top": config.get_stitch_fixed_band_top(),
+                "bottom": config.get_stitch_fixed_band_bottom(),
+            }
+        except Exception as e:
+            _log_stitch(T("[WARN] 读取长截图后期设置失败: {e}", e=e))
+            return
+        if not settings.get("enabled"):
+            return
+
+        from stitch import postprocess
+
+        top = int(settings.get("top") or 0)
+        bottom = int(settings.get("bottom") or 0)
+        if not top:
+            top = postprocess.detect_fixed_band(self.screenshots, "top")
+        if not bottom:
+            bottom = postprocess.detect_fixed_band(self.screenshots, "bottom")
+        if top or bottom:
+            self.stitched_result = postprocess.remove_fixed_bands(
+                self.stitched_result, top=top, bottom=bottom)
+
+    def _segment_limit(self) -> int:
+        """分段上限（0 = 不分段）。"""
+        try:
+            from settings import get_tool_settings_manager
+
+            return int(get_tool_settings_manager().get_stitch_max_segment_height() or 0)
+        except Exception as e:
+            _log_stitch(T("[WARN] 读取长截图分段设置失败: {e}", e=e))
+            return 0
+
     def _save_result(self):
-        """提交拼接结果的异步保存任务"""
+        """提交拼接结果的异步保存任务（按设置分段逐段落盘）"""
         if self.stitched_result is None:
             _log_stitch(T("[WARN] 没有拼接结果，跳过保存"))
             return
 
+        self._postprocess_result()
+
         direction_suffix = "横" if self.scroll_direction == "horizontal" else "縦"
         target_dir = self.save_directory
 
+        from stitch import postprocess
+
+        segments = postprocess.split_segments(self.stitched_result, self._segment_limit())
         try:
-            task_path = self.save_service.save_pil_async(
-                self.stitched_result,
-                directory=target_dir,
-                prefix="長スクショ",
-                suffix=direction_suffix,
-                image_format="PNG"
-            )
+            task_path = None
+            for index, segment in enumerate(segments, 1):
+                suffix = direction_suffix if len(segments) == 1 else f"{direction_suffix}_{index}"
+                task_path = self.save_service.save_pil_async(
+                    segment,
+                    directory=target_dir,
+                    prefix="長スクショ",
+                    suffix=suffix,
+                    image_format="PNG"
+                )
             if task_path:
                 _log_stitch(T("[SAVE] 长截图保存任务已提交: {task_path}", task_path=task_path))
             else:
@@ -1428,6 +1482,37 @@ class ScrollCaptureWindow(QWidget):
             import traceback
             traceback.print_exc()
     
+    def _on_seam_correct(self, delta: int) -> bool:
+        """接缝人工修正：把预览中心的接缝位置上下挪 ±1 / ±10 像素。"""
+        from stitch import postprocess
+
+        if self.stitched_result is None or not delta:
+            return False
+        seam_y = self._preview_center_in_result()
+        self.stitched_result = postprocess.shift_seam(self.stitched_result, seam_y, delta)
+        _log_stitch(T("接缝修正: 预览中心 y={y}，位移 {delta}px → {height}px",
+                      y=seam_y, delta=delta, height=self.stitched_result.size[1]), force=True)
+        self._refresh_preview_panel()
+        return True
+
+    def _preview_center_in_result(self) -> int:
+        """预览面板中心对应的拼接结果 y 坐标。
+
+        预览是等比缩放的，所以要先按缩放比还原；拿不到面板尺寸时退回结果图中心。
+        注意方向：向上滚动时预览显示的是翻转图，要把 y 映射回未翻转的坐标。
+        """
+        height = self.stitched_result.size[1]
+        panel = getattr(self, "preview_panel", None)
+        try:
+            panel_height = panel.preview_label.height()
+            scale = panel_height / height if height else 1.0
+            y = int((panel_height / 2) / scale) if scale > 0 else height // 2
+        except Exception:
+            y = height // 2
+        if self.scroll_locked_direction == "up" and len(self.screenshots) >= 2:
+            y = height - y
+        return max(0, min(y, height))
+
     def _on_manual_capture(self):
         """手动截图（从工具栏触发）"""
         try:

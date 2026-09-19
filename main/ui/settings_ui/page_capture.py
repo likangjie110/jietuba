@@ -427,6 +427,38 @@ def create_capture_page(dialog) -> QWidget:
     # ── 截图外观（圆角 / 描边阴影）────────────────────
     # 这些键以前只能在截图窗口里的浮层面板改，这里给一处固定入口；读写的是同一份
     # 应用设置（app/screenshot_*），不会出现两份值。
+    # 长截图后期（接缝修正在长截图窗口的工具栏上，这里只放「落盘前做什么」）
+    grp_stitch = SettingCardGroup(dialog.tr("Long Screenshot Cleanup"), view)
+    fixed_card = SwitchSettingCard(
+        FluentIcon.ALIGNMENT,
+        dialog.tr("Remove fixed header and footer"),
+        dialog.tr("Drops the title bar or footer that repeats in every frame."),
+        parent=grp_stitch,
+    )
+    fixed_card.setChecked(dialog.config_manager.get_stitch_remove_fixed_bands())
+    dialog.stitch_fixed_bands_toggle = fixed_card
+    grp_stitch.addSettingCard(fixed_card)
+
+    segment_card = FSettingCard(
+        FluentIcon.DOCUMENT,
+        dialog.tr("Split exported image"),
+        dialog.tr("Exports a very long screenshot as several files of this height."),
+        parent=grp_stitch,
+    )
+    dialog.stitch_segment_combo = ComboBox(segment_card)
+    dialog.stitch_segment_combo.setFixedWidth(160)
+    dialog.stitch_segment_combo.addItem(dialog.tr("Do not split"), userData=0)
+    for height in (2048, 4096, 8192):
+        dialog.stitch_segment_combo.addItem(
+            dialog.tr("{height} px").replace("{height}", str(height)), userData=height)
+    _select_combo(dialog.stitch_segment_combo,
+                  dialog.config_manager.get_stitch_max_segment_height())
+    segment_card.hBoxLayout.addWidget(
+        dialog.stitch_segment_combo, 0, Qt.AlignmentFlag.AlignRight)
+    segment_card.hBoxLayout.addSpacing(16)
+    grp_stitch.addSettingCard(segment_card)
+    layout.addWidget(grp_stitch)
+
     grp_look = SettingCardGroup(dialog.tr("Screenshot Appearance"), view)
 
     rounded_card = SwitchSettingCard(

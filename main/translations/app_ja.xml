@@ -2753,6 +2753,34 @@ SOFTWARE.</translation>
             <source>Translate Image in Place</source>
             <translation>翻訳して画像に反映</translation>
         </message>
+        <message>
+            <source>Long Screenshot Cleanup</source>
+            <translation>長いスクリーンショットの後処理</translation>
+        </message>
+        <message>
+            <source>Remove fixed header and footer</source>
+            <translation>固定のヘッダー/フッターを除去</translation>
+        </message>
+        <message>
+            <source>Drops the title bar or footer that repeats in every frame.</source>
+            <translation>毎フレームに繰り返し現れるタイトルバーやフッターを成品から取り除きます。</translation>
+        </message>
+        <message>
+            <source>Split exported image</source>
+            <translation>長い画像を分割して保存</translation>
+        </message>
+        <message>
+            <source>Exports a very long screenshot as several files of this height.</source>
+            <translation>この高さを超える長い画像は、この高さで分割して複数ファイルに保存します。</translation>
+        </message>
+        <message>
+            <source>Do not split</source>
+            <translation>分割しない</translation>
+        </message>
+        <message>
+            <source>{height} px</source>
+            <translation>{height} px</translation>
+        </message>
 </context>
 
 <context>
@@ -3213,6 +3241,14 @@ SOFTWARE.</translation>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
+        <message>
+            <source>Fix seam alignment</source>
+            <translation>継ぎ目を修正</translation>
+        </message>
+        <message>
+            <source>Nudge seam {delta}px</source>
+            <translation>継ぎ目を {delta}px ずらす</translation>
+        </message>
 </context>
 
 <context>

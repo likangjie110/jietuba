@@ -2789,6 +2789,34 @@ SOFTWARE.</translation>
             <source>Translate Image in Place</source>
             <translation>Translate Image in Place</translation>
         </message>
+        <message>
+            <source>Long Screenshot Cleanup</source>
+            <translation>Long Screenshot Cleanup</translation>
+        </message>
+        <message>
+            <source>Remove fixed header and footer</source>
+            <translation>Remove fixed header and footer</translation>
+        </message>
+        <message>
+            <source>Drops the title bar or footer that repeats in every frame.</source>
+            <translation>Drops the title bar or footer that repeats in every frame.</translation>
+        </message>
+        <message>
+            <source>Split exported image</source>
+            <translation>Split exported image</translation>
+        </message>
+        <message>
+            <source>Exports a very long screenshot as several files of this height.</source>
+            <translation>Exports a very long screenshot as several files of this height.</translation>
+        </message>
+        <message>
+            <source>Do not split</source>
+            <translation>Do not split</translation>
+        </message>
+        <message>
+            <source>{height} px</source>
+            <translation>{height} px</translation>
+        </message>
 </context>
 
 <context>
@@ -3245,6 +3273,14 @@ SOFTWARE.</translation>
         <source>Cancel</source>
         <translation>Cancel</translation>
     </message>
+        <message>
+            <source>Fix seam alignment</source>
+            <translation>Fix seam alignment</translation>
+        </message>
+        <message>
+            <source>Nudge seam {delta}px</source>
+            <translation>Nudge seam {delta}px</translation>
+        </message>
 </context>
 
 <context>

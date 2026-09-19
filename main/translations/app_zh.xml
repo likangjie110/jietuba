@@ -2789,6 +2789,34 @@ SOFTWARE.</translation>
             <source>Translate Image in Place</source>
             <translation>截图翻译并落图</translation>
         </message>
+        <message>
+            <source>Long Screenshot Cleanup</source>
+            <translation>长截图后期</translation>
+        </message>
+        <message>
+            <source>Remove fixed header and footer</source>
+            <translation>消除固定的标题栏/底栏</translation>
+        </message>
+        <message>
+            <source>Drops the title bar or footer that repeats in every frame.</source>
+            <translation>滚动截图里每帧都重复出现的标题栏或底栏会从成品里切掉。</translation>
+        </message>
+        <message>
+            <source>Split exported image</source>
+            <translation>超长图分段导出</translation>
+        </message>
+        <message>
+            <source>Exports a very long screenshot as several files of this height.</source>
+            <translation>超过这个高度的长截图会按此高度切成多个文件保存。</translation>
+        </message>
+        <message>
+            <source>Do not split</source>
+            <translation>不分段</translation>
+        </message>
+        <message>
+            <source>{height} px</source>
+            <translation>{height} 像素</translation>
+        </message>
 </context>
 
 <context>
@@ -3249,6 +3277,14 @@ SOFTWARE.</translation>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
+        <message>
+            <source>Fix seam alignment</source>
+            <translation>修正接缝</translation>
+        </message>
+        <message>
+            <source>Nudge seam {delta}px</source>
+            <translation>接缝位移 {delta} 像素</translation>
+        </message>
 </context>
 
 <context>

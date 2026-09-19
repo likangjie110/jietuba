@@ -357,6 +357,11 @@ class ToolSettingsManager(QObject):
         "ocr_vision_models": [],
         "ocr_vision_model": "",
         "ocr_vision_target": "markdown",
+        # 长截图后期（见 stitch/postprocess.py）
+        "stitch_remove_fixed_bands": False,   # 自动消除固定的标题栏/底栏
+        "stitch_fixed_band_top": 0,           # >0 时用这个像素高度，0 = 自动检测
+        "stitch_fixed_band_bottom": 0,
+        "stitch_max_segment_height": 0,       # >0 时按此高度分段导出，0 = 不分段
         # 任务模板（id 见 ocr/vision_models.py 的 TASKS）：决定发给视觉模型的指令
         "ocr_vision_task": "table",
         # 本地 OCR 置信度低于它就提示「可改用视觉模型」；提示不发任何网络请求
@@ -2102,6 +2107,55 @@ class ToolSettingsManager(QObject):
             "split_sentences": split_sentences,
             "preserve_formatting": preserve_formatting,
         }
+
+    #: 长截图分段高度的可选值（0 = 不分段）
+    STITCH_SEGMENT_HEIGHTS = (0, 2048, 4096, 8192)
+
+    def get_stitch_remove_fixed_bands(self) -> bool:
+        return bool(self.get_app_setting("stitch_remove_fixed_bands", False))
+
+    def set_stitch_remove_fixed_bands(self, value: bool):
+        self.set_app_setting("stitch_remove_fixed_bands", bool(value))
+
+    def get_stitch_fixed_band_top(self) -> int:
+        return self._stitch_pixels("stitch_fixed_band_top")
+
+    def set_stitch_fixed_band_top(self, value) -> None:
+        self.set_app_setting("stitch_fixed_band_top", self._clamp_stitch_pixels(value))
+
+    def get_stitch_fixed_band_bottom(self) -> int:
+        return self._stitch_pixels("stitch_fixed_band_bottom")
+
+    def set_stitch_fixed_band_bottom(self, value) -> None:
+        self.set_app_setting("stitch_fixed_band_bottom", self._clamp_stitch_pixels(value))
+
+    @staticmethod
+    def _clamp_stitch_pixels(value) -> int:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            return 0
+        return max(0, min(2000, number))
+
+    def _stitch_pixels(self, key: str) -> int:
+        return self._clamp_stitch_pixels(self.get_app_setting(key, 0))
+
+    def get_stitch_max_segment_height(self) -> int:
+        """分段上限；不在候选表里的值按「不分段」处理，免得配出一个奇怪的尺寸。"""
+        raw = self.get_app_setting("stitch_max_segment_height", 0)
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            return 0
+        return value if value in self.STITCH_SEGMENT_HEIGHTS else 0
+
+    def set_stitch_max_segment_height(self, value) -> None:
+        try:
+            number = int(value)
+        except (TypeError, ValueError):
+            number = 0
+        self.set_app_setting("stitch_max_segment_height",
+                             number if number in self.STITCH_SEGMENT_HEIGHTS else 0)
 
     #: 截图翻译的三种呈现
     TRANSLATION_IMAGE_MODES = ("text", "replace", "bilingual")
