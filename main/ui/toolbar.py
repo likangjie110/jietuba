@@ -266,6 +266,7 @@ class Toolbar(QWidget):
     screenshot_translate_clicked = Signal()  # 截图翻译按钮
     translate_in_place_clicked = Signal()  # 翻译并落图按钮
     text_recognize_clicked = Signal()  # 文字识别按钮
+    vision_read_clicked = Signal()  # AI 解读按钮（视觉模型，可换任务模板重跑）
     scan_code_clicked = Signal()  # 扫码按钮
     gif_record_clicked = Signal()  # GIF录制按钮
     video_record_clicked = Signal()  # 视频录制按钮
@@ -366,6 +367,9 @@ class Toolbar(QWidget):
         self.text_recognize_btn = self._add_button(
             "text_recognize", "svg/文字识别.svg", "Recognize text (OCR)", wide,
             self.text_recognize_clicked.emit)
+        self.vision_read_btn = self._add_button(
+            "vision_read", "svg/AI解读.svg", "Read with AI (vision model)", wide,
+            self.vision_read_clicked.emit)
         self.scan_code_btn = self._add_button(
             "scan_code", "svg/扫码.svg", "Scan QR code / barcode", wide, self.scan_code_clicked.emit)
         self.gif_btn = self._add_button(

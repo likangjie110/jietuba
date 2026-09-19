@@ -333,3 +333,47 @@ class TestTextRecognizeAction:
         assert len(warnings) == 1
         tools.export_service.export_base_image_only.assert_not_called()
         tools.parent_window.cleanup_and_close.assert_not_called()
+
+
+class TestVisionReadAction:
+    """截图工具栏的「AI 解读」：关掉截图界面后把选区交给视觉模型窗口。"""
+
+    def _tools(self, image, confirmed=True):
+        tools = ActionTools.__new__(ActionTools)
+        tools.scene = MagicMock()
+        tools.scene.selection_model.is_confirmed = confirmed
+        tools.export_service = MagicMock()
+        tools.export_service.export_base_image_only.return_value = image
+        tools.parent_window = MagicMock()
+        tools.config_manager = MagicMock()
+        return tools
+
+    def test_closes_the_capture_first_then_opens_the_vision_window(self, monkeypatch):
+        steps = []
+        image = _blank_image()
+        tools = self._tools(image)
+        tools.parent_window.cleanup_and_close.side_effect = lambda: steps.append("close capture")
+
+        from core import actions
+
+        def _convert(shown, config_manager, *, task=None, show_window=False):
+            steps.append(("convert", shown, show_window))
+            return True
+
+        monkeypatch.setattr(actions, "recognize_image_with_vision", _convert)
+
+        tools.handle_vision_read()
+
+        assert steps == ["close capture", ("convert", image, True)]
+
+    def test_without_a_confirmed_selection_it_only_warns(self, monkeypatch):
+        warnings = []
+        monkeypatch.setattr("ui.dialogs.show_modeless_warning_dialog",
+                            lambda *args: warnings.append(args))
+        tools = self._tools(_blank_image(), confirmed=False)
+
+        tools.handle_vision_read()
+
+        assert len(warnings) == 1
+        tools.export_service.export_base_image_only.assert_not_called()
+        tools.parent_window.cleanup_and_close.assert_not_called()

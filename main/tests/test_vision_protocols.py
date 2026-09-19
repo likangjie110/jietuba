@@ -181,7 +181,8 @@ class TestProtocolDetails:
 
 class TestTaskTemplates:
     def test_all_documented_templates_exist(self):
-        assert {task.id for task in TASKS} == {"text", "code", "table", "formula", "general"}
+        assert {task.id for task in TASKS} == {"text", "code", "table", "formula",
+                                              "general", "solve"}
 
     def test_templates_produce_different_instructions(self):
         instructions = {task.id: instruction_for(task.id) for task in TASKS}

@@ -78,6 +78,11 @@ TASKS: tuple = (
         "Describe what this image shows, including the visible text and the layout. "
         "Be concise and factual.",
     ),
+    VisionTask(
+        "solve", "Solve the problem",
+        "Solve the problem shown in this image. Give the answer first, then the reasoning "
+        "in a few short steps. Plain text only.",
+    ),
 )
 
 TASKS_BY_ID = {task.id: task for task in TASKS}

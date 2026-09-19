@@ -487,7 +487,8 @@ class TestVisionAction:
         monkeypatch.setattr(actions_module, "capture_at_cursor",
                             lambda _app: (image(80, 40), QRectF(0, 0, 80, 40)))
         monkeypatch.setattr(actions_module, "_flash_capture_mask", lambda *a, **k: None)
-        monkeypatch.setattr("ocr.result_dialog.maybe_show_ocr_result", lambda *a, **k: None)
+        monkeypatch.setattr("ocr.vision_result_window.show_vision_result",
+                            lambda *a, **k: None)
 
         app = SimpleNamespace(config_manager=config)
         assert actions_module.run_action("convert_image_markdown", app) is True
@@ -550,6 +551,42 @@ class TestTableAction:
         assert actions_module.run_action("recognize_table",
                                          SimpleNamespace(config_manager=config)) is True
         assert opened == []
+
+
+class TestSolveAction:
+    def test_the_task_asks_the_model_to_solve_the_problem(self):
+        assert vision_models.TASKS_BY_ID["solve"].id == "solve"
+        assert "Solve the problem" in vision_models.instruction_for("solve")
+
+    def test_the_action_sends_the_solve_instruction(self, qapp, config, stub_server, monkeypatch):
+        """解题动作固定用 solve 模板，不受设置里选的任务模板影响。"""
+        from types import SimpleNamespace
+
+        import core.actions as actions_module
+
+        vision_models.upsert_model(config, vision_models.VisionModel(
+            name="stub", base_url=stub_server, model_id="vision-1"))
+        config.set_app_setting("ocr_vision_model", "stub")
+        config.set_ocr_vision_task("table")          # 设置里选的是表格，动作仍走解题
+        monkeypatch.setattr(actions_module, "capture_at_cursor",
+                            lambda _app: (image(80, 40), QRectF(0, 0, 80, 40)))
+        monkeypatch.setattr(actions_module, "_flash_capture_mask", lambda *a, **k: None)
+        monkeypatch.setattr("ocr.vision_result_window.show_vision_result",
+                            lambda *a, **k: None)
+
+        app = SimpleNamespace(config_manager=config)
+        assert actions_module.run_action("solve_problem", app) is True
+
+        instruction = _StubHandler.seen[-1]["body"]["messages"][0]["content"][0]["text"]
+        assert "Solve the problem" in instruction
+        assert QGuiApplication.clipboard().text() == _StubHandler.response_text
+
+    def test_the_action_is_registered_as_a_silent_capture(self):
+        from core import actions
+
+        action = actions.ACTIONS_BY_ID["solve_problem"]
+        assert action.silent_capture is True
+        assert "solve_problem" in actions.GESTURE_ACTION_IDS
 
 
 class _InlineThread:

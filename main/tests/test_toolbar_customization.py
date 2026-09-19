@@ -83,8 +83,21 @@ class TestNormalizeLayout:
         stored = [(key, SHOW) for key in DEFAULT_ORDER if key != "scan_code"]
         layout = normalize_layout(stored)
         keys = [key for key, _mode in layout]
-        assert keys[keys.index("text_recognize") + 1] == "scan_code"
+        predecessor = DEFAULT_ORDER[DEFAULT_ORDER.index("scan_code") - 1]
+        assert keys[keys.index(predecessor) + 1] == "scan_code"
         assert dict(layout)["scan_code"] == MORE
+
+    def test_the_ai_button_is_in_the_default_layout(self):
+        """AI 解读按钮：默认收进「…」，老配置里没有它也能补回来"""
+        assert "vision_read" in DEFAULT_ORDER
+        assert "vision_read" in DEFAULT_MORE
+
+        layout = normalize_layout([(key, SHOW) for key in DEFAULT_ORDER
+                                   if key != "vision_read"])
+        keys = [key for key, _mode in layout]
+        predecessor = DEFAULT_ORDER[DEFAULT_ORDER.index("vision_read") - 1]
+        assert keys[keys.index(predecessor) + 1] == "vision_read"
+        assert dict(layout)["vision_read"] == MORE
 
 
 class TestPersistence:

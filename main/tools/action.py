@@ -248,6 +248,23 @@ class ActionTools:
         self._cleanup_and_close()
         show_text_recognition(image)
 
+    def handle_vision_read(self):
+        """AI 解读：把选区交给视觉模型，关掉截图界面后在结果窗口里显示。
+
+        与「文字识别」的区别是这里不弹一个只读结果：窗口留着选区图与任务模板，用户可以
+        就地换成「解释代码」「转表格」「解题」再读一次，不用回去重新截一张图。
+
+        没配视觉模型时不静默失败——走 ``recognize_image_with_vision`` 的同一条判断，
+        它会提示并记日志（模型是可选能力，缺了要说清楚）。
+        """
+        from core import actions
+
+        image = self._selection_base_image()
+        if image is None:
+            return
+        self._cleanup_and_close()
+        actions.recognize_image_with_vision(image, self.config_manager, show_window=True)
+
     def handle_scan_code(self):
         """扫码：识别选区里的二维码 / 条形码，关掉截图界面后在结果窗口里列出"""
         from barcode import show_barcode_result

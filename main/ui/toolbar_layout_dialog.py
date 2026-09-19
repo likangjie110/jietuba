@@ -36,6 +36,7 @@ BUTTON_NAMES = {
     "translate_in_place": "Translate image in place",
     "loupe": "Magnify a detail",
     "text_recognize": "Recognize text",
+    "vision_read": "Read with AI",
     "scan_code": "Scan code",
     "gif": "GIF recording",
     "video": "Video recording",
