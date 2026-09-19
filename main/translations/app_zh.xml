@@ -1894,6 +1894,10 @@ This action cannot be undone.</source>
         <translation>DeepL免费版：每月50万字符。获取API密钥：</translation>
     </message>
     <message>
+        <source>Unofficial Edge endpoint, no API key needed. It may be rate-limited or stop working at any time.</source>
+        <translation>微软 Edge 内置翻译的免费接口，无需密钥。非官方接口，可能被限流或随时失效。</translation>
+    </message>
+    <message>
         <source>DeepL offers a free API tier with 500,000 characters/month.</source>
         <translation>DeepL提供免费API，每月50万字符额度。</translation>
     </message>

@@ -1818,6 +1818,10 @@ This action cannot be undone.</source>
         <translation>DeepL 무료 요금제: 월 500,000자. API 키 발급:</translation>
     </message>
     <message>
+        <source>Unofficial Edge endpoint, no API key needed. It may be rate-limited or stop working at any time.</source>
+        <translation>Microsoft Edge 내장 번역의 무료 엔드포인트입니다. API 키가 필요 없지만 비공식이므로 속도 제한을 받거나 언제든 중단될 수 있습니다.</translation>
+    </message>
+    <message>
         <source>DeepL offers a free API tier with 500,000 characters/month.</source>
         <translation>DeepL은 월 500,000자까지 무료 API 요금제를 제공합니다.</translation>
     </message>

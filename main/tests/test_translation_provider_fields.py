@@ -41,14 +41,22 @@ def declared_fields(registry):
 # 声明本身的一致性
 # ============================================================================
 
+_NO_CREDENTIAL_BY_DESIGN = {
+    # 本地离线引擎：既不需要密钥，也没有开关，用哪个模型由离线模型组自己管
+    # （见 local_models_card）。
+    "local",
+    # Bing 免费接口：密钥就是「不需要密钥」，唯一要说的话在 notice 里。
+    "bing_free",
+}
+
+
 def test_every_provider_declares_at_least_one_credential(registry):
     """每家要么有凭据、要么有可选项——都没有的服务商在界面上就是一片空白。
 
-    本地离线引擎是唯一的例外：它既不需要密钥，也没有开关，用哪个模型由离线模型组
-    自己管（见 local_models_card）。
+    例外见 _NO_CREDENTIAL_BY_DESIGN：那两家的「配置」这一步本来就不存在。
     """
     for meta in registry.available_providers():
-        if meta.provider_id == "local":
+        if meta.provider_id in _NO_CREDENTIAL_BY_DESIGN:
             continue
         assert meta.credentials or meta.options, meta.provider_id
 

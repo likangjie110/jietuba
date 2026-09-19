@@ -66,7 +66,8 @@ class AzureTranslateProvider(TranslationProvider):
         if len(request.text) > self.MAX_TEXT_LENGTH:
             return self._error(
                 TranslationErrorCode.INVALID_REQUEST,
-                "Text exceeds Azure Translator's 50,000-character limit",
+                f"Text exceeds {self.display_name}'s "
+                f"{self.MAX_TEXT_LENGTH:,}-character limit",
             )
         if not self.is_configured():
             return self._error(
@@ -87,23 +88,16 @@ class AzureTranslateProvider(TranslationProvider):
             params["from"] = self._to_azure_code(request.source_lang)
 
         url = f"{base_url}?{urllib.parse.urlencode(params)}"
-        body = json.dumps(
-            [{"Text": request.text}],
-            ensure_ascii=False,
-            separators=(",", ":"),
-        ).encode("utf-8")
 
         headers: dict[str, str] = {
             "Content-Type": "application/json; charset=utf-8",
-            "Ocp-Apim-Subscription-Key": self._api_key,
             "X-ClientTraceId": str(uuid.uuid4()),
+            **self._auth_headers(),
         }
-        if self._region:
-            headers["Ocp-Apim-Subscription-Region"] = self._region
 
         http_request = urllib.request.Request(
             url=url,
-            data=body,
+            data=self._request_body(request),
             method="POST",
             headers=headers,
         )
@@ -117,19 +111,19 @@ class AzureTranslateProvider(TranslationProvider):
             if not raw or not isinstance(raw, list):
                 return self._error(
                     TranslationErrorCode.UNKNOWN,
-                    "Invalid Azure Translator response",
+                    f"Invalid {self.display_name} response",
                 )
             translations = raw[0].get("translations", [])
             if not translations:
                 return self._error(
                     TranslationErrorCode.UNKNOWN,
-                    "Invalid Azure Translator response",
+                    f"Invalid {self.display_name} response",
                 )
             translated = str(translations[0].get("text", "") or "")
             if not translated:
                 return self._error(
                     TranslationErrorCode.UNKNOWN,
-                    "Invalid Azure Translator response",
+                    f"Invalid {self.display_name} response",
                 )
             detected = ""
             detected_lang = raw[0].get("detectedLanguage", {})
@@ -173,7 +167,7 @@ class AzureTranslateProvider(TranslationProvider):
             )
             return self._error(
                 TranslationErrorCode.UNKNOWN,
-                "Failed to parse Azure Translator response",
+                f"Failed to parse {self.display_name} response",
             )
         except Exception as exc:
             log_error(
@@ -184,6 +178,27 @@ class AzureTranslateProvider(TranslationProvider):
                 TranslationErrorCode.UNKNOWN,
                 f"Translation failed: {exc}",
             )
+
+    def _auth_headers(self) -> dict[str, str]:
+        """鉴权头。抽成方法是为了让同一套 v3 协议的另一家只换这一处。
+
+        bing_free 继承整个 translate()，只覆盖这个方法、_request_body 和 API_URL。
+        """
+        headers = {"Ocp-Apim-Subscription-Key": self._api_key}
+        if self._region:
+            headers["Ocp-Apim-Subscription-Region"] = self._region
+        return headers
+
+    def _request_body(self, request: TranslationRequest) -> bytes:
+        """v3 的请求体：一个带 Text 字段的元素。
+
+        Edge 那个免费接口收的是裸字符串数组，形状不一样，由子类覆盖。
+        """
+        return json.dumps(
+            [{"Text": request.text}],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
 
     @classmethod
     def _to_azure_code(cls, language_code: str) -> str:
