@@ -166,6 +166,30 @@ class TestCliOutput:
         assert "缺少命令" in data["error"]
 
 
+    def test_ocr_on_an_image_without_text_says_so(self, tmp_path):
+        """识别成功但一行都没有时要说得明白：带上 note，而不是只给一串 0 让人猜。"""
+        blank = QImage(320, 120, QImage.Format.Format_ARGB32)
+        blank.fill(QColor("white"))
+        path = tmp_path / "blank.png"
+        blank.save(str(path), "PNG")
+
+        code, out, _err = run_cli("--json", "ocr", "--from", str(path))
+
+        data = parse_stdout(out)
+        assert code == 0 and data["ok"] is True, data
+        assert data["source"] == str(path)
+        assert data["line_count"] == 0, data
+        assert data["text"] == ""
+        assert data.get("note"), f"零行结果没带 note: {data}"
+        assert isinstance(data["note"], str)
+
+    def test_the_zero_line_note_has_an_english_template(self):
+        """note 用 T() 渲染，因此中英模板都要在——否则英文界面会露出半句中文。"""
+        from core.log_translations import TRANSLATIONS
+
+        assert TRANSLATIONS.get("没有识别到文字")
+
+
 class TestCliParsing:
     """不走进程的解析层用例（覆盖进程内调用与参数裁剪）。"""
 

@@ -165,7 +165,7 @@ def ocr(*, path: str = "", save_text: str = "", return_format: str = "text") -> 
 
     log_debug(T("Agent 识别: {count} 行（置信度 {score}）", count=len(rows),
                 score=round(average_confidence(result), 3)), "Agent")
-    return {
+    payload = {
         "ok": True,
         "command": "ocr",
         "source": source,
@@ -175,6 +175,11 @@ def ocr(*, path: str = "", save_text: str = "", return_format: str = "text") -> 
         "length": len(text),
         "text_path": save_text,
     }
+    if not rows:
+        # 识别成功但一行都没有：调用方（尤其是 Agent）需要能分清这是「图里没字」还是「没跑成」，
+        # 否则只能看到一串 0 去猜
+        payload["note"] = T("没有识别到文字").render()
+    return payload
 
 
 def status() -> dict:
