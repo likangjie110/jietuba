@@ -39,10 +39,19 @@ def setup_environment():
 
 
 def ensure_module_path():
-    """确保 main/ 目录在 sys.path 中"""
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    if current_dir not in sys.path:
-        sys.path.insert(0, current_dir)
+    """确保 **main/**（``core``、``ocr`` 这些包的父目录）在 sys.path 中。
+
+    这里放进去的必须是 main/ 而不是 main/core：把 main/core 放进 sys.path 会让
+    ``import platform`` 命中我们的 ``core/platform`` 包，把标准库同名模块整个遮掉，
+    症状是第三方库（例如 mss）报 ``module 'platform' has no attribute 'system'``。
+    用 ``--json`` 走 Agent 命令行时会真的踩到——GUI 启动路径只是碰巧没在那个时刻 import 它。
+    """
+    current_dir = os.path.dirname(os.path.abspath(__file__))     # main/core
+    root = os.path.dirname(current_dir)                          # main
+    if current_dir in sys.path:
+        sys.path.remove(current_dir)
+    if root not in sys.path:
+        sys.path.insert(0, root)
 
 
 def _read_instance_record(pid_file: str):
@@ -553,10 +562,15 @@ def run():
     # 4. Windows 任务栏图标（必须在 QApplication 创建之前）
     set_app_user_model_id("jietuba.app")
 
-    # 5. 单实例检查
+    # 5. Agent 命令行（`--json ...`）：不进 GUI、不注册单实例，跑完就退出
+    from agent.cli import handle_cli
+
+    handle_cli()
+
+    # 6. 单实例检查
     ensure_single_instance()
 
-    # 6. 启动主应用
+    # 7. 启动主应用
     from main_app import MainApp
     main = MainApp()
     main.run()

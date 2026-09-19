@@ -9,6 +9,7 @@ TRANSLATIONS 字典供 core.logger.LogMsg.render() 查询。
 中文模板原文（含 {name} 占位符），value 是对应的英文模板。
 """
 from . import (
+    agent,
     barcode,
     canvas,
     capture,
@@ -26,6 +27,7 @@ from . import (
 )
 
 _MODULES = (
+    agent,
     barcode,
     canvas,
     capture,

@@ -138,6 +138,10 @@ class MainApp(QObject):
             self._on_ui_theme_changed
         )
         
+        # Agent bridge：常驻时开一个本机套接字，外部 Agent 通过它复用应用里的 OCR/权限
+        self.agent_bridge = None
+        self._start_agent_bridge()
+
         # Logger - 日志初始化，
         setup_logger(self.config_manager)
         self._logger = get_logger()
@@ -248,8 +252,28 @@ class MainApp(QObject):
             return 0
         return pin_session.save_session(PinManager.instance().get_all_pins(), limit)
 
+    def _start_agent_bridge(self) -> None:
+        """启动本机 Agent bridge（失败只记日志：没有它命令行仍可自己执行）。"""
+        try:
+            from agent.bridge import AgentBridgeServer
+
+            bridge = AgentBridgeServer(self)
+            self.agent_bridge = bridge if bridge.start() else None
+        except Exception as e:
+            log_exception(e, T("启动 Agent bridge"))
+
+    def _stop_agent_bridge(self) -> None:
+        bridge = getattr(self, "agent_bridge", None)
+        if bridge is not None:
+            try:
+                bridge.stop()
+            except Exception as e:
+                log_exception(e, T("停止 Agent bridge"))
+            self.agent_bridge = None
+
     def _on_about_to_quit(self):
         """应用退出前收尾"""
+        self._stop_agent_bridge()
         try:
             # 会话要在贴图被销毁之前存：cleanup() 之后管理器里就没有贴图了
             self.save_pin_session_if_enabled()
