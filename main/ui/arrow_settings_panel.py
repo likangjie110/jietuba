@@ -21,6 +21,9 @@ class ArrowSettingsPanel(QWidget):
     """箭头工具二级菜单"""
 
     arrow_style_changed = Signal(str)
+    path_style_changed = Signal(str)     # straight / curve / elbow
+    head_start_changed = Signal(str)     # inherit/none/triangle/...
+    head_end_changed = Signal(str)
     size_changed = Signal(int)
     color_changed = Signal(QColor)
     opacity_changed = Signal(int)  # 兼容旧接口（无控件）
@@ -64,6 +67,36 @@ class ArrowSettingsPanel(QWidget):
         self.arrow_style_combo.setToolTip(self.tr("Arrow Style"))
         self.arrow_style_combo.setMaxVisibleItems(10)
         layout.addWidget(self.arrow_style_combo)
+
+        self.path_style_combo = QComboBox()
+        for value, label in (("straight", self.tr("Straight")),
+                             ("curve", self.tr("Curve")),
+                             ("elbow", self.tr("Elbow"))):
+            self.path_style_combo.addItem(label, value)
+        self.path_style_combo.setToolTip(self.tr("Arrow path"))
+        layout.addWidget(self.path_style_combo)
+
+        self.head_start_combo = QComboBox()
+        self.head_end_combo = QComboBox()
+        for combo, tooltip in ((self.head_start_combo, self.tr("Start arrowhead")),
+                               (self.head_end_combo, self.tr("End arrowhead"))):
+            for value, label in (("inherit", self.tr("Follow style")),
+                                 ("none", self.tr("None")),
+                                 ("triangle", self.tr("Triangle")),
+                                 ("triangle_outline", self.tr("Triangle outline")),
+                                 ("circle", self.tr("Circle")),
+                                 ("diamond", self.tr("Diamond")),
+                                 ("bar", self.tr("Bar"))):
+                combo.addItem(label, value)
+            combo.setToolTip(tooltip)
+            layout.addWidget(combo)
+
+        # 样式模板（与其它标注工具共用同一套控件；arrow 也是其中之一）
+        from .annotation_settings_panel import StyleTemplateControls
+
+        self.template_controls = StyleTemplateControls(self)
+        self.template_controls.set_tool("arrow")
+        layout.addWidget(self.template_controls)
 
         # 线宽选择
         self.size_spin = StepperWidget(self.current_size, 1, 20)
@@ -123,6 +156,12 @@ class ArrowSettingsPanel(QWidget):
     def _connect_signals(self):
         """连接内部信号"""
         self.arrow_style_combo.currentIndexChanged.connect(self._on_arrow_style_changed)
+        self.path_style_combo.currentIndexChanged.connect(
+            lambda _index: self.path_style_changed.emit(self.path_style_combo.currentData()))
+        self.head_start_combo.currentIndexChanged.connect(
+            lambda _index: self.head_start_changed.emit(self.head_start_combo.currentData()))
+        self.head_end_combo.currentIndexChanged.connect(
+            lambda _index: self.head_end_changed.emit(self.head_end_combo.currentData()))
         self.size_spin.valueChanged.connect(self._on_size_changed)
         self.opacity_spin.valueChanged.connect(self._on_opacity_changed)
         self.color_btn.color_changed.connect(self._on_color_picked)

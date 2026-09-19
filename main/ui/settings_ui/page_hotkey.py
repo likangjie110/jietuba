@@ -35,6 +35,20 @@ SCREENSHOT_KEYS = [
     ("inapp_translate", "Screenshot Translate",    "shift+c"),
 ]
 
+# 标注元素的层级与对齐（画布内快捷键；默认都带修饰键，避免与单键工具快捷方式撞车）
+LAYER_KEYS = [
+    ("inapp_bring_to_front", "Bring to Front",      "ctrl+shift+]"),
+    ("inapp_send_to_back",   "Send to Back",        "ctrl+shift+["),
+    ("inapp_bring_forward",  "Bring Forward",       ""),
+    ("inapp_send_backward",  "Send Backward",       ""),
+    ("inapp_align_left",     "Align Left",          ""),
+    ("inapp_align_hcenter",  "Align Horizontal Center", ""),
+    ("inapp_align_right",    "Align Right",         ""),
+    ("inapp_align_top",      "Align Top",           ""),
+    ("inapp_align_vcenter",  "Align Vertical Center", ""),
+    ("inapp_align_bottom",   "Align Bottom",        ""),
+]
+
 PIN_KEYS = [
     ("inapp_copy_pin",        "Copy Pinned Image",      "ctrl+c"),
     ("inapp_thumbnail",       "Toggle Thumbnail",       "r"),
@@ -55,7 +69,7 @@ TOOL_KEYS = [
     for cfg_key, _tool_id, label, default in ANNOTATION_TOOL_SHORTCUTS
 ]
 
-INAPP_KEYS = SCREENSHOT_KEYS + TOOL_KEYS + PIN_KEYS
+INAPP_KEYS = SCREENSHOT_KEYS + TOOL_KEYS + LAYER_KEYS + PIN_KEYS
 
 _EDIT_W = 140
 _EDIT_H = 28
@@ -423,15 +437,19 @@ def create_hotkey_page(dialog) -> QWidget:
         SCREENSHOT_KEYS, "screenshot", extra_widgets=[move_row]
     )
     tools_tab = _build_tab(TOOL_KEYS, "screenshot")
+    layer_tab = _build_tab(LAYER_KEYS, "screenshot")
     pin_tab = _build_tab(PIN_KEYS, "pin")
 
     stack.addWidget(screenshot_tab)
     stack.addWidget(tools_tab)
+    stack.addWidget(layer_tab)
     stack.addWidget(pin_tab)
 
     tab_switch.addItem("screenshot", dialog.tr("Screenshot Shortcuts"), lambda: stack.setCurrentIndex(0))
     tab_switch.addItem("tools", dialog.tr("Annotation Tools"), lambda: stack.setCurrentIndex(1))
-    tab_switch.addItem("pin", dialog.tr("Pin Shortcuts"), lambda: stack.setCurrentIndex(2))
+    tab_switch.addItem("layer", dialog.tr("Layer & Alignment"),
+                       lambda: stack.setCurrentIndex(2))
+    tab_switch.addItem("pin", dialog.tr("Pin Shortcuts"), lambda: stack.setCurrentIndex(3))
     tab_switch.setCurrentItem("screenshot")
 
     tab_layout.addWidget(tab_switch, 0, Qt.AlignmentFlag.AlignLeft)
@@ -439,9 +457,11 @@ def create_hotkey_page(dialog) -> QWidget:
 
     screenshot_h = _stack_page_height(len(SCREENSHOT_KEYS) + 1)
     tools_h = _stack_page_height(len(TOOL_KEYS))
+    layer_h = _stack_page_height(len(LAYER_KEYS))
     pin_h = _stack_page_height(len(PIN_KEYS))
-    stack.setMinimumHeight(max(screenshot_h, tools_h, pin_h))
-    tab_card.setFixedHeight(max(screenshot_h, tools_h, pin_h) + 80)
+    tallest = max(screenshot_h, tools_h, layer_h, pin_h)
+    stack.setMinimumHeight(tallest)
+    tab_card.setFixedHeight(tallest + 80)
     grp_inapp.addSettingCard(tab_card)
 
     # 冲突检测
@@ -494,7 +514,7 @@ def _on_shortcut_changed(dialog, changed_key: str, new_text: str, base_style: st
 
     # 找到冲突项的显示名
     conflict_label = conflict_key
-    for keys_list in (SCREENSHOT_KEYS, TOOL_KEYS, PIN_KEYS):
+    for keys_list in (SCREENSHOT_KEYS, TOOL_KEYS, LAYER_KEYS, PIN_KEYS):
         for cfg, tr_src, _default in keys_list:
             if cfg == conflict_key:
                 conflict_label = dialog.tr(tr_src)

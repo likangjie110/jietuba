@@ -94,9 +94,92 @@ def _verify_formula_service(dialog) -> None:
         )
 
 
+def _export_settings(dialog) -> None:
+    """把整份设置导出成 zip（文件对话框选路径）。"""
+    from PySide6.QtWidgets import QFileDialog
+
+    from core.settings_archive import export_settings
+    from ui.dialogs import show_info_dialog, show_warning_dialog
+
+    path, _selected = QFileDialog.getSaveFileName(
+        dialog, dialog.tr("Export settings"), "jietuba-settings.zip",
+        "Zip archives (*.zip);;All files (*.*)")
+    if not path:
+        return
+    if not path.lower().endswith(".zip"):
+        path += ".zip"
+    result = export_settings(dialog.config_manager, path)
+    if result:
+        show_info_dialog(dialog, dialog.tr("Export settings"), result.message)
+    else:
+        show_warning_dialog(dialog, dialog.tr("Export settings"), result.error)
+
+
+def _import_settings(dialog) -> None:
+    """导入设置包；先问一次（会整体替换当前设置），失败会自动回滚。"""
+    from PySide6.QtWidgets import QFileDialog
+
+    from core.settings_archive import import_settings
+    from ui.dialogs import show_confirm_dialog, show_info_dialog, show_warning_dialog
+
+    path, _selected = QFileDialog.getOpenFileName(
+        dialog, dialog.tr("Import settings"), "",
+        "Zip archives (*.zip);;All files (*.*)")
+    if not path:
+        return
+    if not show_confirm_dialog(
+            dialog, dialog.tr("Import settings"),
+            dialog.tr("This replaces every setting with the archive content. Continue?")):
+        return
+    result = import_settings(dialog.config_manager, path)
+    if result:
+        show_info_dialog(dialog, dialog.tr("Import settings"), result.message)
+    else:
+        show_warning_dialog(dialog, dialog.tr("Import settings"), result.error)
+
+
+def _check_updates(dialog) -> bool:
+    """检查更新：把真实结果（有新版 / 已是最新 / 读不到远端）如实显示出来。"""
+    from core.updates import check_for_updates
+    from ui.dialogs import show_info_dialog, show_warning_dialog
+
+    messages = []
+
+    def notify(message: str) -> None:
+        messages.append(message)
+
+    has_new = check_for_updates(notify)
+    text = messages[-1] if messages else dialog.tr("检查更新失败")
+    if has_new:
+        show_info_dialog(dialog, dialog.tr("Updates"), text)
+    elif messages:
+        # 「已是最新」与「读不到远端」都不弹错误框，但都要如实说明原因
+        show_info_dialog(dialog, dialog.tr("Updates"), text)
+    else:
+        show_warning_dialog(dialog, dialog.tr("Updates"), text)
+    return has_new
+
+
+def _build_backup_row(dialog, group: SettingCardGroup) -> None:
+    """备份与恢复：导出/导入整份设置（导出的是 zip，导入失败会回滚）。"""
+    card = FSettingCard(
+        FluentIcon.SYNC,
+        dialog.tr("Backup and Restore"),
+        dialog.tr("Export every setting to a zip file, or restore one."),
+        parent=group,
+    )
+    export_btn = PushButton(dialog.tr("Export settings"), card)
+    export_btn.clicked.connect(lambda: _export_settings(dialog))
+    import_btn = PushButton(dialog.tr("Import settings"), card)
+    import_btn.clicked.connect(lambda: _import_settings(dialog))
+    for widget in (export_btn, import_btn):
+        card.hBoxLayout.addWidget(widget, 0, Qt.AlignmentFlag.AlignRight)
+        card.hBoxLayout.addSpacing(8)
+    group.addSettingCard(card)
+
+
 def _build_update_row(dialog, group: SettingCardGroup) -> None:
     """更新源（地址可改，留空用内置的 GitHub 发布页）+ 检查更新。"""
-    from core.updates import check_for_updates
 
     card = FSettingCard(
         FluentIcon.INFO,
@@ -112,7 +195,7 @@ def _build_update_row(dialog, group: SettingCardGroup) -> None:
     )
 
     check_btn = PushButton(dialog.tr("Check for Updates"), card)
-    check_btn.clicked.connect(lambda: check_for_updates())
+    check_btn.clicked.connect(lambda: _check_updates(dialog))
 
     for widget in (dialog.update_source_input, check_btn):
         card.hBoxLayout.addWidget(widget, 0, Qt.AlignmentFlag.AlignRight)
@@ -306,6 +389,107 @@ def _choose_video_folder(dialog) -> None:
         dialog.video_save_path_input.setText(folder)
 
 
+def _build_history_row(dialog, group: SettingCardGroup) -> None:
+    """截图历史组：开关 / 保留天数 / 条数上限 / 磁盘上限 / 立即清理 / 打开历史窗口。"""
+    config = dialog.config_manager
+
+    enabled_card = SwitchSettingCard(
+        FluentIcon.HISTORY,
+        dialog.tr("Screenshot History"),
+        dialog.tr("Keep every confirmed screenshot and browse it later."),
+        parent=group,
+    )
+    enabled_card.setChecked(config.get_history_enabled())
+    dialog.history_enabled_toggle = enabled_card
+    group.addSettingCard(enabled_card)
+
+    retention_card = FSettingCard(
+        FluentIcon.DATE_TIME,
+        dialog.tr("Retention Period"),
+        dialog.tr("Delete history entries older than this (0 = keep forever)."),
+        parent=group,
+    )
+    dialog.history_retention_combo = ComboBox(retention_card)
+    dialog.history_retention_combo.setFixedWidth(140)
+    for days in config.HISTORY_RETENTION_DAY_OPTIONS:
+        label = dialog.tr("Keep forever") if days == 0 else dialog.tr("{days} days").format(days=days)
+        dialog.history_retention_combo.addItem(label, userData=days)
+    _select_combo(dialog.history_retention_combo, config.get_history_retention_days())
+    retention_card.hBoxLayout.addWidget(
+        dialog.history_retention_combo, 0, Qt.AlignmentFlag.AlignRight
+    )
+    retention_card.hBoxLayout.addSpacing(16)
+    group.addSettingCard(retention_card)
+
+    entries_card = FSettingCard(
+        FluentIcon.LAYOUT,
+        dialog.tr("Maximum Entries"),
+        dialog.tr("Keep at most this many entries (0 = no limit)."),
+        parent=group,
+    )
+    dialog.history_entries_spin = QSpinBox(entries_card)
+    dialog.history_entries_spin.setRange(*config.HISTORY_MAX_ENTRIES_RANGE)
+    dialog.history_entries_spin.setFixedWidth(140)
+    dialog.history_entries_spin.setValue(config.get_history_max_entries())
+    entries_card.hBoxLayout.addWidget(
+        dialog.history_entries_spin, 0, Qt.AlignmentFlag.AlignRight
+    )
+    entries_card.hBoxLayout.addSpacing(16)
+    group.addSettingCard(entries_card)
+
+    disk_card = FSettingCard(
+        FluentIcon.DOWNLOAD,
+        dialog.tr("Maximum Disk Usage"),
+        dialog.tr("Oldest entries are deleted first once this is exceeded."),
+        parent=group,
+    )
+    dialog.history_disk_spin = QSpinBox(disk_card)
+    dialog.history_disk_spin.setRange(*config.HISTORY_MAX_DISK_RANGE_MB)
+    dialog.history_disk_spin.setSuffix(dialog.tr(" MiB"))
+    dialog.history_disk_spin.setFixedWidth(160)
+    dialog.history_disk_spin.setValue(config.get_history_max_disk_mb())
+    disk_card.hBoxLayout.addWidget(dialog.history_disk_spin, 0, Qt.AlignmentFlag.AlignRight)
+    disk_card.hBoxLayout.addSpacing(16)
+    group.addSettingCard(disk_card)
+
+    tools_card = FSettingCard(
+        FluentIcon.DELETE,
+        dialog.tr("History Tools"),
+        dialog.tr("Open the history window or clean up old entries now."),
+        parent=group,
+    )
+    open_btn = PushButton(dialog.tr("Open History"), tools_card)
+    open_btn.clicked.connect(lambda: _open_history_window(dialog))
+    clean_btn = PushButton(dialog.tr("Clean Up Now"), tools_card)
+    clean_btn.clicked.connect(lambda: _clean_history_now(dialog))
+    for widget in (open_btn, clean_btn):
+        tools_card.hBoxLayout.addWidget(widget, 0, Qt.AlignmentFlag.AlignRight)
+        tools_card.hBoxLayout.addSpacing(8)
+    group.addSettingCard(tools_card)
+
+
+def _open_history_window(dialog) -> None:
+    """打开历史窗口（窗口自己读配置，这里只负责拉起来）。"""
+    from history.window import open_history_window
+
+    open_history_window(dialog.config_manager, dialog)
+
+
+def _clean_history_now(dialog) -> None:
+    """按当前配置立刻清理一次，并把删掉的条数如实说出来。"""
+    from history import apply_configured_retention, get_store
+    from ui.dialogs import show_info_dialog
+
+    removed = apply_configured_retention(dialog.config_manager)
+    remaining = len(get_store().entries())
+    show_info_dialog(
+        dialog,
+        dialog.tr("Screenshot History"),
+        dialog.tr("Removed {removed} entries; {remaining} left.").format(
+            removed=removed, remaining=remaining),
+    )
+
+
 def create_misc_page(dialog) -> QWidget:
     """创建杂项设置页面 — Fluent Design"""
     scroll = QScrollArea()
@@ -409,6 +593,11 @@ def create_misc_page(dialog) -> QWidget:
     _build_video_row(dialog, grp_video)
     layout.addWidget(grp_video)
 
+    # ════ 截图历史 ════
+    grp_history = SettingCardGroup(dialog.tr("Screenshot History Settings"), view)
+    _build_history_row(dialog, grp_history)
+    layout.addWidget(grp_history)
+
     # ════ 桌面工具栏 / 托盘 ════
     grp_shell = SettingCardGroup(dialog.tr("Desktop & Tray"), view)
 
@@ -450,6 +639,25 @@ def create_misc_page(dialog) -> QWidget:
     tray_card.hBoxLayout.addSpacing(16)
     grp_shell.addSettingCard(tray_card)
 
+    # 托盘滚轮（中键）动作：默认不做事
+    scroll_card = FSettingCard(
+        FluentIcon.COMMAND_PROMPT,
+        dialog.tr("Tray Scroll Action"),
+        dialog.tr("What a scroll-wheel click (middle click) on the tray icon does."),
+        parent=grp_shell,
+    )
+    dialog.tray_scroll_combo = ComboBox(scroll_card)
+    dialog.tray_scroll_combo.setFixedWidth(180)
+    dialog.tray_scroll_combo.addItem(dialog.tr("Do nothing"), userData="")
+    for action in _actions.ACTIONS:
+        dialog.tray_scroll_combo.addItem(dialog.tr(action.label), userData=action.id)
+    _select_combo(dialog.tray_scroll_combo, dialog.config_manager.get_tray_scroll_action())
+    scroll_card.hBoxLayout.addWidget(
+        dialog.tray_scroll_combo, 0, Qt.AlignmentFlag.AlignRight
+    )
+    scroll_card.hBoxLayout.addSpacing(16)
+    grp_shell.addSettingCard(scroll_card)
+
     layout.addWidget(grp_shell)
 
     # ════ 网络代理 ════
@@ -461,6 +669,11 @@ def create_misc_page(dialog) -> QWidget:
     grp_update = SettingCardGroup(dialog.tr("Updates"), view)
     _build_update_row(dialog, grp_update)
     layout.addWidget(grp_update)
+
+    # ════ 备份与恢复 ════
+    grp_backup = SettingCardGroup(dialog.tr("Backup"), view)
+    _build_backup_row(dialog, grp_backup)
+    layout.addWidget(grp_backup)
 
     # ════ 分享分析数据 ════
     grp_privacy = SettingCardGroup(dialog.tr("Usage Data"), view)

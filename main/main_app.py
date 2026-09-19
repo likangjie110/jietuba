@@ -467,9 +467,18 @@ class MainApp(QObject):
         单击执行的动作取自「快捷键/动作」页那份注册表（``app/tray_click_action``），
         所以用户可以把托盘单击换成剪贴板、翻译等任何已登记的动作。
         """
+        from core import actions
+
+        if reason == QSystemTrayIcon.ActivationReason.MiddleClick:
+            # 托盘滚轮点击：默认不绑（空串=不做事），绑了才跑
+            scroll_action = self.config_manager.get_tray_scroll_action()
+            if not scroll_action:
+                return
+            log_debug(T("托盘滚轮触发动作: {action_id}", action_id=scroll_action), "Tray")
+            actions.run_action(scroll_action, self)
+            return
         if reason != QSystemTrayIcon.ActivationReason.Trigger:
             return
-        from core import actions
 
         action_id = self.config_manager.get_tray_click_action()
         if action_id == "screenshot":
@@ -780,6 +789,45 @@ class MainApp(QObject):
             log_exception(e, T("启动剪贴板监听"))
         return False
     
+    def open_history_window(self):
+        """打开截图历史窗口（托盘/热键/全局鼠标动作共用这个入口）。"""
+        try:
+            from history.window import open_history_window
+
+            self.history_window = open_history_window(self.config_manager)
+            return self.history_window
+        except Exception as e:
+            from core.logger import log_exception
+
+            log_exception(e, T("打开截图历史窗口"))
+            return None
+
+    def open_image_viewer(self):
+        """打开独立图片查看器：优先看剪贴板里的图，其次看历史里最新的一条。"""
+        from PySide6.QtGui import QImage
+
+        from core.actions import clipboard_image
+        from ui.image_viewer import open_image_viewer
+
+        image = clipboard_image()
+        if image is None or image.isNull():
+            from history import get_store
+
+            entries = get_store().entries()
+            if entries:
+                image = get_store().image(entries[0].id)
+        if image is None or image.isNull():
+            log_warning(T("没有可查看的图片（剪贴板与历史都为空）"), "ImageViewer")
+            return None
+        return open_image_viewer(image=QImage(image), config_manager=self.config_manager)
+
+    def open_main_window(self):
+        """打开主窗口（历史 / 翻译 / 设置 / 关于）。"""
+        from ui.main_window import open_main_window
+
+        self.main_window = open_main_window(self.config_manager)
+        return self.main_window
+
     def open_clipboard_window(self):
         """打开剪切板历史窗口"""
         

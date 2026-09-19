@@ -418,6 +418,20 @@ class EditItemCommand(QUndoCommand):
         if isinstance(origin, QPointF) and hasattr(self.item, "setTransformOriginPoint"):
             self.item.setTransformOriginPoint(QPointF(origin))
 
+        z_value = state.get("z_value")
+        if isinstance(z_value, (int, float)) and hasattr(self.item, "setZValue"):
+            try:
+                self.item.setZValue(float(z_value))
+            except Exception as e:
+                log_exception(e, T("恢复层级"))
+
+        appearance = state.get("arrow_appearance")
+        if isinstance(appearance, dict) and hasattr(self.item, "apply_arrow_state"):
+            try:
+                self.item.apply_arrow_state(appearance)
+            except Exception as e:
+                log_exception(e, T("恢复箭头外观"))
+
         point_size = state.get("font_point_size")
         if isinstance(point_size, (int, float)) and hasattr(
             self.item, "set_font_point_size"

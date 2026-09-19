@@ -11,10 +11,16 @@ from .drawing_items import (
     TextItem, NumberItem
 )
 from .spotlight_item import SpotlightCurtain, SpotlightItem
+from .annotation_items import (
+    FILTER_KINDS, PATCH_ERASE, PATCH_FILTER,
+    InsertedImageItem, LineItem, PixelPatchItem, WatermarkItem, fit_rect,
+)
 
 __all__ = [
     'BackgroundItem', 'SelectionItem',
     'StrokeItem', 'RectItem', 'EllipseItem', 'ArrowItem',
     'TextItem', 'NumberItem', 'MosaicItem',
-    'SpotlightCurtain', 'SpotlightItem'
+    'SpotlightCurtain', 'SpotlightItem',
+    'WatermarkItem', 'LineItem', 'PixelPatchItem', 'InsertedImageItem',
+    'FILTER_KINDS', 'PATCH_FILTER', 'PATCH_ERASE', 'fit_rect',
 ]

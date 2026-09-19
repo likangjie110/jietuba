@@ -282,6 +282,9 @@ class Toolbar(QWidget):
     
     # 箭头工具专用信号
     arrow_style_changed = Signal(str)  # 箭头样式改变(single/double/bar)
+    arrow_path_style_changed = Signal(str)   # 直线/曲线/折线
+    arrow_head_start_changed = Signal(str)   # 起点端点样式
+    arrow_head_end_changed = Signal(str)     # 终点端点样式
 
     # 马赛克工具专用信号
     mosaic_style_changed = Signal(str)       # 马赛克种类改变(pixelate/blur)
@@ -382,6 +385,18 @@ class Toolbar(QWidget):
         self.eraser_btn = self._add_tool_button(
             "eraser", "svg/橡皮.svg", "Eraser tool", (btn_width, icon_eraser))
 
+        # 第二批标注工具
+        self.line_btn = self._add_tool_button(
+            "line", "svg/直线.svg", "Straight line (hold Shift for a clean angle)", tool)
+        self.watermark_btn = self._add_tool_button(
+            "watermark", "svg/水印.svg", "Watermark (drag an area to fill with text)", tool)
+        self.filter_btn = self._add_tool_button(
+            "filter", "svg/滤镜.svg", "Filter (grayscale / invert / blur / emboss)", tool)
+        self.smart_erase_btn = self._add_tool_button(
+            "smart_erase", "svg/智能擦除.svg", "Smart erase (paint to fill with the background)", tool)
+        self.insert_image_btn = self._add_tool_button(
+            "insert_image", "svg/插入图片.svg", "Insert an image from a file", tool)
+
         self.undo_btn = self._add_button("undo", "svg/撤回.svg", "Undo", tool, self.undo_clicked.emit)
         self.redo_btn = self._add_button("redo", "svg/复原.svg", "Redo", tool, self.redo_clicked.emit)
 
@@ -407,6 +422,11 @@ class Toolbar(QWidget):
 
         # 收集所有工具按钮
         self.tool_buttons = {
+            "line": self.line_btn,
+            "watermark": self.watermark_btn,
+            "filter": self.filter_btn,
+            "smart_erase": self.smart_erase_btn,
+            "insert_image": self.insert_image_btn,
             "pen": self.pen_btn,
             "highlighter": self.highlighter_btn,
             "mosaic": self.mosaic_btn,
@@ -610,6 +630,9 @@ class Toolbar(QWidget):
         self.arrow_panel.size_changed.connect(self._on_panel_size_changed)
         self.arrow_panel.opacity_changed.connect(self._on_panel_opacity_changed)
         self.arrow_panel.arrow_style_changed.connect(self._on_arrow_style_changed)
+        self.arrow_panel.path_style_changed.connect(self._on_arrow_path_style_changed)
+        self.arrow_panel.head_start_changed.connect(self._on_arrow_head_start_changed)
+        self.arrow_panel.head_end_changed.connect(self._on_arrow_head_end_changed)
         self.arrow_panel.hide()
         
         # === 4. 序号设置面板 (number) ===
@@ -640,7 +663,14 @@ class Toolbar(QWidget):
             self.text_panel.background_changed.connect(self._on_text_background_changed)
         self.text_panel.hide()
 
-        # === 6. 马赛克设置面板 (mosaic) ===
+        # === 6.5 第二批标注工具设置面板 (line / watermark / filter / smart_erase) ===
+        from .annotation_settings_panel import AnnotationSettingsPanel
+
+        self.annotation_panel = AnnotationSettingsPanel(parent)
+        self._make_floating(self.annotation_panel)
+        self.annotation_panel.hide()
+
+        # === 7. 马赛克设置面板 (mosaic) ===
         self.mosaic_panel = MosaicSettingsPanel(parent)
         self._make_floating(self.mosaic_panel)
 
@@ -827,6 +857,7 @@ class Toolbar(QWidget):
         if hasattr(self, 'number_panel'): self.number_panel.hide()
         if hasattr(self, 'text_panel'): self.text_panel.hide()
         if hasattr(self, 'mosaic_panel'): self.mosaic_panel.hide()
+        if hasattr(self, 'annotation_panel'): self.annotation_panel.hide()
 
     def _show_panel_for_tool(self, tool_id: str):
         """显示指定工具的设置面板，内容一律回填成该工具的持久化设置。
@@ -858,8 +889,14 @@ class Toolbar(QWidget):
             "number": self.number_panel,
             "text": self.text_panel,
             "mosaic": self.mosaic_panel,
+            "line": getattr(self, "annotation_panel", None),
+            "watermark": getattr(self, "annotation_panel", None),
+            "filter": getattr(self, "annotation_panel", None),
+            "smart_erase": getattr(self, "annotation_panel", None),
         }
-        
+        if tool_id in ("line", "watermark", "filter", "smart_erase") and hasattr(self, "annotation_panel"):
+            self.annotation_panel.set_tool(tool_id)
+
         panel = panel_map.get(tool_id)
         if panel:
             panel.show()
@@ -950,6 +987,38 @@ class Toolbar(QWidget):
             return
         from .text_settings_panel import TextSettingsPanel
         TextSettingsPanel.save_background_to_config(enabled, color, opacity)
+
+    def _on_arrow_path_style_changed(self, style: str):
+        """路径样式：既是新箭头的默认值，也立刻应用给选中的箭头。"""
+        try:
+            from settings import get_tool_settings_manager
+
+            manager = get_tool_settings_manager()
+            if manager is not None:
+                manager.update_settings("arrow", path_style=style)
+        except Exception as e:
+            log_exception(e, T("保存箭头路径样式"))
+        self.arrow_path_style_changed.emit(style)
+
+    def _on_arrow_head_start_changed(self, style: str):
+        """起点端点样式（同上）。"""
+        self._persist_arrow_head("head_start", style)
+        self.arrow_head_start_changed.emit(style)
+
+    def _on_arrow_head_end_changed(self, style: str):
+        """终点端点样式（同上）。"""
+        self._persist_arrow_head("head_end", style)
+        self.arrow_head_end_changed.emit(style)
+
+    def _persist_arrow_head(self, key: str, style: str) -> None:
+        try:
+            from settings import get_tool_settings_manager
+
+            manager = get_tool_settings_manager()
+            if manager is not None:
+                manager.update_settings("arrow", **{key: style})
+        except Exception as e:
+            log_exception(e, T("保存箭头端点样式"))
 
     def _on_arrow_style_changed(self, style: str):
         """箭头样式改变"""

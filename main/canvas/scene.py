@@ -89,7 +89,8 @@ class CanvasScene(QGraphicsScene):
         from tools import ToolController, ToolContext
         from tools import (
             PenTool, RectTool, EllipseTool, ArrowTool,
-            TextTool, NumberTool, HighlighterTool, CursorTool, EraserTool, MosaicTool, SpotlightTool
+            TextTool, NumberTool, HighlighterTool, CursorTool, EraserTool, MosaicTool, SpotlightTool,
+            LineTool, WatermarkTool, FilterTool, SmartEraseTool, InsertImageTool,
         )
 
         ctx = ToolContext(
@@ -117,6 +118,12 @@ class CanvasScene(QGraphicsScene):
             self.tool_controller.register(MosaicTool())
         self.tool_controller.register(SpotlightTool())
         self.tool_controller.register(EraserTool())  # 橡皮擦工具
+        # 第二批标注工具（直线 / 水印 / 滤镜 / 智能擦除 / 插入图片）
+        self.tool_controller.register(LineTool())
+        self.tool_controller.register(WatermarkTool())
+        self.tool_controller.register(FilterTool())
+        self.tool_controller.register(SmartEraseTool())
+        self.tool_controller.register(InsertImageTool())
         
         # 默认激活光标工具（表示无绘制工具激活，SmartEditController负责选择/编辑交互）
         self.tool_controller.activate("cursor")

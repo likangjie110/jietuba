@@ -30,7 +30,8 @@ EDITOR_MODE_VIDEO = "video"
 
 #: 不走截图链路、直接调应用入口的动作 id
 APP_ENTRY_ACTIONS = ("clipboard", "open_translation", "pin_clipboard_text",
-                     "open_save_folder", "translate_clipboard_image", "check_updates")
+                     "open_save_folder", "translate_clipboard_image", "check_updates",
+                     "open_history", "open_image_viewer", "open_main_window")
 
 
 @dataclass(frozen=True)
@@ -51,6 +52,9 @@ ACTIONS = (
     Action("screenshot_quick_save", "Screenshot and Save", silent_capture=True, tray=True),
     Action("screenshot_copy_text", "Screenshot and Copy Text", silent_capture=True),
     Action("copy_table_markdown", "Copy Table as Markdown", silent_capture=True),
+    Action("recognize_table", "Table Recognition", silent_capture=True, tray=True),
+    Action("convert_image_markdown", "Convert Image to Markdown", silent_capture=True,
+           tray=True),
     Action("recognize_formula", "Recognize Formula as LaTeX", silent_capture=True),
     Action("screenshot_translate", "Screenshot and Translate",
            editor_mode=EDITOR_MODE_TRANSLATE),
@@ -58,6 +62,9 @@ ACTIONS = (
     Action("gif_capture", "GIF Capture", editor_mode=EDITOR_MODE_GIF, tray=True),
     Action("video_capture", "Video Recording", editor_mode=EDITOR_MODE_VIDEO, tray=True),
     Action("clipboard", "Clipboard", tray=True),
+    Action("open_history", "Screenshot History", tray=True),
+    Action("open_image_viewer", "Image Viewer", tray=True),
+    Action("open_main_window", "Main Window", tray=True),
     Action("open_translation", "Translation", tray=True),
     Action("pin_clipboard_text", "Pin Clipboard Text", tray=True),
     Action("translate_clipboard_image", "Translate Clipboard Image", tray=True),
@@ -151,15 +158,12 @@ def _quick_save(image, app) -> bool:
     from core.save import SaveService
 
     config = app.config_manager
+    paths = config.get_save_paths()
     thread = deliver_image_async(
         image,
         copy_to_clipboard=False,
         save_service=SaveService(config_manager=config),
-        save_kwargs=dict(
-            directory=config.get_screenshot_save_path(),
-            prefix="",
-            image_format=config.get_screenshot_format(),
-        ),
+        save_kwargs=dict(prefix="", paths=paths),
     )
     return thread is not None
 
@@ -190,6 +194,16 @@ def _flash_capture_mask(rect, app) -> None:
         flash_capture_mask(rect)
     except Exception as e:
         log_exception(e, T("显示截图遮罩"))
+
+
+def _record_history(image, rect, app) -> None:
+    """把这次静默截图的结果记进历史（失败只记日志，不影响动作本身）。"""
+    try:
+        from history import record_screenshot
+
+        record_screenshot(image, rect, getattr(app, "config_manager", None))
+    except Exception as e:
+        log_exception(e, T("记录截图历史"))
 
 
 def _normalize_app_name(name: str) -> str:
@@ -285,6 +299,109 @@ class _OcrTextThread(QThread):
             self.recognized.emit("")
         finally:
             self._image = None
+
+
+class _OcrRawThread(QThread):
+    """只做 OCR 的线程，把**原始结果**（带坐标）发给主线程。
+
+    与 ``_OcrTextThread`` 的区别是它不转文本：表格编辑器要的是带坐标的结果，
+    转成文本之后就再也切不出行列了。
+    """
+
+    recognized = Signal(object)
+
+    def __init__(self, image):
+        super().__init__()
+        self._image = image
+
+    def run(self):
+        try:
+            from ocr import is_ocr_available, recognize_text
+
+            if not is_ocr_available():
+                log_warning(T("OCR 不可用，无法识别截图文字"), "Action")
+                self.recognized.emit(None)
+                return
+            self.recognized.emit(recognize_text(self._image, return_format="dict"))
+        except Exception as e:
+            log_exception(e, T("识别截图文字"))
+            self.recognized.emit(None)
+        finally:
+            self._image = None
+
+
+class _RawResultSink(QObject):
+    """原始结果的接收端：表格识别完成后打开编辑器。"""
+
+    def __init__(self, opener):
+        super().__init__()
+        self._opener = opener
+
+    def on_result(self, result) -> None:
+        if not isinstance(result, dict) or result.get("code") != 100:
+            log_warning(T("未识别到可用的表格结果"), "Action")
+            return
+        self._opener(result)
+
+    def on_finished(self) -> None:
+        _ocr_thread_refs[:] = [ref for ref in _ocr_thread_refs if ref[1] is not self]
+
+
+def _recognize_table(image) -> bool:
+    """静默截取 → OCR → 打开可编辑表格窗口（表里能合并/拆分/复制粘贴，导出 Markdown/HTML）。"""
+    from ocr.table_editor import open_table_editor
+
+    thread = _OcrRawThread(image)
+    sink = _RawResultSink(lambda result: _open_table_editor(result, open_table_editor))
+    thread.recognized.connect(sink.on_result)
+    thread.finished.connect(sink.on_finished)
+    _ocr_thread_refs.append((thread, sink))
+    thread.start()
+    log_debug(T("开始识别表格文字"), "Action")
+    return True
+
+
+def _open_table_editor(result, opener) -> bool:
+    """用识别结果建一张表并打开编辑器；没有表格特征时如实提示。"""
+    from ocr.table_document import TableDocument
+
+    try:
+        document = TableDocument.from_ocr_result(result)
+    except Exception as e:
+        log_exception(e, T("从识别结果建表"))
+        return False
+    if document.rows == 0 or document.cols == 0:
+        log_warning(T("识别结果里没有表格特征，未打开表格编辑器"), "Action")
+        return False
+    opener(document)
+    return True
+
+
+def _convert_image_markdown(image, app) -> bool:
+    """静默截取 → 交给配置的视觉模型转 Markdown/HTML → 复制并展示结果。"""
+    from ocr.vision_models import convert_image, selected_model
+
+    config = getattr(app, "config_manager", None)
+    model = selected_model(config)
+    target = config.get_ocr_vision_target() if config is not None else "markdown"
+    if model is None:
+        log_warning(T("没有配置可用的视觉模型，无法转换图片"), "Action")
+        return False
+
+    result = convert_image(image, model, target=target)
+    if not result:
+        log_warning(T("图片转换失败: {error}", error=result.error), "Action")
+        return False
+
+    clipboard = QApplication.clipboard()
+    if clipboard is not None:
+        clipboard.setText(result.text)
+    log_debug(T("图片已转换为 {target}（{count} 字）", target=target,
+                count=len(result.text)), "Action")
+    from ocr.result_dialog import maybe_show_ocr_result
+
+    maybe_show_ocr_result(result.text, "copy_all")
+    return True
 
 
 class _TextClipboardSink(QObject):
@@ -450,9 +567,14 @@ def _run_app_entry(action_id: str, app) -> bool:
     if action_id == "translate_clipboard_image":
         return _translate_clipboard_image(app)
     if action_id == "check_updates":
-        from core.updates import check_for_updates
-
-        return bool(check_for_updates())
+        return _check_updates(app)
+    if action_id == "open_history":
+        app.open_history_window()
+        return True
+    if action_id == "open_image_viewer":
+        return bool(app.open_image_viewer())
+    if action_id == "open_main_window":
+        return bool(app.open_main_window())
     return False
 
 
@@ -484,6 +606,31 @@ def _translate_clipboard_image(app) -> bool:
               "Action")
     TranslationManager.instance().translate_from_image(pixmap=pixmap, **params)
     return True
+
+
+def _check_updates(app) -> bool:
+    """托盘/热键触发的「检查更新」：读远端 → 如实提示 → 有新版才打开发布页。
+
+    返回「这次检查有没有得到结论」：读不到远端返回 False（用户看到的提示里说明了原因），
+    已是最新返回 True——两者都不该被当成「动作执行失败」。
+    """
+    from PySide6.QtWidgets import QSystemTrayIcon
+
+    from core.updates import run_update_check
+
+    def notify(message: str) -> None:
+        log_debug(T("更新检查: {message}", message=message), "Action")
+        icon = getattr(app, "tray_icon", None)
+        if icon is not None and hasattr(icon, "showMessage"):
+            icon.showMessage(T("检查更新").render(), message,
+                             QSystemTrayIcon.MessageIcon.Information, 5000)
+
+    result = run_update_check(notify)
+    if result.state == "newer" and result.url:
+        from core.platform import shell
+
+        shell.open_url(result.url)
+    return result.state != "unknown"
 
 
 def _open_save_folder(app) -> bool:
@@ -594,6 +741,7 @@ def run_action(action_id: str, app) -> bool:
 
     log_debug(T("动作触发: {action_id}", action_id=action_id), "Action")
     _flash_capture_mask(rect, app)
+    _record_history(image, rect, app)
     if action_id == "screenshot_copy":
         return _copy(image)
     if action_id == "screenshot_quick_save":
@@ -604,6 +752,10 @@ def run_action(action_id: str, app) -> bool:
         return _copy_text(image)
     if action_id == "copy_table_markdown":
         return _copy_table_markdown(image)
+    if action_id == "recognize_table":
+        return _recognize_table(image)
+    if action_id == "convert_image_markdown":
+        return _convert_image_markdown(image, app)
     if action_id == "recognize_formula":
         return _recognize_formula(image)
     return False

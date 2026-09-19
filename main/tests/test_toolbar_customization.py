@@ -16,7 +16,7 @@ from pin.pin_toolbar import PinToolbar
 from settings import get_tool_settings_manager
 from ui.toolbar import Toolbar
 from ui.toolbar_layout import (
-    DEFAULT_ORDER, HIDE, LOCKED, MORE, SETTING_KEY, SHOW,
+    DEFAULT_MORE, DEFAULT_ORDER, HIDE, LOCKED, MORE, SETTING_KEY, SHOW,
     default_layout, load_layout, normalize_layout, save_layout,
 )
 from ui.toolbar_layout_dialog import ToolbarLayoutDialog
@@ -102,11 +102,12 @@ class TestPersistence:
 class TestScreenshotToolbar:
 
     def test_default_layout_folds_low_frequency_buttons_and_ends_with_more(self, qapp):
+        # 从 DEFAULT_MORE 现算，而不是手抄一份：新加按钮时这里不该再红一次
         toolbar = Toolbar()
         assert _toolbar_row(toolbar) == [
-            key for key in DEFAULT_ORDER if key not in ("scan_code", "spotlight")
+            key for key in DEFAULT_ORDER if key not in DEFAULT_MORE
         ] + ["more"]
-        assert toolbar._folded_keys == ["scan_code", "spotlight"]
+        assert toolbar._folded_keys == [key for key in DEFAULT_ORDER if key in DEFAULT_MORE]
         assert toolbar.copy_btn.isHidden()
         geometries = [toolbar._buttons[key].geometry() for key in _toolbar_row(toolbar)]
         for left, right in zip(geometries, geometries[1:]):
@@ -120,15 +121,22 @@ class TestScreenshotToolbar:
         assert toolbar.more_btn.geometry().right() == toolbar.rect().right()
 
     def test_configured_layout_reorders_folds_and_hides(self, qapp):
+        # 基线用默认排布（新按钮的默认折叠状态跟着走），只改这条用例要改的几项
         default_width = Toolbar().width()
-        save_layout(_layout_with(first="pin", mosaic=MORE, text=HIDE, scan_code=MORE))
+        layout = [("pin", SHOW)] + [
+            (key, mode) for key, mode in default_layout() if key != "pin"
+        ]
+        layout = [(key, {"mosaic": MORE, "text": HIDE, "scan_code": MORE}.get(key, mode))
+                  for key, mode in layout]
+        save_layout(layout)
 
         toolbar = Toolbar()
         row = _toolbar_row(toolbar)
         assert row[0] == "pin"
         assert row[-1] == "more"
         assert "mosaic" not in row and "text" not in row
-        assert toolbar._folded_keys == ["scan_code", "mosaic"]
+        assert toolbar._folded_keys == [key for key in DEFAULT_ORDER
+                                        if key in (DEFAULT_MORE | {"mosaic"})]
         assert toolbar.width() < default_width
 
     def test_hiding_a_tool_only_hides_its_button(self, qapp):

@@ -16,12 +16,13 @@ pin_window.py 有 580 条语句、覆盖率 16%，是 pin 包最大的窟窿。�
 hasattr(self, '_image_transform') 决定基准尺寸从哪来，MagicMock 会让它恒为真；
 而且 _thumbnail_mode 等是类上的 property，假 self 用普通属性才能绕开它们。
 """
-from types import SimpleNamespace
+from contextlib import contextmanager
+from types import MethodType, SimpleNamespace
 
 import pytest
-from PySide6.QtCore import QPoint, QSize, Qt
+from PySide6.QtCore import QPoint, QRect, QSize, Qt
 
-from pin import pin_actions
+from pin import pin_actions, pin_window as pin_window_module
 from pin.pin_window import PinWindow
 
 NO_MOD = Qt.KeyboardModifier.NoModifier
@@ -314,29 +315,95 @@ class TestThumbnailModeIgnoresWheel:
 # 拖拽
 # ============================================================================
 
+@contextmanager
+def _system_move(answer):
+    """把「交给系统拖动」这个平台边界换成固定答案，并记录被问过的窗口。
+
+    这是窗口管理器那一侧（平台层），用替身；被测的是 PinWindow 拿到答案之后
+    走哪条路：系统接管就自己收尾，被拒就自己每帧搬窗口。
+    """
+    calls = []
+
+    def fake(window):
+        calls.append(window)
+        return answer
+
+    original = pin_window_module.window_ops.start_system_move
+    pin_window_module.window_ops.start_system_move = fake
+    try:
+        yield calls
+    finally:
+        pin_window_module.window_ops.start_system_move = original
+
+
+def _platform_accepts_system_move():
+    return _system_move(True)
+
+
+def _platform_refuses_system_move():
+    return _system_move(False)
+
+
 def _drag_self(dragging=False, start_pos=QPoint(100, 100),
-               window_pos=QPoint(500, 400)):
-    return SimpleNamespace(
+               window_pos=QPoint(500, 400), *, selected=False, followed=False):
+    fake = SimpleNamespace(
         _is_dragging=dragging,
         _drag_start_pos=start_pos,
         _drag_start_window_pos=window_pos,
+        _toolbar_follows_natively=followed,
         toolbar=None,
         move=_Recorder(),
         setCursor=_Recorder(),
         pos=lambda: window_pos,
-        is_selected=lambda: False,      # 没在多选里：走「只动自己」这条路
+        x=lambda: window_pos.x(),
+        y=lambda: window_pos.y(),
+        tr=lambda text: text,
+        is_selected=lambda: selected,
+        end_window_drag=_Recorder(),    # 系统接管后由 start_window_drag 调用
     )
+    # 真实实现按未绑定方式调用，但它内部还会走 self._let_system_drag()，所以把那份
+    # 真实实现绑到这个假 self 上，测的仍是「问平台 → 按答案决定走哪条路」。
+    # 「窗口有没有移动余地」单独测（TestSystemDragRoom），这里固定为「有」。
+    fake._system_drag_has_room = lambda: True
+    fake._let_system_drag = MethodType(PinWindow._let_system_drag, fake)
+    return fake
 
 
 class TestWindowDrag:
 
     def test_starting_a_drag_records_the_anchor_and_changes_the_cursor(self):
         fake = _drag_self()
-        PinWindow.start_window_drag(fake, QPoint(150, 160))
+        with _platform_refuses_system_move():
+            PinWindow.start_window_drag(fake, QPoint(150, 160))
         assert fake._is_dragging is True
         assert fake._drag_start_pos == QPoint(150, 160)
         assert fake._drag_start_window_pos == QPoint(500, 400)
         assert fake.setCursor.calls == [(Qt.CursorShape.ClosedHandCursor,)]
+
+    def test_the_system_takes_over_when_the_platform_accepts_it(self):
+        """系统拖动是阻塞的（返回即松手），所以按下时就同步收尾，不再自己搬窗口。"""
+        fake = _drag_self()
+        with _platform_accepts_system_move():
+            PinWindow.start_window_drag(fake, QPoint(150, 160))
+        assert fake.end_window_drag.called
+        assert fake.move.calls == []
+
+    def test_a_selected_pin_keeps_the_manual_path(self):
+        """多选成组拖动不能交给系统：系统一次只搬一个窗口，同组其它贴图得我们搬。"""
+        fake = _drag_self(selected=True)
+        with _platform_accepts_system_move() as calls:
+            PinWindow.start_window_drag(fake, QPoint(150, 160))
+        assert calls == []
+        assert not fake.end_window_drag.called
+
+    def test_a_platform_refusal_falls_back_to_manual_dragging(self):
+        fake = _drag_self()
+        with _platform_refuses_system_move() as calls:
+            PinWindow.start_window_drag(fake, QPoint(150, 160))
+        assert len(calls) == 1                     # 问过平台，被拒
+        assert not fake.end_window_drag.called
+        PinWindow.update_window_drag(fake, QPoint(160, 170))
+        assert fake.move.calls == [(QPoint(510, 410),)]
 
     def test_the_window_follows_the_pointer_delta(self):
         fake = _drag_self(dragging=True)
@@ -360,30 +427,72 @@ class TestWindowDrag:
 
     def test_ending_a_drag_restores_the_cursor(self):
         fake = _drag_self(dragging=True)
+        fake._sync_toolbar_with_window = _Recorder()
         PinWindow.end_window_drag(fake)
         assert fake._is_dragging is False
         assert fake.setCursor.calls == [(Qt.CursorShape.ArrowCursor,)]
 
     def test_ending_a_drag_that_never_started_is_a_no_op(self):
         fake = _drag_self(dragging=False)
+        fake._sync_toolbar_with_window = _Recorder()
         PinWindow.end_window_drag(fake)
         assert fake.setCursor.calls == []
+        assert not fake._sync_toolbar_with_window.called
 
     def test_a_visible_toolbar_is_kept_in_sync(self):
         sync = _Recorder()
-        fake = _drag_self(dragging=True)
+        fake = _drag_self()
         fake.toolbar = SimpleNamespace(
             isVisible=lambda: True, sync_with_pin_window=sync)
-        PinWindow.update_window_drag(fake, QPoint(110, 110))
+        PinWindow._sync_toolbar_with_window(fake)
         assert sync.called
 
     def test_a_hidden_toolbar_is_not_synced(self):
         sync = _Recorder()
-        fake = _drag_self(dragging=True)
+        fake = _drag_self()
         fake.toolbar = SimpleNamespace(
             isVisible=lambda: False, sync_with_pin_window=sync)
-        PinWindow.update_window_drag(fake, QPoint(110, 110))
+        PinWindow._sync_toolbar_with_window(fake)
         assert not sync.called
+
+    def test_an_attached_toolbar_is_not_moved_by_us_any_more(self):
+        """工具栏挂成原生跟随窗口后由系统带着走，我们每帧再搬一次只是白花时间。"""
+        sync = _Recorder()
+        fake = _drag_self(followed=True)
+        fake.toolbar = SimpleNamespace(
+            isVisible=lambda: True, sync_with_pin_window=sync)
+        PinWindow._sync_toolbar_with_window(fake)
+        assert not sync.called
+
+
+class TestSystemDragRoom:
+    """「窗口在屏幕可用区里还留得下移动余地吗」——决定拖动交给系统还是自己搬。
+
+    系统的窗口拖动会把窗口夹在屏幕可用区里（实测可拖动范围 = 可用区 − 窗口尺寸），
+    贴着屏幕大小的贴图交给系统就等于动不了，因此大到一定程度必须继续自己搬。
+    """
+
+    @staticmethod
+    def _room(width, height):
+        window = SimpleNamespace(
+            width=lambda: width, height=lambda: height,
+            screen=lambda: SimpleNamespace(availableGeometry=lambda: QRect(0, 0, 2000, 1200)))
+        return PinWindow._system_drag_has_room(window)
+
+    def test_a_small_pin_has_room(self):
+        assert self._room(800, 600) is True
+
+    def test_a_full_screen_pin_has_no_room(self):
+        assert self._room(1900, 1150) is False
+
+    def test_the_rule_looks_at_both_axes(self):
+        assert self._room(800, 1150) is False      # 高度顶满
+        assert self._room(1900, 600) is False      # 宽度顶满
+
+    def test_a_missing_screen_is_a_no(self):
+        window = SimpleNamespace(width=lambda: 100, height=lambda: 100,
+                                 screen=lambda: None)
+        assert PinWindow._system_drag_has_room(window) is False
 
 
 # ============================================================================

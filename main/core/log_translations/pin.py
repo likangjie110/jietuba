@@ -22,6 +22,12 @@ TRANSLATIONS: dict[str, str] = {
     "读取贴图手势配置": "Reading pin gesture config",
     "贴图已锁定，忽略缩放": "Pin is locked, ignoring zoom",
     "贴图已锁定，忽略拖动": "Pin is locked, ignoring drag",
+    "贴图拖动开始: 起点 ({x}, {y})，系统接管: {system}":
+        "Pin drag started at ({x}, {y}), handed to the system: {system}",
+    "贴图拖动结束: 位移 ({dx}, {dy})": "Pin drag finished, moved by ({dx}, {dy})",
+    "贴图拖动已交给系统": "Pin drag handed over to the system",
+    "工具栏已挂为跟随窗口，拖动时由系统带动":
+        "Toolbar attached as a follow window; the system moves it with the pin",
     "贴图锁定状态: {locked}": "Pin lock state: {locked}",
     "还没有 OCR 结果，无法复制文字": "No OCR result yet, cannot copy text",
     "没有识别到文字": "No text recognized",

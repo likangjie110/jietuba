@@ -67,6 +67,11 @@ PIN_ACTIONS = (
     PinAction("toggle_thumbnail", "Thumbnail Mode"),
     PinAction("toggle_toolbar", "Toggle Toolbar"),
     PinAction("toggle_lock", "Lock Position and Size"),
+    PinAction("toggle_click_through", "Toggle Click-through"),
+    PinAction("toggle_focus_mode", "Focus Mode"),
+    PinAction("close_others", "Close Other Pins"),
+    PinAction("load_content", "Load New Content"),
+    PinAction("recognize_text", "Recognize Text Again"),
     PinAction("context_menu", "Show Context Menu"),
     PinAction("close_selected", "Close Selected Pins"),
     PinAction("copy_and_close", "Copy and Close"),
@@ -184,6 +189,16 @@ def run_pin_action(action_id: str, window) -> bool:
     if action_id == "toggle_lock":
         window.toggle_lock()
         return True
+    if action_id == "toggle_click_through":
+        return bool(window.toggle_click_through())
+    if action_id == "toggle_focus_mode":
+        return bool(window.toggle_focus_mode())
+    if action_id == "close_others":
+        return window.close_other_pins() >= 0
+    if action_id == "load_content":
+        return bool(window.load_image_from_file())
+    if action_id == "recognize_text":
+        return bool(window.recognize_text_now())
     if action_id == "context_menu":
         return bool(window.show_context_menu_at_cursor())
     if action_id == "close_selected":

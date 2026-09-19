@@ -126,13 +126,23 @@ class TestNetworkProxy:
 
 
 class TestUpdateSource:
+    """更新源与检查：地址可配置，「检查更新」按远端真实版本如实报告（详见块 6 的测试）。"""
+
+    def test_the_source_url_is_configurable(self, qapp, config):
+        from core import updates
+
+        config.set_update_source_url("https://example.com/rel")
+        assert updates.update_source_url() == "https://example.com/rel"
+        config.set_update_source_url("")
+        assert updates.update_source_url() == updates.DEFAULT_UPDATE_SOURCE
+
     def test_open_uses_the_system_browser(self, qapp, monkeypatch):
         from core import updates
 
         opened = []
         monkeypatch.setattr("core.platform.shell.open_url", lambda url: opened.append(url) or True)
 
-        assert updates.check_for_updates() is True
+        assert updates.open_update_source() is True
         assert opened == [updates.update_source_url()]
         assert opened[0].startswith("https://github.com/")
 
@@ -140,13 +150,16 @@ class TestUpdateSource:
         """动作注册表里的 check_updates 走的就是这条入口（热键/手势/托盘都能绑它）。"""
         from core import actions
 
-        opened = []
-        monkeypatch.setattr("core.platform.shell.open_url", lambda url: opened.append(url) or True)
-
         assert "check_updates" in actions.ACTIONS_BY_ID
         assert "check_updates" in actions.APP_ENTRY_ACTIONS
+
+        # 远端读不到时返回 False，但结论（含原因）已经交给 notify 展示
+        seen = []
+        monkeypatch.setattr("core.updates.run_update_check",
+                            lambda notify=None, **kwargs: seen.append(notify) or
+                            type("R", (), {"state": "current", "url": ""})())
         assert actions.run_action("check_updates", SimpleNamespace()) is True
-        assert opened and opened[0].endswith("/releases")
+        assert seen and callable(seen[0])
 
 
 class TestIgnoreOwnClipboardWrite:

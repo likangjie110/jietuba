@@ -148,6 +148,9 @@ class ToolSettingsManager(QObject):
             "opacity": 1.0,
             "arrow_size": 9,  # 箭头大小
             "arrow_style": "single",  # 箭头样式：single（单头）或 double（双头）
+            "path_style": "straight",  # 路径样式：straight / curve / elbow
+            "head_start": "inherit",   # 起点端点：inherit 跟随 arrow_style，或 none/triangle/...
+            "head_end": "inherit",     # 终点端点，取值同上
         },
         "text": {
             "color": "#000000",  # 黑色
@@ -168,6 +171,30 @@ class ToolSettingsManager(QObject):
         "eraser": {
             "stroke_width": 25,  # 橡皮擦大小（宽度）
             "opacity": 1.0,      # 占位参数（橡皮擦不需要透明度）
+        },
+        # ---- 第二批标注工具（工具在按下的那一刻读这些键，所以改完立即生效）----
+        "line": {
+            "color": "#FF0000",
+            "stroke_width": 6,
+            "opacity": 1.0,
+            "line_style": "solid",  # solid / dashed / dashed_dense
+        },
+        "watermark": {
+            "text": "jietuba",
+            "font_size": 28,
+            "angle": -30.0,       # 度数，负数=逆时针
+            "gap": 120,           # 相邻水印的间距（px）
+            "opacity": 0.35,      # 水印自身的淡度
+            "color": "#FFFFFF",
+        },
+        "filter": {
+            "kind": "grayscale",  # grayscale / invert / blur / emboss
+            "radius": 6,          # 高斯模糊半径
+            "strength": 1.0,      # 浮雕强度
+        },
+        "smart_erase": {
+            "brush_width": 40,    # 涂抹宽度
+            "sample_margin": 6,   # 从笔画外侧取样估计背景色的圈宽
         },
     }
     
@@ -205,6 +232,17 @@ class ToolSettingsManager(QObject):
         "inapp_zoom_out": "pagedown",          # 放大镜缩小
         "inapp_translate": "shift+c",          # 截图翻译
         "inapp_cursor_move_mode": "both",      # 鼠标微移模式: both / arrows / wasd
+        # 标注元素的层级与对齐（画布内快捷键，定义表见 page_hotkey.LAYER_KEYS）
+        "inapp_bring_to_front": "ctrl+shift+]",
+        "inapp_send_to_back": "ctrl+shift+[",
+        "inapp_bring_forward": "",
+        "inapp_send_backward": "",
+        "inapp_align_left": "",
+        "inapp_align_hcenter": "",
+        "inapp_align_right": "",
+        "inapp_align_top": "",
+        "inapp_align_vcenter": "",
+        "inapp_align_bottom": "",
         **{key: default for key, _tool, _label, default in ANNOTATION_TOOL_SHORTCUTS},
         # ==================== 2. 截图 ====================
         # 截图交互
@@ -237,6 +275,11 @@ class ToolSettingsManager(QObject):
             "long_screenshot": True,
             "gif_capture": True,
             "video_capture": True,
+            "open_history": True,
+            "open_image_viewer": True,
+            "open_main_window": True,
+            "recognize_table": True,
+            "convert_image_markdown": True,
             "clipboard": True,
             "open_translation": True,
             "open_save_folder": True,
@@ -251,8 +294,12 @@ class ToolSettingsManager(QObject):
         # 截图保存
         "screenshot_save_enabled": True,       # 自动保存截图
         "screenshot_save_path": default_screenshot_dir(),  # 默认保存路径（按平台选目录）
+        # 多保存路径：[{"path": ..., "format": "PNG", "quality": 85}, ...]
+        # 空表时按「单路径 + screenshot_format/screenshot_quality」工作（老配置无缝沿用）
+        "screenshot_save_paths": [],
         "screenshot_format": "PNG",            # 保存格式: PNG / JPG / BMP / WEBP / PDF
         "screenshot_quality": 85,              # 有损格式质量 (1-100, PNG/BMP忽略)
+        "pdf_page_size": "original",           # PDF 页尺寸: original / a4_portrait / a4_landscape
 
         # 截图圆角
         "screenshot_rounded_enabled": False,   # 圆角截图开关
@@ -296,6 +343,12 @@ class ToolSettingsManager(QObject):
         # capture 截图后 / copy_all 复制所有文本 / copy_selection 复制选定文本。
         # 默认空表：沿用「只有复制、不弹窗」的老行为
         "ocr_dialog_triggers": [],
+        # 模型档位（见 ocr/model_tiers.py；不可用的档位不会出现在设置页里）
+        "ocr_model_tier": "v6_small",
+        # 视觉模型（OpenAI 兼容；把图片转 Markdown/HTML，见 ocr/vision_models.py）
+        "ocr_vision_models": [],
+        "ocr_vision_model": "",
+        "ocr_vision_target": "markdown",
         # 公式识别（第 9 项）：ppocr_formula 走 Rust 侧 PP-FormulaNet 绑定；
         # external_service 走自建/第三方 HTTP 服务（要填 URL 与可选密钥）
         "formula_engine": "ppocr_formula",
@@ -328,6 +381,13 @@ class ToolSettingsManager(QObject):
         "clipboard_group_bar_position": "top", # 分组栏位置（right/left/top）
         "clipboard_preserve_search": False,    # 关闭时保留搜索栏内容
         "clipboard_db_path": "",               # 剪贴板数据库自定义路径（空=默认位置）
+
+        # ==================== 3.5 截图历史 ====================
+        # 用户确认过的截图结果存一份到应用数据目录；三个上限都是 0 = 不限制
+        "history_enabled": True,               # 是否记录截图历史
+        "history_retention_days": 0,           # 保留天数（0 = 永久保留）
+        "history_max_entries": 0,              # 最多保留多少条（0 = 不限制）
+        "history_max_disk_mb": 0,              # 磁盘占用上限 MiB（0 = 不限制）
 
         # ==================== 4. 外观 ====================
         "ui_theme_mode": "system",             # 界面主题（system/light/dark）
@@ -391,7 +451,8 @@ class ToolSettingsManager(QObject):
         # ==================== 7.1 系统与集成（2026-09-19 按截图清单补）====================
         "desktop_toolbar_mode": "none",        # 桌面工具栏：none 不显示 / floating_ball 悬浮球
         "desktop_toolbar_position": "",        # 悬浮球位置 "x,y"（空串 = 默认右下角）
-        "tray_click_action": "screenshot",     # 托盘单击执行的动作 id（取自 core.actions 注册表）
+        "tray_click_action": "screenshot",
+        "tray_scroll_action": "",              # 托盘滚轮（中键）动作 id（空=不做事）     # 托盘单击执行的动作 id（取自 core.actions 注册表）
         # 网络代理：none 直连 / manual 手动（翻译、公式识别等走网络的功能都用它）
         "proxy_mode": "none",
         "proxy_host": "",
@@ -442,6 +503,22 @@ class ToolSettingsManager(QObject):
             
             self._tool_settings[tool_id] = tool_setting
     
+    def reload_from_storage(self) -> None:
+        """从存储重新读回工具设置。
+
+        导入设置包（``core/settings_archive.import_settings``）写的是 QSettings，而工具
+        设置在被读进内存后就不会自己回去看存储了——不调这一步，导入之后「工具设置」还是
+        旧值，用户会看到「导入成功了但画笔粗细没变」。
+        """
+        for tool_id, defaults in self.DEFAULT_SETTINGS.items():
+            tool_setting = self._tool_settings.get(tool_id)
+            if tool_setting is None:
+                self._tool_settings[tool_id] = ToolSettings(tool_id, defaults)
+                self._load_tool_settings(self._tool_settings[tool_id])
+                continue
+            tool_setting.reset_to_defaults()
+            self._load_tool_settings(tool_setting)
+
     def _load_tool_settings(self, tool_setting: ToolSettings):
         """从 QSettings 加载工具设置"""
         tool_id = tool_setting.tool_id
@@ -1158,6 +1235,16 @@ class ToolSettingsManager(QObject):
             return
         self.qsettings.setValue("app/screenshot_save_path", value)
 
+    #: PDF 页尺寸（见 core/save.py 的 PDF_PAGE_SIZES）
+    PDF_PAGE_SIZES = ("original", "a4_portrait", "a4_landscape")
+
+    def get_pdf_page_size(self) -> str:
+        """PDF 页尺寸：原图尺寸 / A4 纵 / A4 横。"""
+        return self._choice("pdf_page_size", self.PDF_PAGE_SIZES, "original")
+
+    def set_pdf_page_size(self, value: str):
+        self.set_app_setting("pdf_page_size", str(value or "original"))
+
     def get_screenshot_format(self) -> str:
         """获取截图保存格式 (PNG/JPG/BMP/WEBP/PDF)"""
         return self.qsettings.value("app/screenshot_format", self.APP_DEFAULT_SETTINGS["screenshot_format"], type=str)
@@ -1169,6 +1256,67 @@ class ToolSettingsManager(QObject):
     def get_screenshot_quality(self) -> int:
         """获取截图保存质量 (1-100, PNG/BMP时忽略)"""
         return self.qsettings.value("app/screenshot_quality", self.APP_DEFAULT_SETTINGS["screenshot_quality"], type=int)
+
+    #: 单条保存路径的字段
+    SAVE_PATH_FIELDS = ("path", "format", "quality")
+
+    def get_save_paths(self) -> list:
+        """多保存路径列表；没配过时返回「单路径」那一条（兼容老配置）。"""
+        raw = self.get_app_setting("screenshot_save_paths", [])
+        paths = []
+        if isinstance(raw, str) and raw.strip():
+            import json
+
+            try:
+                raw = json.loads(raw)
+            except (TypeError, ValueError):
+                from core.logger import log_warning, T
+
+                log_warning(T("保存路径列表格式不对，按单路径处理"), "Settings")
+                raw = []
+        if isinstance(raw, list):
+            for item in raw:
+                if isinstance(item, str):
+                    item = {"path": item}
+                if not isinstance(item, dict):
+                    continue
+                folder = str(item.get("path", "") or "").strip()
+                if not folder:
+                    continue
+                from core.image_formats import preferred_format
+
+                fmt = preferred_format(item.get("format") or self.get_screenshot_format())
+                try:
+                    quality = max(1, min(100, int(item.get("quality", self.get_screenshot_quality()))))
+                except (TypeError, ValueError):
+                    quality = self.get_screenshot_quality()
+                paths.append({"path": folder, "format": fmt, "quality": quality})
+        if not paths:
+            folder = self.get_screenshot_save_path()
+            if folder:
+                paths.append({"path": folder, "format": self.get_screenshot_format(),
+                              "quality": self.get_screenshot_quality()})
+        return paths
+
+    def set_save_paths(self, paths) -> None:
+        """写入多保存路径列表；传空表时就是「没配过」（读回来会退回单路径）。"""
+        import json
+
+        cleaned = []
+        for item in paths or []:
+            if isinstance(item, str):
+                item = {"path": item}
+            if not isinstance(item, dict):
+                continue
+            folder = str(item.get("path", "") or "").strip()
+            if not folder:
+                continue
+            cleaned.append({
+                "path": folder,
+                "format": str(item.get("format") or "PNG").upper(),
+                "quality": max(1, min(100, int(item.get("quality", 85) or 85))),
+            })
+        self.set_app_setting("screenshot_save_paths", json.dumps(cleaned, ensure_ascii=False))
 
     def set_screenshot_quality(self, value: int):
         """设置截图保存质量 (1-100)"""
@@ -1401,6 +1549,25 @@ class ToolSettingsManager(QObject):
         value = str(self.get_app_setting(key, default) or "").strip().lower()
         return value if value in allowed else default
 
+    #: 视觉模型的输出格式
+    OCR_VISION_TARGETS = ("markdown", "html")
+
+    def get_ocr_model_tier(self) -> str:
+        """识别模型档位；配置里的档位在当前机器上不可用时退回可用档位。"""
+        from ocr.model_tiers import DEFAULT_TIER, selected_tier
+
+        return selected_tier(self, fallback=DEFAULT_TIER)
+
+    def set_ocr_model_tier(self, tier: str):
+        self.set_app_setting("ocr_model_tier", str(tier or "").strip())
+
+    def get_ocr_vision_target(self) -> str:
+        """视觉模型输出 Markdown 还是 HTML。"""
+        return self._choice("ocr_vision_target", self.OCR_VISION_TARGETS, "markdown")
+
+    def set_ocr_vision_target(self, target: str):
+        self.set_app_setting("ocr_vision_target", str(target or "markdown"))
+
     def get_ocr_text_layout(self) -> str:
         """识别结果的文本布局（见 OCR_TEXT_LAYOUTS）。"""
         return self._choice("ocr_text_layout", self.OCR_TEXT_LAYOUTS, "auto")
@@ -1505,6 +1672,16 @@ class ToolSettingsManager(QObject):
 
     def set_tray_click_action(self, action_id: str):
         self.set_app_setting("tray_click_action", action_id)
+
+    def get_tray_scroll_action(self) -> str:
+        """托盘滚轮（中键）执行的动作 id；空串表示不做事。"""
+        from core import actions
+
+        action_id = str(self.get_app_setting("tray_scroll_action", "") or "").strip()
+        return action_id if action_id in actions.ACTIONS_BY_ID else ""
+
+    def set_tray_scroll_action(self, action_id: str):
+        self.set_app_setting("tray_scroll_action", str(action_id or ""))
 
     #: 网络代理
     PROXY_MODES = ("none", "manual")
@@ -1873,6 +2050,68 @@ class ToolSettingsManager(QObject):
     def set_clipboard_db_path(self, value: str):
         """设置剪贴板数据库自定义路径"""
         self.qsettings.setValue("clipboard/db_path", value or "")
+
+    # ==================== 截图历史 ====================
+
+    #: 保留天数上限（设置页的下拉选项）
+    HISTORY_RETENTION_DAY_OPTIONS = (0, 1, 7, 30, 90, 365)
+    #: 条数上限（0 = 不限制）
+    HISTORY_MAX_ENTRIES_RANGE = (0, 100000)
+    #: 磁盘上限 MiB（0 = 不限制）
+    HISTORY_MAX_DISK_RANGE_MB = (0, 100000)
+
+    def get_history_enabled(self) -> bool:
+        """是否记录截图历史。"""
+        return self.qsettings.value(
+            "app/history_enabled", self.APP_DEFAULT_SETTINGS["history_enabled"], type=bool)
+
+    def set_history_enabled(self, value: bool):
+        self.set_app_setting("history_enabled", bool(value))
+
+    def get_history_retention_days(self) -> int:
+        """保留天数（0 = 永久保留）；不认识的档位退回 0。"""
+        value = self.get_app_setting("history_retention_days", 0)
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            return 0
+        return value if value in self.HISTORY_RETENTION_DAY_OPTIONS else 0
+
+    def set_history_retention_days(self, value: int):
+        try:
+            value = int(value)
+        except (TypeError, ValueError):
+            value = 0
+        self.set_app_setting("history_retention_days",
+                             value if value in self.HISTORY_RETENTION_DAY_OPTIONS else 0)
+
+    def get_history_max_entries(self) -> int:
+        """最多保留多少条（0 = 不限制）。"""
+        low, high = self.HISTORY_MAX_ENTRIES_RANGE
+        try:
+            value = int(self.get_app_setting("history_max_entries", 0))
+        except (TypeError, ValueError):
+            return 0
+        return max(low, min(high, value))
+
+    def set_history_max_entries(self, value: int):
+        low, high = self.HISTORY_MAX_ENTRIES_RANGE
+        self.set_app_setting("history_max_entries", max(low, min(high, self._int_setting(value, "history_max_entries"))))
+
+    def get_history_max_disk_mb(self) -> int:
+        """磁盘占用上限 MiB（0 = 不限制）。"""
+        low, high = self.HISTORY_MAX_DISK_RANGE_MB
+        try:
+            value = int(self.get_app_setting("history_max_disk_mb", 0))
+        except (TypeError, ValueError):
+            return 0
+        return max(low, min(high, value))
+
+    def set_history_max_disk_mb(self, value: int):
+        low, high = self.HISTORY_MAX_DISK_RANGE_MB
+        self.set_app_setting("history_max_disk_mb",
+                             max(low, min(high, self._int_setting(value, "history_max_disk_mb"))))
+
     
     def get_clipboard_auto_cleanup(self) -> bool:
         """获取是否自动清理超出限制的记录"""
@@ -2012,7 +2251,7 @@ class ToolSettingsManager(QObject):
     #: 最长录制时长（秒，0 = 不限制）
     VIDEO_MAX_DURATION_RANGE = (0, 24 * 3600)
 
-    def _video_int(self, value, key: str) -> int:
+    def _int_setting(self, value, key: str) -> int:
         """把写进来的值转成整数；转不了就落这个键的默认值（不该让界面传一次脏值就炸）。"""
         try:
             return int(value)
@@ -2044,7 +2283,7 @@ class ToolSettingsManager(QObject):
 
     def set_video_fps(self, value: int):
         """写帧率；给进来一个不能当数字用的值时落默认值（读的时候本来也会被规范化）。"""
-        self.set_app_setting("video_fps", self._video_int(value, "video_fps"))
+        self.set_app_setting("video_fps", self._int_setting(value, "video_fps"))
 
     def get_video_fps_options(self) -> list:
         """录制帧率可选项列表。"""
@@ -2069,7 +2308,7 @@ class ToolSettingsManager(QObject):
 
     def set_video_bitrate_mbps(self, value: int):
         low, high = self.VIDEO_BITRATE_RANGE
-        value = self._video_int(value, "video_bitrate_mbps")
+        value = self._int_setting(value, "video_bitrate_mbps")
         self.set_app_setting("video_bitrate_mbps", max(low, min(high, value)))
 
     def get_video_audio(self) -> str:
@@ -2098,7 +2337,7 @@ class ToolSettingsManager(QObject):
 
     def set_video_max_duration_s(self, value: int):
         low, high = self.VIDEO_MAX_DURATION_RANGE
-        value = self._video_int(value, "video_max_duration_s")
+        value = self._int_setting(value, "video_max_duration_s")
         self.set_app_setting("video_max_duration_s", max(low, min(high, value)))
 
     def get_video_save_path(self) -> str:

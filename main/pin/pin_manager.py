@@ -203,6 +203,120 @@ class PinManager(QObject):
     # 选中集合属于管理器而不是单个窗口：拖动一张时要带动整组，画选中框时也要知道
     # 别处选了什么。窗口只负责「把 Ctrl/Cmd+点击告诉自己属于哪个集合」。
 
+
+    # ==================================================================
+    # 分组
+    # ==================================================================
+
+    def groups(self) -> dict:
+        """当前分组：``{组名: [贴图窗口]}``（按名字排序，便于界面展示）。"""
+        buckets: dict = {}
+        for pin in self.get_all_pins():
+            name = getattr(pin, "group_name", "") or ""
+            if not name:
+                continue
+            buckets.setdefault(name, []).append(pin)
+        return {name: buckets[name] for name in sorted(buckets)}
+
+    def group_names(self) -> List[str]:
+        return list(self.groups().keys())
+
+    def add_to_group(self, pin, name: str) -> bool:
+        """把一张贴图加进某个分组（组不存在就新建）。"""
+        group = str(name or "").strip()
+        if pin is None or not group:
+            return False
+        try:
+            pin.group_name = group
+        except Exception as e:
+            log_exception(e, T("加入贴图分组"))
+            return False
+        log_debug(T("贴图加入分组: {name}", name=group), "PinManager")
+        return True
+
+    def remove_from_group(self, pin) -> bool:
+        """把贴图移出分组。"""
+        if pin is None or not getattr(pin, "group_name", ""):
+            return False
+        pin.group_name = ""
+        log_debug(T("贴图已移出分组"), "PinManager")
+        return True
+
+    def close_group(self, name: str) -> int:
+        """关掉一个分组里的所有贴图，返回关掉的数量。"""
+        pins = list(self.groups().get(str(name or "").strip(), []))
+        for pin in pins:
+            self.remove_pin(pin)
+        log_debug(T("关闭贴图分组: {name} ({count} 张)", name=name, count=len(pins)),
+                  "PinManager")
+        return len(pins)
+
+    def delete_empty_groups(self) -> List[str]:
+        """清掉「已经没有成员」的分组名，返回被清掉的名字（有内容的分组不动）。
+
+        分组是贴在窗口上的属性，窗口一关，组名就只留在这里的登记表里；不主动清的话
+        右键菜单会攒下一堆空组。所以这里维护一份「见过的组名」，只删其中没有成员的。
+        """
+        known = set(getattr(self, "_known_groups", set()))
+        alive = set(self.groups().keys())
+        removed = sorted(known - alive)
+        self._known_groups = alive
+        if removed:
+            log_debug(T("已清理空分组: {names}", names=", ".join(removed)), "PinManager")
+        return removed
+
+    def remember_group(self, name: str) -> None:
+        """登记一个组名（新建分组时调用），供「清理空分组」判断。"""
+        group = str(name or "").strip()
+        if not group:
+            return
+        known = set(getattr(self, "_known_groups", set()))
+        known.add(group)
+        self._known_groups = known
+
+    # ==================================================================
+    # 焦点模式 / 关闭其它
+    # ==================================================================
+
+    def is_focus_mode(self, pin) -> bool:
+        return getattr(self, "_focus_pin", None) is pin
+
+    def toggle_focus_mode(self, pin) -> bool:
+        """焦点模式：只显示这一张，再按一次还原（其它贴图只是隐藏，不关闭）。"""
+        if pin is None:
+            return False
+        if self.is_focus_mode(pin):
+            for other in self.get_all_pins():
+                other.show()
+            self._focus_pin = None
+            log_debug(T("退出焦点模式"), "PinManager")
+            return True
+        self._focus_pin = pin
+        for other in self.get_all_pins():
+            if other is pin:
+                other.show()
+            else:
+                other.hide()
+        log_debug(T("进入焦点模式"), "PinManager")
+        return True
+
+    def restore_visibility(self) -> None:
+        """退出焦点模式（关闭/恢复贴图时兜底）。"""
+        if getattr(self, "_focus_pin", None) is None:
+            return
+        self._focus_pin = None
+        for pin in self.get_all_pins():
+            pin.show()
+
+    def close_other_pins(self, keep) -> int:
+        """关掉除 ``keep`` 以外的所有贴图，返回关掉的数量。"""
+        others = [pin for pin in self.get_all_pins() if pin is not keep]
+        for pin in others:
+            self.remove_pin(pin)
+        if others:
+            log_debug(T("关闭其它贴图: {count} 张", count=len(others)), "PinManager")
+        return len(others)
+
     def selected_pins(self) -> List:
         """当前被选中的贴图（按选中顺序）。"""
         return [pin for pin in self._selected if pin in self.pin_windows]

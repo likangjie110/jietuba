@@ -43,15 +43,9 @@
         <source>Developer</source>
         <translation>개발자</translation>
     </message>
-
-    <!-- Page Titles -->
     <message>
         <source>Shortcut Settings</source>
         <translation>단축키 설정</translation>
-    </message>
-    <message>
-        <source>Capture Settings</source>
-        <translation>캡처 설정</translation>
     </message>
     <message>
         <source>Clipboard Settings</source>
@@ -77,7 +71,6 @@
         <source>Developer Options</source>
         <translation>개발자 옵션</translation>
     </message>
-    <!-- Capture Settings page section headers -->
     <message>
         <source>Smart Selection</source>
         <translation>스마트 선택</translation>
@@ -90,8 +83,6 @@
         <source>OCR Settings</source>
         <translation>OCR 설정</translation>
     </message>
-
-    <!-- Setup Wizard -->
     <message>
         <source>Setup Wizard</source>
         <translation>설정 마법사</translation>
@@ -104,8 +95,6 @@
         <source>Open Wizard</source>
         <translation>마법사 열기</translation>
     </message>
-    
-    <!-- Startup Preload -->
     <message>
         <source>Startup Preload</source>
         <translation>시작 시 미리 로드</translation>
@@ -162,8 +151,6 @@
         <source>Initialize clipboard monitoring on startup</source>
         <translation>시작 시 클립보드 모니터링을 초기화합니다</translation>
     </message>
-
-    <!-- Selection Info Panel -->
     <message>
         <source>Selection Info Panel</source>
         <translation>선택 정보 패널</translation>
@@ -180,8 +167,6 @@
         <source>Hide the info panel while dragging the selection area</source>
         <translation>선택 영역을 드래그하는 동안 정보 패널을 숨깁니다</translation>
     </message>
-
-    <!-- Buttons -->
     <message>
         <source>Reset This Page</source>
         <translation>이 페이지 초기화</translation>
@@ -222,8 +207,6 @@
         <source>Latest Log</source>
         <translation>최신 로그</translation>
     </message>
-    
-    <!-- Hotkey Page -->
     <message>
         <source>Global Hotkeys</source>
         <translation>전역 단축키</translation>
@@ -244,18 +227,54 @@
         <source>Screenshot Shortcuts</source>
         <translation>스크린샷 단축키</translation>
     </message>
-    <message><source>Annotation Tools</source><translation>주석 도구</translation></message>
-    <message><source>Select / Cursor</source><translation>선택 / 커서</translation></message>
-    <message><source>Pen</source><translation>펜</translation></message>
-    <message><source>Highlighter</source><translation>형광펜</translation></message>
-    <message><source>Mosaic</source><translation>모자이크</translation></message>
-    <message><source>Arrow</source><translation>화살표</translation></message>
-    <message><source>Number</source><translation>번호</translation></message>
-    <message><source>Rectangle</source><translation>사각형</translation></message>
-    <message><source>Ellipse</source><translation>타원</translation></message>
-    <message><source>Text</source><translation>텍스트</translation></message>
-    <message><source>Eraser</source><translation>지우개</translation></message>
-    <message><source>💡 Configured shortcuts take priority over WASD and C. Arrow keys remain available; Esc is reserved.</source><translation>💡 설정한 단축키는 WASD와 C보다 우선합니다. 방향키는 계속 사용할 수 있고 Esc는 예약 키입니다.</translation></message>
+    <message>
+        <source>Annotation Tools</source>
+        <translation>주석 도구</translation>
+    </message>
+    <message>
+        <source>Select / Cursor</source>
+        <translation>선택 / 커서</translation>
+    </message>
+    <message>
+        <source>Pen</source>
+        <translation>펜</translation>
+    </message>
+    <message>
+        <source>Highlighter</source>
+        <translation>형광펜</translation>
+    </message>
+    <message>
+        <source>Mosaic</source>
+        <translation>모자이크</translation>
+    </message>
+    <message>
+        <source>Arrow</source>
+        <translation>화살표</translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation>번호</translation>
+    </message>
+    <message>
+        <source>Rectangle</source>
+        <translation>사각형</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation>타원</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>텍스트</translation>
+    </message>
+    <message>
+        <source>Eraser</source>
+        <translation>지우개</translation>
+    </message>
+    <message>
+        <source>💡 Configured shortcuts take priority over WASD and C. Arrow keys remain available; Esc is reserved.</source>
+        <translation>💡 설정한 단축키는 WASD와 C보다 우선합니다. 방향키는 계속 사용할 수 있고 Esc는 예약 키입니다.</translation>
+    </message>
     <message>
         <source>Pin Shortcuts</source>
         <translation>고정 창 단축키</translation>
@@ -338,8 +357,6 @@ Replace it?</source>
         <source>💡 Hint: You can use modifier keys like Ctrl, Shift, Alt.</source>
         <translation>💡 팁: Ctrl, Shift, Alt 같은 보조 키를 사용할 수 있습니다.</translation>
     </message>
-    
-    <!-- Long Screenshot Page -->
     <message>
         <source>Stitching Engine</source>
         <translation>합성 엔진</translation>
@@ -368,8 +385,6 @@ Replace it?</source>
         <source>Skip this many top pixels on subsequent captures during matching</source>
         <translation>매칭 중 후속 캡처의 상단 픽셀 수를 건너뜁니다</translation>
     </message>
-
-    <!-- Capture Behavior -->
     <message>
         <source>Capture Behavior</source>
         <translation>캡처 동작</translation>
@@ -406,8 +421,6 @@ Replace it?</source>
         <source>Start new text annotations at about 30 characters wide and keep them inside the selection.</source>
         <translation>새 텍스트 주석은 약 30자 너비로 시작하고 선택 영역 안에 유지됩니다.</translation>
     </message>
-    
-    <!-- Smart Selection Page -->
     <message>
         <source>Enable Smart Selection</source>
         <translation>스마트 선택 사용</translation>
@@ -432,8 +445,6 @@ Replace it?</source>
         <source>3. Click to select that area</source>
         <translation>3. 클릭하여 해당 영역을 선택합니다</translation>
     </message>
-    
-    <!-- Save Page -->
     <message>
         <source>Auto-save Screenshots</source>
         <translation>스크린샷 자동 저장</translation>
@@ -470,8 +481,6 @@ Replace it?</source>
         <source>Select Screenshot Save Folder</source>
         <translation>스크린샷 저장 폴더 선택</translation>
     </message>
-    
-    <!-- OCR Page -->
     <message>
         <source>No OCR Version / OCR module not found</source>
         <translation>OCR 미포함 버전 / OCR 모듈을 찾을 수 없음</translation>
@@ -516,8 +525,6 @@ Replace it?</source>
         <source>💡 Supports 100+ languages: Chinese, English, Japanese, Korean, Arabic, etc.</source>
         <translation>💡 중국어, 영어, 일본어, 한국어, 아랍어 등 100개 이상의 언어를 지원합니다.</translation>
     </message>
-    
-    <!-- Log Page -->
     <message>
         <source>Save Logs</source>
         <translation>로그 저장</translation>
@@ -582,8 +589,6 @@ Replace it?</source>
         <source>*Changes will fully take effect after restart.</source>
         <translation>*변경 사항은 재시작 후 완전히 적용됩니다.</translation>
     </message>
-    
-    <!-- Misc Page -->
     <message>
         <source>Launch on Startup</source>
         <translation>시작 시 실행</translation>
@@ -624,8 +629,6 @@ Replace it?</source>
         <source>💡 Hint: Even with background startup, you can operate from system tray.</source>
         <translation>💡 팁: 백그라운드 시작 상태에서도 시스템 트레이에서 조작할 수 있습니다.</translation>
     </message>
-    
-    <!-- Info Page -->
     <message>
         <source>Jietuba - Screenshot Tool</source>
         <translation>Jietuba - 스크린샷 도구</translation>
@@ -655,11 +658,9 @@ Replace it?</source>
         <translation>👨‍💻 개발자: rijyaaru</translation>
     </message>
     <message>
-    <source>🛠️ Tech: Python、Rust、PyQt6、Oneocr、DeepLAPI</source>
-    <translation>🛠️ 기술: Python、Rust、PyQt6、Oneocr、DeepLAPI</translation>
+        <source>🛠️ Tech: Python、Rust、PyQt6、Oneocr、DeepLAPI</source>
+        <translation>🛠️ 기술: Python、Rust、PyQt6、Oneocr、DeepLAPI</translation>
     </message>
-
-    <!-- Translation Settings Page -->
     <message>
         <source>Translation Engine</source>
         <translation>번역 엔진</translation>
@@ -686,7 +687,7 @@ Replace it?</source>
     </message>
     <message>
         <source>Enable if you have a paid DeepL subscription</source>
-        <translation>DeepL 유료 구독이 있는 경우 활성화하세요</translation>
+        <translation>유료 DeepL 구독이 있는 경우 켜세요</translation>
     </message>
     <message>
         <source>Amazon Translate</source>
@@ -754,7 +755,7 @@ Replace it?</source>
     </message>
     <message>
         <source>Auto (System)</source>
-        <translation>자동 (시스템)</translation>
+        <translation>자동(시스템)</translation>
     </message>
     <message>
         <source>Ignore Line Breaks</source>
@@ -762,7 +763,7 @@ Replace it?</source>
     </message>
     <message>
         <source>Merge multi-line text for better translation</source>
-        <translation>더 나은 번역을 위해 여러 줄 텍스트를 병합</translation>
+        <translation>더 나은 번역을 위해 여러 줄 텍스트를 합칩니다</translation>
     </message>
     <message>
         <source>Preserve Formatting</source>
@@ -770,7 +771,7 @@ Replace it?</source>
     </message>
     <message>
         <source>Keep original text formatting</source>
-        <translation>원본 텍스트 서식을 유지</translation>
+        <translation>원본 텍스트 서식 유지</translation>
     </message>
     <message>
         <source>UI Detection</source>
@@ -1780,7 +1781,896 @@ This action cannot be undone.</source>
         <translation>클립보드 데이터 위치를 변경했지만 이전 파일이 사용 중이라 삭제하지 못했습니다. 앱을 다시 시작한 뒤 삭제할 수 있습니다.
 {error}</translation>
     </message>
+    <message>
+        <source>Translation Hotkey</source>
+        <translation>번역 단축키</translation>
+    </message>
+    <message>
+        <source>Get your API key from DeepL website (free tier available)</source>
+        <translation>DeepL 웹사이트에서 API 키를 발급받으세요(무료 요금제 제공)</translation>
+    </message>
+    <message>
+        <source>Show Key</source>
+        <translation>키 표시</translation>
+    </message>
+    <message>
+        <source>Hide Key</source>
+        <translation>키 숨기기</translation>
+    </message>
+    <message>
+        <source>Leave empty to follow system language</source>
+        <translation>비워 두면 시스템 언어를 따릅니다</translation>
+    </message>
+    <message>
+        <source>Advanced Options</source>
+        <translation>고급 옵션</translation>
+    </message>
+    <message>
+        <source>Auto Split Sentences</source>
+        <translation>문장 자동 분리</translation>
+    </message>
+    <message>
+        <source>Automatically split text into sentences for better translation</source>
+        <translation>더 나은 번역을 위해 텍스트를 자동으로 문장 단위로 나눕니다</translation>
+    </message>
+    <message>
+        <source>Keep original text formatting in translation</source>
+        <translation>번역 시 원본 텍스트 서식을 유지합니다</translation>
+    </message>
+    <message>
+        <source>DeepL free tier: 500,000 chars/month. Get API key at</source>
+        <translation>DeepL 무료 요금제: 월 500,000자. API 키 발급:</translation>
+    </message>
+    <message>
+        <source>DeepL offers a free API tier with 500,000 characters/month.</source>
+        <translation>DeepL은 월 500,000자까지 무료 API 요금제를 제공합니다.</translation>
+    </message>
+    <message>
+        <source>Visit https://www.deepl.com/pro-api to get your API key.</source>
+        <translation>API 키를 받으려면 https://www.deepl.com/pro-api 를 방문하세요.</translation>
+    </message>
+    <message>
+        <source>Enable Clipboard Manager</source>
+        <translation>클립보드 관리자 사용</translation>
+    </message>
+    <message>
+        <source>Monitor and manage clipboard history</source>
+        <translation>클립보드 기록을 모니터링하고 관리합니다</translation>
+    </message>
+    <message>
+        <source>Auto Paste After Selection</source>
+        <translation>선택 후 자동 붙여넣기</translation>
+    </message>
+    <message>
+        <source>Automatically send Ctrl+V after selecting an item</source>
+        <translation>항목 선택 후 자동으로 Ctrl+V를 보냅니다</translation>
+    </message>
+    <message>
+        <source>History Limit</source>
+        <translation>기록 한도</translation>
+    </message>
+    <message>
+        <source>Maximum number of items to keep (0 = unlimited)</source>
+        <translation>유지할 최대 항목 수 (0 = 무제한)</translation>
+    </message>
+    <message>
+        <source>Auto Cleanup Old Items</source>
+        <translation>오래된 항목 자동 정리</translation>
+    </message>
+    <message>
+        <source>Automatically remove items exceeding the limit</source>
+        <translation>한도를 초과한 항목을 자동으로 제거합니다</translation>
+    </message>
+    <message>
+        <source>Data Storage Location</source>
+        <translation>데이터 저장 위치</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>알 수 없음</translation>
+    </message>
+    <message>
+        <source>Clipboard module not available</source>
+        <translation>클립보드 모듈을 사용할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Open Folder</source>
+        <translation>열기</translation>
+    </message>
+    <message>
+        <source>Clear Clipboard History</source>
+        <translation>클립보드 기록 비우기</translation>
+    </message>
+    <message>
+        <source>Delete all clipboard history records</source>
+        <translation>모든 클립보드 기록을 삭제합니다</translation>
+    </message>
+    <message>
+        <source>← Get storage size</source>
+        <translation>← 저장소 크기 가져오기</translation>
+    </message>
+    <message>
+        <source>Clear History</source>
+        <translation>기록 비우기</translation>
+    </message>
+    <message>
+        <source>Image Data Optimization</source>
+        <translation>이미지 데이터 최적화</translation>
+    </message>
+    <message>
+        <source>If PNG is available, skip storing DIB to save space</source>
+        <translation>PNG를 사용할 수 있으면 DIB 저장을 건너뛰어 공간을 절약합니다</translation>
+    </message>
+    <message>
+        <source>💡 Hint: Set clipboard hotkey in Shortcuts settings.</source>
+        <translation>💡 팁: 단축키 설정에서 클립보드 단축키를 설정하세요.</translation>
+    </message>
+    <message>
+        <source>Confirm Clear</source>
+        <translation>비우기 확인</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to clear all clipboard history?\nThis action cannot be undone.</source>
+        <translation>모든 클립보드 기록을 비우시겠습니까?\n이 작업은 되돌릴 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Also delete saved content in groups</source>
+        <translation>그룹에 저장된 내용도 함께 삭제</translation>
+    </message>
+    <message>
+        <source>Clipboard history cleared successfully</source>
+        <translation>클립보드 기록이 성공적으로 비워졌습니다</translation>
+    </message>
+    <message>
+        <source>Failed to clear clipboard history</source>
+        <translation>클립보드 기록 비우기 실패</translation>
+    </message>
+    <message>
+        <source>Color Copy Format</source>
+        <translation>색상 복사 형식</translation>
+    </message>
+    <message>
+        <source>Used when copying color info in magnifier.</source>
+        <translation>돋보기에서 색상 정보를 복사할 때 사용합니다.</translation>
+    </message>
+    <message>
+        <source>RGB+HEX</source>
+        <translation>RGB+HEX</translation>
+    </message>
+    <message>
+        <source>RGB only</source>
+        <translation>RGB만</translation>
+    </message>
+    <message>
+        <source>HEX only</source>
+        <translation>HEX만</translation>
+    </message>
+    <message>
+        <source>Screenshot</source>
+        <translation>스크린샷</translation>
+    </message>
+    <message>
+        <source>Theme Color</source>
+        <translation>테마 색상</translation>
+    </message>
+    <message>
+        <source>Affects selection border, toolbar border, magnifier crosshair, etc. Restart recommended after change.</source>
+        <translation>선택 테두리, 도구 모음 테두리, 돋보기 십자선 등에 영향을 줍니다. 변경 후 재시작을 권장합니다.</translation>
+    </message>
+    <message>
+        <source>Select Theme Color</source>
+        <translation>테마 색상 선택</translation>
+    </message>
+    <message>
+        <source>Used for selection border, toolbar accent, magnifier crosshair.</source>
+        <translation>선택 테두리, 도구 모음 강조색, 돋보기 십자선에 사용됩니다.</translation>
+    </message>
+    <message>
+        <source>Screenshot Overlay</source>
+        <translation>스크린샷 오버레이</translation>
+    </message>
+    <message>
+        <source>The semi-transparent overlay color outside the selection area during screenshot.</source>
+        <translation>스크린샷 중 선택 영역 바깥의 반투명 오버레이 색상입니다.</translation>
+    </message>
+    <message>
+        <source>Select Mask Color</source>
+        <translation>마스크 색상 선택</translation>
+    </message>
+    <message>
+        <source>Mask Color</source>
+        <translation>마스크 색상</translation>
+    </message>
+    <message>
+        <source>The overlay color for unselected area. Supports transparency.</source>
+        <translation>선택되지 않은 영역의 오버레이 색상입니다. 투명도를 지원합니다.</translation>
+    </message>
+    <message>
+        <source>Reset to Defaults</source>
+        <translation>기본값으로 재설정</translation>
+    </message>
+    <message>
+        <source>💡 Hint: Color changes take effect on the next screenshot.</source>
+        <translation>💡 팁: 색상 변경은 다음 스크린샷부터 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>테마</translation>
+    </message>
+    <message>
+        <source>Font Size</source>
+        <translation>글꼴 크기</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation>불투명도</translation>
+    </message>
+    <message>
+        <source>Opaque</source>
+        <translation>불투명</translation>
+    </message>
+    <message>
+        <source>Basic Settings</source>
+        <translation>기본 설정</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>기록</translation>
+    </message>
+    <message>
+        <source>Data</source>
+        <translation>데이터</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>경고</translation>
+    </message>
+    <message>
+        <source>Folder does not exist</source>
+        <translation>폴더가 존재하지 않습니다</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>오류</translation>
+    </message>
+    <message>
+        <source>Success</source>
+        <translation>성공</translation>
+    </message>
+    <message>
+        <source>Startup</source>
+        <translation>시작</translation>
+    </message>
+    <message>
+        <source>Pin Window</source>
+        <translation>고정 창</translation>
+    </message>
+    <message>
+        <source>Operation</source>
+        <translation>동작</translation>
+    </message>
+    <message>
+        <source>Features</source>
+        <translation>기능</translation>
+    </message>
+    <message>
+        <source>OCR text recognition · Long screenshot · Pin window · Clipboard manager · DeepL translation</source>
+        <translation>OCR 텍스트 인식 · 긴 스크린샷 · 고정 창 · 클립보드 관리자 · DeepL 번역</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>라이선스</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>자세히</translation>
+    </message>
+    <message>
+        <source>MIT License</source>
+        <translation>MIT 라이선스</translation>
+    </message>
+    <message>
+        <source>MIT License Text</source>
+        <translation>MIT License
+
+Copyright (c) 2025 RIJYAARU
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</translation>
+    </message>
+    <message>
+        <source>Source Code</source>
+        <translation>소스 코드</translation>
+    </message>
+    <message>
+        <source>Open GitHub</source>
+        <translation>GitHub 열기</translation>
+    </message>
+    <message>
+        <source>Long Screenshot</source>
+        <translation>긴 스크린샷</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>도구</translation>
+    </message>
+    <message>
+        <source>Storage</source>
+        <translation>저장소</translation>
+    </message>
+    <message>
+        <source>Clipboard Hotkey</source>
+        <translation>클립보드 단축키</translation>
+    </message>
+    <message>
+        <source>Save Format</source>
+        <translation>저장 형식</translation>
+    </message>
+    <message>
+        <source>OCR</source>
+        <translation>OCR</translation>
+    </message>
+    <message>
+        <source>Change Location</source>
+        <translation>위치 변경</translation>
+    </message>
+    <message>
+        <source>Current clipboard database path is unavailable.</source>
+        <translation>현재 클립보드 데이터베이스 위치를 가져올 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Choose Clipboard Data Folder</source>
+        <translation>클립보드 데이터 폴더 선택</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>정보</translation>
+    </message>
+    <message>
+        <source>The selected folder is already the current location.</source>
+        <translation>선택한 폴더가 이미 현재 위치입니다.</translation>
+    </message>
+    <message>
+        <source>Please choose a folder outside the current clipboard images folder.</source>
+        <translation>현재 클립보드 이미지 폴더 밖의 폴더를 선택하세요.</translation>
+    </message>
+    <message>
+        <source>Replace Existing Data</source>
+        <translation>기존 데이터 교체</translation>
+    </message>
+    <message>
+        <source>The selected folder already contains clipboard data. Replace it with the current data?</source>
+        <translation>선택한 폴더에 이미 클립보드 데이터가 있습니다. 현재 데이터로 교체할까요?</translation>
+    </message>
+    <message>
+        <source>Failed to close the current clipboard database.</source>
+        <translation>현재 클립보드 데이터베이스를 닫지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Preparing migration...</source>
+        <translation>이동을 준비하는 중...</translation>
+    </message>
+    <message>
+        <source>Moving Clipboard Data</source>
+        <translation>클립보드 데이터 이동 중</translation>
+    </message>
+    <message>
+        <source>Finalizing migration...</source>
+        <translation>이동을 마무리하는 중...</translation>
+    </message>
+    <message>
+        <source>Migration complete.</source>
+        <translation>이동이 완료되었습니다.</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully.</source>
+        <translation>클립보드 데이터 위치가 변경되었습니다.</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully, but the old files are still in use and could not be deleted. You can remove them after restarting the app.\n{error}</source>
+        <translation>클립보드 데이터 위치가 변경되었지만, 이전 파일이 아직 사용 중이라 삭제하지 못했습니다. 앱을 다시 시작한 뒤 삭제할 수 있습니다.\n{error}</translation>
+    </message>
+    <message>
+        <source>Clipboard data moved, but reopening the database failed. Please restart the app.</source>
+        <translation>클립보드 데이터는 이동했지만 데이터베이스를 다시 열지 못했습니다. 앱을 다시 시작하세요.</translation>
+    </message>
+    <message>
+        <source>No clipboard data files were found to move.</source>
+        <translation>이동할 클립보드 데이터 파일을 찾지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Moving clipboard data... {done} / {total}</source>
+        <translation>클립보드 데이터 이동 중... {done} / {total}</translation>
+    </message>
+    <message>
+        <source>Application</source>
+        <translation>애플리케이션</translation>
+    </message>
+    <message>
+        <source>Interface Theme</source>
+        <translation>화면 테마</translation>
+    </message>
+    <message>
+        <source>Choose a display mode.</source>
+        <translation>표시 모드를 선택하세요.</translation>
+    </message>
+    <message>
+        <source>System</source>
+        <translation>시스템</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>라이트</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>다크</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>권한</translation>
+    </message>
+    <message>
+        <source>System Permissions</source>
+        <translation>시스템 권한</translation>
+    </message>
+    <message>
+        <source>jietuba needs these system permissions. Grant them here; the status refreshes by itself once granted.</source>
+        <translation>jietuba에 다음 시스템 권한이 필요합니다. 여기에서 허용하면 상태가 자동으로 갱신됩니다.</translation>
+    </message>
+    <message>
+        <source>Accessibility Permission</source>
+        <translation>손쉬운 사용 권한</translation>
+    </message>
+    <message>
+        <source>Global hotkeys only work with this permission, and smart selection uses it to detect the element under the cursor.</source>
+        <translation>전역 단축키는 이 권한이 있어야 동작하며, 스마트 선택도 커서 아래의 요소를 감지할 때 이 권한을 사용합니다.</translation>
+    </message>
+    <message>
+        <source>Screen Recording Permission</source>
+        <translation>화면 기록 권한</translation>
+    </message>
+    <message>
+        <source>Screenshots contain window contents only with this permission; without it they show the desktop wallpaper only.</source>
+        <translation>이 권한이 있어야 스크린샷에 창 내용이 포함됩니다. 없으면 바탕 화면 배경만 캡처됩니다.</translation>
+    </message>
+    <message>
+        <source>Granted</source>
+        <translation>허용됨</translation>
+    </message>
+    <message>
+        <source>Not Granted</source>
+        <translation>허용되지 않음</translation>
+    </message>
+    <message>
+        <source>Granted. Restart jietuba for it to take effect.</source>
+        <translation>허용됨. jietuba를 다시 시작하면 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Authorize</source>
+        <translation>권한 허용</translation>
+    </message>
+    <message>
+        <source>Open System Settings</source>
+        <translation>시스템 설정 열기</translation>
+    </message>
+    <message>
+        <source>Restart jietuba</source>
+        <translation>jietuba 다시 시작</translation>
+    </message>
+    <message>
+        <source>jietuba will close and reopen so the newly granted permission takes effect.</source>
+        <translation>jietuba를 종료하고 다시 열면 새로 허용한 권한이 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Video Recording</source>
+        <translation>동영상 녹화</translation>
+    </message>
+    <message>
+        <source>Video Container</source>
+        <translation>동영상 컨테이너</translation>
+    </message>
+    <message>
+        <source>File format of the recorded video.</source>
+        <translation>녹화한 동영상의 파일 형식입니다.</translation>
+    </message>
+    <message>
+        <source>Video Codec</source>
+        <translation>동영상 코덱</translation>
+    </message>
+    <message>
+        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
+        <translation>H.264는 호환성이 가장 좋고, H.265는 파일이 더 작습니다.</translation>
+    </message>
+    <message>
+        <source>Video Quality</source>
+        <translation>화질</translation>
+    </message>
+    <message>
+        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
+        <translation>선택 영역을 따르거나 1080p/720p/480p로 제한합니다.</translation>
+    </message>
+    <message>
+        <source>Follow Selection</source>
+        <translation>선택 영역에 맞춤</translation>
+    </message>
+    <message>
+        <source>Video Frame Rate</source>
+        <translation>프레임 레이트</translation>
+    </message>
+    <message>
+        <source>Higher frame rates make smoother videos and larger files.</source>
+        <translation>프레임 레이트가 높을수록 부드럽지만 파일이 커집니다.</translation>
+    </message>
+    <message>
+        <source>Bitrate Limit</source>
+        <translation>비트레이트 상한</translation>
+    </message>
+    <message>
+        <source>0 lets the encoder decide from the quality preset.</source>
+        <translation>0이면 화질 설정에 따라 인코더가 결정합니다.</translation>
+    </message>
+    <message>
+        <source>Record Audio</source>
+        <translation>소리 녹음</translation>
+    </message>
+    <message>
+        <source>Record the microphone together with the screen.</source>
+        <translation>화면과 함께 마이크를 녹음합니다.</translation>
+    </message>
+    <message>
+        <source>No Audio</source>
+        <translation>소리 없음</translation>
+    </message>
+    <message>
+        <source>Microphone</source>
+        <translation>마이크</translation>
+    </message>
+    <message>
+        <source>Microphone Device</source>
+        <translation>마이크 장치</translation>
+    </message>
+    <message>
+        <source>Device used when recording audio (empty = system default).</source>
+        <translation>소리 녹음에 사용할 장치(비워 두면 시스템 기본).</translation>
+    </message>
+    <message>
+        <source>System Default</source>
+        <translation>시스템 기본</translation>
+    </message>
+    <message>
+        <source>Maximum Duration</source>
+        <translation>최대 녹화 시간</translation>
+    </message>
+    <message>
+        <source>Automatically stop after this many seconds (0 = no limit).</source>
+        <translation>이 초를 넘으면 자동으로 중지합니다(0 = 제한 없음).</translation>
+    </message>
+    <message>
+        <source> seconds</source>
+        <translation> 초</translation>
+    </message>
+    <message>
+        <source>Video Save Folder</source>
+        <translation>동영상 저장 폴더</translation>
+    </message>
+    <message>
+        <source>Empty = follow the screenshot save folder.</source>
+        <translation>비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Video recording is unavailable: no encoding backend.</source>
+        <translation>동영상 녹화를 사용할 수 없습니다: 사용 가능한 인코딩 백엔드가 없습니다.</translation>
+    </message>
+    <message>
+        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
+        <translation>💡 녹화 파일을 저장할 폴더를 입력합니다. 비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>찾아보기</translation>
+    </message>
+    <message>
+        <source>Screenshot History Settings</source>
+        <translation>스크린샷 기록</translation>
+    </message>
+    <message>
+        <source>Screenshot History</source>
+        <translation>스크린샷 기록</translation>
+    </message>
+    <message>
+        <source>Keep every confirmed screenshot and browse it later.</source>
+        <translation>확인한 스크린샷을 저장해 두고 나중에 다시 볼 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Delete history entries older than this (0 = keep forever).</source>
+        <translation>이 일수를 넘긴 기록은 삭제됩니다(0 = 영구 보관).</translation>
+    </message>
+    <message>
+        <source>Keep forever</source>
+        <translation>영구 보관</translation>
+    </message>
+    <message>
+        <source>{days} days</source>
+        <translation>{days}일</translation>
+    </message>
+    <message>
+        <source>Maximum Entries</source>
+        <translation>최대 보관 개수</translation>
+    </message>
+    <message>
+        <source>Keep at most this many entries (0 = no limit).</source>
+        <translation>최대 이 개수까지 보관합니다(0 = 제한 없음).</translation>
+    </message>
+    <message>
+        <source>Maximum Disk Usage</source>
+        <translation>디스크 사용량 상한</translation>
+    </message>
+    <message>
+        <source>Oldest entries are deleted first once this is exceeded.</source>
+        <translation>상한을 넘으면 오래된 것부터 삭제됩니다.</translation>
+    </message>
+    <message>
+        <source> MiB</source>
+        <translation> MiB</translation>
+    </message>
+    <message>
+        <source>History Tools</source>
+        <translation>기록 도구</translation>
+    </message>
+    <message>
+        <source>Open the history window or clean up old entries now.</source>
+        <translation>기록 창을 열거나 지금 오래된 항목을 정리합니다.</translation>
+    </message>
+    <message>
+        <source>Open History</source>
+        <translation>기록 열기</translation>
+    </message>
+    <message>
+        <source>Clean Up Now</source>
+        <translation>지금 정리</translation>
+    </message>
+    <message>
+        <source>Removed {removed} entries; {remaining} left.</source>
+        <translation>{removed}개를 삭제했습니다. {remaining}개 남았습니다.</translation>
+    </message>
+    <message>
+        <source>Layer &amp; Alignment</source>
+        <translation>레이어 및 정렬</translation>
+    </message>
+    <message>
+        <source>Bring to Front</source>
+        <translation>맨 앞으로</translation>
+    </message>
+    <message>
+        <source>Send to Back</source>
+        <translation>맨 뒤로</translation>
+    </message>
+    <message>
+        <source>Bring Forward</source>
+        <translation>앞으로 보내기</translation>
+    </message>
+    <message>
+        <source>Send Backward</source>
+        <translation>뒤로 보내기</translation>
+    </message>
+    <message>
+        <source>Align Left</source>
+        <translation>왼쪽 정렬</translation>
+    </message>
+    <message>
+        <source>Align Horizontal Center</source>
+        <translation>가로 가운데 정렬</translation>
+    </message>
+    <message>
+        <source>Align Right</source>
+        <translation>오른쪽 정렬</translation>
+    </message>
+    <message>
+        <source>Align Top</source>
+        <translation>위쪽 정렬</translation>
+    </message>
+    <message>
+        <source>Align Vertical Center</source>
+        <translation>세로 가운데 정렬</translation>
+    </message>
+    <message>
+        <source>Align Bottom</source>
+        <translation>아래쪽 정렬</translation>
+    </message>
+    <message>
+        <source>Toggle Click-through</source>
+        <translation>클릭 통과 전환</translation>
+    </message>
+    <message>
+        <source>Focus Mode</source>
+        <translation>포커스 모드</translation>
+    </message>
+    <message>
+        <source>Close Other Pins</source>
+        <translation>다른 핀 닫기</translation>
+    </message>
+    <message>
+        <source>Load New Content</source>
+        <translation>새 내용 불러오기</translation>
+    </message>
+    <message>
+        <source>Recognize Text Again</source>
+        <translation>텍스트 다시 인식</translation>
+    </message>
+    <message>
+        <source>OCR Model</source>
+        <translation>인식 모델</translation>
+    </message>
+    <message>
+        <source>Which PP-OCR model pair to load (only installed tiers are listed).</source>
+        <translation>불러올 PP-OCR 모델 조합(설치된 것만 표시).</translation>
+    </message>
+    <message>
+        <source>No OCR model found</source>
+        <translation>OCR 모델을 찾을 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Vision Model</source>
+        <translation>비전 모델</translation>
+    </message>
+    <message>
+        <source>OpenAI-compatible endpoint that converts an image to Markdown or HTML.</source>
+        <translation>이미지를 Markdown 또는 HTML로 변환하는 OpenAI 호환 엔드포인트.</translation>
+    </message>
+    <message>
+        <source>Image Conversion Output</source>
+        <translation>이미지 변환 출력</translation>
+    </message>
+    <message>
+        <source>Convert images to Markdown (tables) or HTML.</source>
+        <translation>이미지를 Markdown(표) 또는 HTML로 변환합니다.</translation>
+    </message>
+    <message>
+        <source>Markdown</source>
+        <translation>Markdown</translation>
+    </message>
+    <message>
+        <source>HTML</source>
+        <translation>HTML</translation>
+    </message>
+    <message>
+        <source>Table Recognition</source>
+        <translation>표 인식</translation>
+    </message>
+    <message>
+        <source>Convert Image to Markdown</source>
+        <translation>이미지를 Markdown으로 변환</translation>
+    </message>
+    <message>
+        <source>Backup</source>
+        <translation>백업</translation>
+    </message>
+    <message>
+        <source>Backup and Restore</source>
+        <translation>백업 및 복원</translation>
+    </message>
+    <message>
+        <source>Export every setting to a zip file, or restore one.</source>
+        <translation>모든 설정을 zip으로 내보내거나 zip에서 복원합니다.</translation>
+    </message>
+    <message>
+        <source>Export settings</source>
+        <translation>설정 내보내기</translation>
+    </message>
+    <message>
+        <source>Import settings</source>
+        <translation>설정 가져오기</translation>
+    </message>
+    <message>
+        <source>This replaces every setting with the archive content. Continue?</source>
+        <translation>현재 설정이 압축 파일의 내용으로 바뀝니다. 계속할까요?</translation>
+    </message>
+    <message>
+        <source>Search settings and functions</source>
+        <translation>설정 및 기능 검색</translation>
+    </message>
+    <message>
+        <source>检查更新失败</source>
+        <translation>업데이트 확인 실패</translation>
+    </message>
+    <message>
+        <source>PDF Page Size</source>
+        <translation>PDF 페이지 크기</translation>
+    </message>
+    <message>
+        <source>Page size used when saving as PDF.</source>
+        <translation>PDF로 저장할 때 사용할 페이지 크기.</translation>
+    </message>
+    <message>
+        <source>Original size</source>
+        <translation>원본 크기</translation>
+    </message>
+    <message>
+        <source>A4 portrait</source>
+        <translation>A4 세로</translation>
+    </message>
+    <message>
+        <source>A4 landscape</source>
+        <translation>A4 가로</translation>
+    </message>
+    <message>
+        <source>Tray Scroll Action</source>
+        <translation>트레이 휠 동작</translation>
+    </message>
+    <message>
+        <source>What a scroll-wheel click (middle click) on the tray icon does.</source>
+        <translation>트레이 아이콘을 휠 클릭(중간 클릭)했을 때 실행할 동작.</translation>
+    </message>
+    <message>
+        <source>Left drag up</source>
+        <translation>왼쪽 드래그 위로</translation>
+    </message>
+    <message>
+        <source>Left drag down</source>
+        <translation>왼쪽 드래그 아래로</translation>
+    </message>
+    <message>
+        <source>Left drag left</source>
+        <translation>왼쪽 드래그 왼쪽으로</translation>
+    </message>
+    <message>
+        <source>Left drag right</source>
+        <translation>왼쪽 드래그 오른쪽으로</translation>
+    </message>
+    <message>
+        <source>Right drag up</source>
+        <translation>오른쪽 드래그 위로</translation>
+    </message>
+    <message>
+        <source>Right drag down</source>
+        <translation>오른쪽 드래그 아래로</translation>
+    </message>
+    <message>
+        <source>Right drag left</source>
+        <translation>오른쪽 드래그 왼쪽으로</translation>
+    </message>
+    <message>
+        <source>Right drag right</source>
+        <translation>오른쪽 드래그 오른쪽으로</translation>
+    </message>
+    <message>
+        <source>Image Viewer</source>
+        <translation>이미지 뷰어</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>메인 창</translation>
+    </message>
+    <message>
+        <source>Save Paths</source>
+        <translation>저장 경로</translation>
+    </message>
+    <message>
+        <source>Save every screenshot into one or more folders, each with its own format.</source>
+        <translation>스크린샷을 여러 폴더에 저장할 수 있습니다(형식은 개별 지정).</translation>
+    </message>
+    <message>
+        <source>Manage…</source>
+        <translation>관리…</translation>
+    </message>
 </context>
+
 
 <context>
     <name>ActionTools</name>
@@ -1814,6 +2704,7 @@ This action cannot be undone.</source>
     </message>
 </context>
 
+
 <context>
     <name>PinTranslationHelper</name>
     <message>
@@ -1825,6 +2716,7 @@ This action cannot be undone.</source>
         <translation>설정에서 DeepL API 키를 구성해 주세요.</translation>
     </message>
 </context>
+
 
 <!-- ========== Toolbar ========== -->
 <context>
@@ -1987,6 +2879,7 @@ This action cannot be undone.</source>
     </message>
 </context>
 
+
 <!-- ========== Pin Window ========== -->
 <context>
     <name>PinWindow</name>
@@ -2122,7 +3015,56 @@ This action cannot be undone.</source>
         <source>Close Selected Pins</source>
         <translation>선택한 고정 이미지 닫기</translation>
     </message>
+    <message>
+        <source>Click-through</source>
+        <translation>클릭 통과</translation>
+    </message>
+    <message>
+        <source>Click-through on</source>
+        <translation>클릭 통과를 켰습니다</translation>
+    </message>
+    <message>
+        <source>Click-through off</source>
+        <translation>클릭 통과를 껐습니다</translation>
+    </message>
+    <message>
+        <source>Focus mode</source>
+        <translation>포커스 모드</translation>
+    </message>
+    <message>
+        <source>Close other pins</source>
+        <translation>다른 핀 닫기</translation>
+    </message>
+    <message>
+        <source>Load new content</source>
+        <translation>새 내용 불러오기</translation>
+    </message>
+    <message>
+        <source>Recognize text again</source>
+        <translation>텍스트 다시 인식</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>그룹</translation>
+    </message>
+    <message>
+        <source>Remove from group</source>
+        <translation>그룹에서 제거</translation>
+    </message>
+    <message>
+        <source>New group…</source>
+        <translation>새 그룹…</translation>
+    </message>
+    <message>
+        <source>New group</source>
+        <translation>새 그룹</translation>
+    </message>
+    <message>
+        <source>Group name</source>
+        <translation>그룹 이름</translation>
+    </message>
 </context>
+
 
 <!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
 <context>
@@ -2189,6 +3131,7 @@ This action cannot be undone.</source>
     </message>
 </context>
 
+
 <!-- ========== System Tray ========== -->
 <context>
     <name>SystemTray</name>
@@ -2220,16 +3163,46 @@ This action cannot be undone.</source>
         <source>Exit</source>
         <translation>종료</translation>
     </message>
-    <message><source>Close all pinned windows</source><translation>모든 고정 창 닫기</translation></message>
-    <message><source>Current pinned windows: {count}</source><translation>현재 고정 창: {count}개</translation></message>
-    <message><source>Move all pins to center</source><translation>모든 고정 창을 화면 중앙으로 이동</translation></message>
-    <message><source>Thumbnail all pins</source><translation>모든 고정 창을 썸네일로 전환</translation></message>
-    <message><source>Restore all pin thumbnails</source><translation>모든 고정 창 썸네일 해제</translation></message>
-    <message><source>Close all pins</source><translation>모든 고정 창 닫기</translation></message>
-    <message><source>Save all pins as...</source><translation>모든 고정 창 다른 이름으로 저장...</translation></message>
-    <message><source>Choose folder to save pinned images</source><translation>고정 이미지를 저장할 폴더 선택</translation></message>
-    <message><source>Save Failed</source><translation>저장 실패</translation></message>
-    <message><source>Saved {saved} pinned images, failed {failed}.</source><translation>고정 이미지 {saved}개 저장, {failed}개 실패.</translation></message>
+    <message>
+        <source>Close all pinned windows</source>
+        <translation>모든 고정 창 닫기</translation>
+    </message>
+    <message>
+        <source>Current pinned windows: {count}</source>
+        <translation>현재 고정 창: {count}개</translation>
+    </message>
+    <message>
+        <source>Move all pins to center</source>
+        <translation>모든 고정 창을 화면 중앙으로 이동</translation>
+    </message>
+    <message>
+        <source>Thumbnail all pins</source>
+        <translation>모든 고정 창을 썸네일로 전환</translation>
+    </message>
+    <message>
+        <source>Restore all pin thumbnails</source>
+        <translation>모든 고정 창 썸네일 해제</translation>
+    </message>
+    <message>
+        <source>Close all pins</source>
+        <translation>모든 고정 창 닫기</translation>
+    </message>
+    <message>
+        <source>Save all pins as...</source>
+        <translation>모든 고정 창 다른 이름으로 저장...</translation>
+    </message>
+    <message>
+        <source>Choose folder to save pinned images</source>
+        <translation>고정 이미지를 저장할 폴더 선택</translation>
+    </message>
+    <message>
+        <source>Save Failed</source>
+        <translation>저장 실패</translation>
+    </message>
+    <message>
+        <source>Saved {saved} pinned images, failed {failed}.</source>
+        <translation>고정 이미지 {saved}개 저장, {failed}개 실패.</translation>
+    </message>
     <message>
         <source>Screenshot and Copy</source>
         <translation>캡처 후 복사</translation>
@@ -2286,7 +3259,28 @@ This action cannot be undone.</source>
         <source>Video Recording</source>
         <translation>동영상 녹화</translation>
     </message>
+    <message>
+        <source>Screenshot History</source>
+        <translation>스크린샷 기록</translation>
+    </message>
+    <message>
+        <source>Table Recognition</source>
+        <translation>표 인식</translation>
+    </message>
+    <message>
+        <source>Convert Image to Markdown</source>
+        <translation>이미지를 Markdown으로 변환</translation>
+    </message>
+    <message>
+        <source>Image Viewer</source>
+        <translation>이미지 뷰어</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>메인 창</translation>
+    </message>
 </context>
+
 
 <!-- ========== Main App (Tray Menu) ========== -->
 <context>
@@ -2383,7 +3377,28 @@ This action cannot be undone.</source>
         <source>Video Recording</source>
         <translation>동영상 녹화</translation>
     </message>
+    <message>
+        <source>Screenshot History</source>
+        <translation>스크린샷 기록</translation>
+    </message>
+    <message>
+        <source>Table Recognition</source>
+        <translation>표 인식</translation>
+    </message>
+    <message>
+        <source>Convert Image to Markdown</source>
+        <translation>이미지를 Markdown으로 변환</translation>
+    </message>
+    <message>
+        <source>Image Viewer</source>
+        <translation>이미지 뷰어</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>메인 창</translation>
+    </message>
 </context>
+
 
 <!-- ========== Translation Dialog ========== -->
 <context>
@@ -2496,9 +3511,18 @@ This action cannot be undone.</source>
         <source>Enter text to translate...</source>
         <translation>번역할 텍스트를 입력하세요...</translation>
     </message>
-    <message><source>Open full window</source><translation>전체 창 열기</translation></message>
-    <message><source>No translation result</source><translation>번역 결과 없음</translation></message>
-    <message><source>Copied</source><translation>복사됨</translation></message>
+    <message>
+        <source>Open full window</source>
+        <translation>전체 창 열기</translation>
+    </message>
+    <message>
+        <source>No translation result</source>
+        <translation>번역 결과 없음</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>복사됨</translation>
+    </message>
     <message>
         <source>%1 characters</source>
         <translation>%1자</translation>
@@ -2521,87 +3545,6 @@ This action cannot be undone.</source>
     </message>
 </context>
 
-<!-- ========== Translation Settings ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Translation</source>
-        <translation>번역</translation>
-    </message>
-    <message><source>Translation Hotkey</source><translation>번역 단축키</translation></message>
-    <message>
-        <source>Translation Settings</source>
-        <translation>번역 설정</translation>
-    </message>
-    <message>
-        <source>DeepL API Key</source>
-        <translation>DeepL API 키</translation>
-    </message>
-    <message>
-        <source>Get your API key from DeepL website (free tier available)</source>
-        <translation>DeepL 웹사이트에서 API 키를 발급받으세요(무료 요금제 제공)</translation>
-    </message>
-    <message>
-        <source>Show Key</source>
-        <translation>키 표시</translation>
-    </message>
-    <message>
-        <source>Hide Key</source>
-        <translation>키 숨기기</translation>
-    </message>
-    <message>
-        <source>Use DeepL Pro API</source>
-        <translation>DeepL Pro API 사용</translation>
-    </message>
-    <message>
-        <source>Enable if you have a paid DeepL subscription</source>
-        <translation>유료 DeepL 구독이 있는 경우 켜세요</translation>
-    </message>
-    <message>
-        <source>Target Language</source>
-        <translation>대상 언어</translation>
-    </message>
-    <message>
-        <source>Leave empty to follow system language</source>
-        <translation>비워 두면 시스템 언어를 따릅니다</translation>
-    </message>
-    <message>
-        <source>Auto (System)</source>
-        <translation>자동(시스템)</translation>
-    </message>
-    <message>
-        <source>Advanced Options</source>
-        <translation>고급 옵션</translation>
-    </message>
-    <message>
-        <source>Auto Split Sentences</source>
-        <translation>문장 자동 분리</translation>
-    </message>
-    <message>
-        <source>Automatically split text into sentences for better translation</source>
-        <translation>더 나은 번역을 위해 텍스트를 자동으로 문장 단위로 나눕니다</translation>
-    </message>
-    <message>
-        <source>Preserve Formatting</source>
-        <translation>서식 유지</translation>
-    </message>
-    <message>
-        <source>Keep original text formatting in translation</source>
-        <translation>번역 시 원본 텍스트 서식을 유지합니다</translation>
-    </message>
-    <message>
-        <source>DeepL free tier: 500,000 chars/month. Get API key at</source>
-        <translation>DeepL 무료 요금제: 월 500,000자. API 키 발급:</translation>
-    </message>
-    <message>
-        <source>DeepL offers a free API tier with 500,000 characters/month.</source>
-        <translation>DeepL은 월 500,000자까지 무료 API 요금제를 제공합니다.</translation>
-    </message>
-    <message>
-        <source>Visit https://www.deepl.com/pro-api to get your API key.</source>
-        <translation>API 키를 받으려면 https://www.deepl.com/pro-api 를 방문하세요.</translation>
-    </message>
-</context>
 <!-- ========== Clipboard Window ========== -->
 <context>
     <name>ClipboardWindow</name>
@@ -2894,6 +3837,7 @@ This action cannot be undone.</source>
     </message>
 </context>
 
+
 <!-- ========== Clipboard Management Dialog ========== -->
 <context>
     <name>ManageDialog</name>
@@ -2936,10 +3880,6 @@ This action cannot be undone.</source>
     <message>
         <source>Add Content</source>
         <translation>내용 추가</translation>
-    </message>
-    <message>
-        <source>New Group</source>
-        <translation>새 그룹</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -3044,10 +3984,6 @@ This action cannot be undone.</source>
     <message>
         <source>(No content in group)</source>
         <translation>(그룹에 내용이 없습니다)</translation>
-    </message>
-    <message>
-        <source>Add Content</source>
-        <translation>내용 추가</translation>
     </message>
     <message>
         <source>Add</source>
@@ -3197,7 +4133,6 @@ This action cannot be undone.</source>
         <source>Failed to delete item</source>
         <translation>항목 삭제 실패</translation>
     </message>
-    <!-- Import/Export -->
     <message>
         <source>📦 Import/Export</source>
         <translation>📦 가져오기/내보내기</translation>
@@ -3300,106 +4235,6 @@ This action cannot be undone.</source>
     </message>
 </context>
 
-<!-- ========== Settings Dialog - Clipboard Settings ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Enable Clipboard Manager</source>
-        <translation>클립보드 관리자 사용</translation>
-    </message>
-    <message>
-        <source>Monitor and manage clipboard history</source>
-        <translation>클립보드 기록을 모니터링하고 관리합니다</translation>
-    </message>
-    <message>
-        <source>Auto Paste After Selection</source>
-        <translation>선택 후 자동 붙여넣기</translation>
-    </message>
-    <message>
-        <source>Automatically send Ctrl+V after selecting an item</source>
-        <translation>항목 선택 후 자동으로 Ctrl+V를 보냅니다</translation>
-    </message>
-    <message>
-        <source>History Limit</source>
-        <translation>기록 한도</translation>
-    </message>
-    <message>
-        <source>Maximum number of items to keep (0 = unlimited)</source>
-        <translation>유지할 최대 항목 수 (0 = 무제한)</translation>
-    </message>
-    <message>
-        <source>Auto Cleanup Old Items</source>
-        <translation>오래된 항목 자동 정리</translation>
-    </message>
-    <message>
-        <source>Automatically remove items exceeding the limit</source>
-        <translation>한도를 초과한 항목을 자동으로 제거합니다</translation>
-    </message>
-    <message>
-        <source>Data Storage Location</source>
-        <translation>데이터 저장 위치</translation>
-    </message>
-    <message>
-        <source>Unknown</source>
-        <translation>알 수 없음</translation>
-    </message>
-    <message>
-        <source>Clipboard module not available</source>
-        <translation>클립보드 모듈을 사용할 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Open Folder</source>
-        <translation>열기</translation>
-    </message>
-    <message>
-        <source>Clear Clipboard History</source>
-        <translation>클립보드 기록 비우기</translation>
-    </message>
-    <message>
-        <source>Delete all clipboard history records</source>
-        <translation>모든 클립보드 기록을 삭제합니다</translation>
-    </message>
-    <message>
-        <source>← Get storage size</source>
-        <translation>← 저장소 크기 가져오기</translation>
-    </message>
-    <message>
-        <source>Clear History</source>
-        <translation>기록 비우기</translation>
-    </message>
-    <message>
-        <source>Image Data Optimization</source>
-        <translation>이미지 데이터 최적화</translation>
-    </message>
-    <message>
-        <source>If PNG is available, skip storing DIB to save space</source>
-        <translation>PNG를 사용할 수 있으면 DIB 저장을 건너뛰어 공간을 절약합니다</translation>
-    </message>
-    <message>
-        <source>💡 Hint: Set clipboard hotkey in Shortcuts settings.</source>
-        <translation>💡 팁: 단축키 설정에서 클립보드 단축키를 설정하세요.</translation>
-    </message>
-    <message>
-        <source>Confirm Clear</source>
-        <translation>비우기 확인</translation>
-    </message>
-    <message>
-        <source>Are you sure you want to clear all clipboard history?\nThis action cannot be undone.</source>
-        <translation>모든 클립보드 기록을 비우시겠습니까?\n이 작업은 되돌릴 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>Also delete saved content in groups</source>
-        <translation>그룹에 저장된 내용도 함께 삭제</translation>
-    </message>
-    <message>
-        <source>Clipboard history cleared successfully</source>
-        <translation>클립보드 기록이 성공적으로 비워졌습니다</translation>
-    </message>
-    <message>
-        <source>Failed to clear clipboard history</source>
-        <translation>클립보드 기록 비우기 실패</translation>
-    </message>
-</context>
 
 <context>
     <name>ArrowSettingsPanel</name>
@@ -3507,7 +4342,60 @@ This action cannot be undone.</source>
         <source>Strength: Maximum</source>
         <translation>강도: 최대</translation>
     </message>
+    <message>
+        <source>Straight</source>
+        <translation>직선</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation>곡선</translation>
+    </message>
+    <message>
+        <source>Elbow</source>
+        <translation>꺾은선</translation>
+    </message>
+    <message>
+        <source>Arrow path</source>
+        <translation>화살표 경로</translation>
+    </message>
+    <message>
+        <source>Start arrowhead</source>
+        <translation>시작 화살촉</translation>
+    </message>
+    <message>
+        <source>End arrowhead</source>
+        <translation>끝 화살촉</translation>
+    </message>
+    <message>
+        <source>Follow style</source>
+        <translation>스타일 따르기</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>없음</translation>
+    </message>
+    <message>
+        <source>Triangle</source>
+        <translation>삼각형</translation>
+    </message>
+    <message>
+        <source>Triangle outline</source>
+        <translation>빈 삼각형</translation>
+    </message>
+    <message>
+        <source>Circle</source>
+        <translation>원</translation>
+    </message>
+    <message>
+        <source>Diamond</source>
+        <translation>다이아몬드</translation>
+    </message>
+    <message>
+        <source>Bar</source>
+        <translation>가로 막대</translation>
+    </message>
 </context>
+
 
 <context>
     <name>TextSettingsPanel</name>
@@ -3569,6 +4457,7 @@ This action cannot be undone.</source>
     </message>
 </context>
 
+
 <context>
     <name>MagnifierOverlay</name>
     <message>
@@ -3577,34 +4466,10 @@ This action cannot be undone.</source>
     </message>
 </context>
 
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Color Copy Format</source>
-        <translation>색상 복사 형식</translation>
-    </message>
-    <message>
-        <source>Used when copying color info in magnifier.</source>
-        <translation>돋보기에서 색상 정보를 복사할 때 사용합니다.</translation>
-    </message>
-    <message>
-        <source>RGB+HEX</source>
-        <translation>RGB+HEX</translation>
-    </message>
-    <message>
-        <source>RGB only</source>
-        <translation>RGB만</translation>
-    </message>
-    <message>
-        <source>HEX only</source>
-        <translation>HEX만</translation>
-    </message>
-</context>
 
 <!-- ========== Welcome Wizard ========== -->
 <context>
     <name>WelcomeWizard</name>
-    <!-- window / nav -->
     <message>
         <source>欢迎使用截图吧</source>
         <translation>JieTuBa에 오신 것을 환영합니다</translation>
@@ -3637,7 +4502,6 @@ This action cannot be undone.</source>
         <source>完成</source>
         <translation>완료</translation>
     </message>
-    <!-- page1 -->
     <message>
         <source>欢迎使用截图吧 👋</source>
         <translation>JieTuBa에 오신 것을 환영합니다 👋</translation>
@@ -3662,7 +4526,6 @@ This action cannot be undone.</source>
         <source>选择后立即生效，欢迎界面将随之切换语言。</source>
         <translation>선택 즉시 적용되며, 환영 화면도 함께 언어가 전환됩니다.</translation>
     </message>
-    <!-- page2 tool names & descriptions (illus carousel) -->
     <message>
         <source>工具_画笔</source>
         <translation>펜</translation>
@@ -3775,7 +4638,6 @@ This action cannot be undone.</source>
         <source>工具描述_完成截图</source>
         <translation>클립보드에 복사하거나 파일로 저장</translation>
     </message>
-    <!-- page2 -->
     <message>
         <source>📸 截图设置</source>
         <translation>📸 스크린샷 설정</translation>
@@ -3796,7 +4658,6 @@ This action cannot be undone.</source>
         <source>选择保存文件夹</source>
         <translation>저장 폴더 선택</translation>
     </message>
-    <!-- page3 -->
     <message>
         <source>请选择工具栏布局首选项</source>
         <translation>도구 모음 레이아웃 선호도를 선택하세요</translation>
@@ -3809,19 +4670,58 @@ This action cannot be undone.</source>
         <source>工具栏在顶部</source>
         <translation>도구 모음 위쪽</translation>
     </message>
-    <message><source>剪贴板</source><translation>클립보드</translation></message>
-    <message><source>历史记录</source><translation>기록</translation></message>
-    <message><source>内容分组</source><translation>콘텐츠 그룹</translation></message>
-    <message><source>快速启动</source><translation>빠른 실행</translation></message>
-    <message><source>文字</source><translation>텍스트</translation></message>
-    <message><source>图片</source><translation>이미지</translation></message>
-    <message><source>文件</source><translation>파일</translation></message>
-    <message><source>会议时间改为 14:00</source><translation>회의 시간을 14:00로 변경</translation></message>
-    <message><source>产品封面.png</source><translation>제품 표지.png</translation></message>
-    <message><source>项目说明.pdf</source><translation>프로젝트 설명.pdf</translation></message>
-    <message><source>感谢您的联系</source><translation>연락해 주셔서 감사합니다</translation></message>
-    <message><source>设计预览.png</source><translation>디자인 미리보기.png</translation></message>
-    <message><source>下周一 10:00 开会</source><translation>다음 주 월요일 10:00 회의</translation></message>
+    <message>
+        <source>剪贴板</source>
+        <translation>클립보드</translation>
+    </message>
+    <message>
+        <source>历史记录</source>
+        <translation>기록</translation>
+    </message>
+    <message>
+        <source>内容分组</source>
+        <translation>콘텐츠 그룹</translation>
+    </message>
+    <message>
+        <source>快速启动</source>
+        <translation>빠른 실행</translation>
+    </message>
+    <message>
+        <source>文字</source>
+        <translation>텍스트</translation>
+    </message>
+    <message>
+        <source>图片</source>
+        <translation>이미지</translation>
+    </message>
+    <message>
+        <source>文件</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>会议时间改为 14:00</source>
+        <translation>회의 시간을 14:00로 변경</translation>
+    </message>
+    <message>
+        <source>产品封面.png</source>
+        <translation>제품 표지.png</translation>
+    </message>
+    <message>
+        <source>项目说明.pdf</source>
+        <translation>프로젝트 설명.pdf</translation>
+    </message>
+    <message>
+        <source>感谢您的联系</source>
+        <translation>연락해 주셔서 감사합니다</translation>
+    </message>
+    <message>
+        <source>设计预览.png</source>
+        <translation>디자인 미리보기.png</translation>
+    </message>
+    <message>
+        <source>下周一 10:00 开会</source>
+        <translation>다음 주 월요일 10:00 회의</translation>
+    </message>
     <message>
         <source>剪贴板管理</source>
         <translation>클립보드 관리자</translation>
@@ -3840,12 +4740,10 @@ This action cannot be undone.</source>
         <source>关闭后不会记录复制内容，快捷键也不会激活窗口。</source>
         <translation>끄면 복사 내용이 기록되지 않고, 단축키로도 창이 열리지 않습니다.</translation>
     </message>
-    <!-- page4 -->
     <message>
         <source>智能选区</source>
         <translation>스마트 선택</translation>
     </message>
-    <!-- page5 -->
     <message>
         <source>🌐 翻译设置</source>
         <translation>🌐 번역 설정</translation>
@@ -3900,7 +4798,6 @@ This action cannot be undone.</source>
         <source>翻译目标语言</source>
         <translation>번역 대상 언어</translation>
     </message>
-    <!-- page6 -->
     <message>
         <source>🎉 一切就绪！</source>
         <translation>🎉 모든 준비 완료!</translation>
@@ -3947,7 +4844,6 @@ This action cannot be undone.</source>
         <source>完成向导时在桌面创建截图吧快捷方式。</source>
         <translation>마법사를 마치면 바탕 화면에 Jietuba 바로가기를 만듭니다.</translation>
     </message>
-    <!-- illus strings -->
     <message>
         <source>截图 · 标注 · 剪贴板 · 翻译，一站搞定</source>
         <translation>스크린샷 · 주석 · 클립보드 · 번역, 한 번에 해결</translation>
@@ -4056,145 +4952,160 @@ This action cannot be undone.</source>
         <source>悬停时自动框出窗口或控件，单击即可精准截取。</source>
         <translation>커서 아래의 창이나 컨트롤을 자동으로 선택해 클릭 한 번으로 캡처합니다.</translation>
     </message>
+    <message>
+        <source>权限</source>
+        <translation>권한</translation>
+    </message>
+    <message>
+        <source>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</source>
+        <translation>두 가지 모두 시스템 권한입니다. 없으면 단축키가 동작하지 않고 스크린샷에는 바탕 화면만 담깁니다.</translation>
+    </message>
+    <message>
+        <source>权限只对本机生效，随时可以在设置里复查。</source>
+        <translation>권한은 이 Mac에만 적용되며 언제든 설정에서 확인할 수 있습니다.</translation>
+    </message>
 </context>
+
 
 <!-- ========== GIF Record Toolbar ========== -->
 <context>
     <name>GifRecordToolbar</name>
-    <message><source>开始录制</source><translation>녹화 시작</translation></message>
-    <message><source>停止录制</source><translation>녹화 중지</translation></message>
-    <message><source>暂停录制</source><translation>녹화 일시정지</translation></message>
-    <message><source>恢复录制</source><translation>녹화 재개</translation></message>
-    <message><source>录制中无法移动</source><translation>녹화 중에는 이동할 수 없습니다</translation></message>
-    <message><source>关闭</source><translation>닫기</translation></message>
-    <message><source>画笔</source><translation>펜</translation></message>
-    <message><source>矩形</source><translation>사각형</translation></message>
-    <message><source>椭圆</source><translation>타원</translation></message>
-    <message><source>箭头</source><translation>화살표</translation></message>
-    <message><source>文字</source><translation>텍스트</translation></message>
-    <message><source>橡皮擦</source><translation>지우개</translation></message>
+    <message>
+        <source>开始录制</source>
+        <translation>녹화 시작</translation>
+    </message>
+    <message>
+        <source>停止录制</source>
+        <translation>녹화 중지</translation>
+    </message>
+    <message>
+        <source>暂停录制</source>
+        <translation>녹화 일시정지</translation>
+    </message>
+    <message>
+        <source>恢复录制</source>
+        <translation>녹화 재개</translation>
+    </message>
+    <message>
+        <source>录制中无法移动</source>
+        <translation>녹화 중에는 이동할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>关闭</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>画笔</source>
+        <translation>펜</translation>
+    </message>
+    <message>
+        <source>矩形</source>
+        <translation>사각형</translation>
+    </message>
+    <message>
+        <source>椭圆</source>
+        <translation>타원</translation>
+    </message>
+    <message>
+        <source>箭头</source>
+        <translation>화살표</translation>
+    </message>
+    <message>
+        <source>文字</source>
+        <translation>텍스트</translation>
+    </message>
+    <message>
+        <source>橡皮擦</source>
+        <translation>지우개</translation>
+    </message>
 </context>
+
 
 <!-- ========== GIF Playback Toolbar ========== -->
 <context>
     <name>GifPlaybackToolbar</name>
-    <message><source>播放</source><translation>재생</translation></message>
-    <message><source>暂停</source><translation>일시정지</translation></message>
-    <message><source>重新录制</source><translation>다시 녹화</translation></message>
-    <message><source>复制到剪贴板</source><translation>클립보드에 복사</translation></message>
-    <message><source>另存为</source><translation>다른 이름으로 저장</translation></message>
-    <message><source>关闭</source><translation>닫기</translation></message>
-    <message><source>显示鼠标光标</source><translation>마우스 커서 표시</translation></message>
+    <message>
+        <source>播放</source>
+        <translation>재생</translation>
+    </message>
+    <message>
+        <source>暂停</source>
+        <translation>일시정지</translation>
+    </message>
+    <message>
+        <source>重新录制</source>
+        <translation>다시 녹화</translation>
+    </message>
+    <message>
+        <source>复制到剪贴板</source>
+        <translation>클립보드에 복사</translation>
+    </message>
+    <message>
+        <source>另存为</source>
+        <translation>다른 이름으로 저장</translation>
+    </message>
+    <message>
+        <source>关闭</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>显示鼠标光标</source>
+        <translation>마우스 커서 표시</translation>
+    </message>
 </context>
+
 
 <!-- ========== Selection Info Panel ========== -->
 <context>
     <name>SelectionInfoPanel</name>
-    <message><source>Border / Shadow</source><translation>테두리 / 그림자</translation></message>
-    <message><source>Rounded Corners</source><translation>둥근 모서리</translation></message>
-    <message><source>Lock Aspect Ratio</source><translation>종횡비 고정</translation></message>
-    <message><source>Refresh Background</source><translation>배경 새로고침</translation></message>
+    <message>
+        <source>Border / Shadow</source>
+        <translation>테두리 / 그림자</translation>
+    </message>
+    <message>
+        <source>Rounded Corners</source>
+        <translation>둥근 모서리</translation>
+    </message>
+    <message>
+        <source>Lock Aspect Ratio</source>
+        <translation>종횡비 고정</translation>
+    </message>
+    <message>
+        <source>Refresh Background</source>
+        <translation>배경 새로고침</translation>
+    </message>
 </context>
+
 
 <!-- ========== Border Shadow Popup ========== -->
 <context>
     <name>BorderShadowPopup</name>
-    <message><source>Select shadow color</source><translation>그림자 색상 선택</translation></message>
-    <message><source>Shadow</source><translation>그림자</translation></message>
-    <message><source>Select border color</source><translation>테두리 색상 선택</translation></message>
-    <message><source>Border</source><translation>테두리</translation></message>
-    <message><source>Size</source><translation>크기</translation></message>
-    <message><source>Keep enabled for every screenshot</source><translation>모든 스크린샷에 계속 적용</translation></message>
+    <message>
+        <source>Select shadow color</source>
+        <translation>그림자 색상 선택</translation>
+    </message>
+    <message>
+        <source>Shadow</source>
+        <translation>그림자</translation>
+    </message>
+    <message>
+        <source>Select border color</source>
+        <translation>테두리 색상 선택</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>테두리</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>크기</translation>
+    </message>
+    <message>
+        <source>Keep enabled for every screenshot</source>
+        <translation>모든 스크린샷에 계속 적용</translation>
+    </message>
 </context>
 
-<!-- ========== Appearance Settings ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message><source>Appearance</source><translation>모양</translation></message>
-    <message><source>Appearance Settings</source><translation>모양 설정</translation></message>
-    <message><source>Screenshot</source><translation>스크린샷</translation></message>
-    <message><source>Clipboard</source><translation>클립보드</translation></message>
-    <message><source>Theme Color</source><translation>테마 색상</translation></message>
-    <message><source>Affects selection border, toolbar border, magnifier crosshair, etc. Restart recommended after change.</source><translation>선택 테두리, 도구 모음 테두리, 돋보기 십자선 등에 영향을 줍니다. 변경 후 재시작을 권장합니다.</translation></message>
-    <message><source>Select Theme Color</source><translation>테마 색상 선택</translation></message>
-    <message><source>Used for selection border, toolbar accent, magnifier crosshair.</source><translation>선택 테두리, 도구 모음 강조색, 돋보기 십자선에 사용됩니다.</translation></message>
-    <message><source>Screenshot Overlay</source><translation>스크린샷 오버레이</translation></message>
-    <message><source>The semi-transparent overlay color outside the selection area during screenshot.</source><translation>스크린샷 중 선택 영역 바깥의 반투명 오버레이 색상입니다.</translation></message>
-    <message><source>Select Mask Color</source><translation>마스크 색상 선택</translation></message>
-    <message><source>Mask Color</source><translation>마스크 색상</translation></message>
-    <message><source>The overlay color for unselected area. Supports transparency.</source><translation>선택되지 않은 영역의 오버레이 색상입니다. 투명도를 지원합니다.</translation></message>
-    <message><source>Reset to Defaults</source><translation>기본값으로 재설정</translation></message>
-    <message><source>💡 Hint: Color changes take effect on the next screenshot.</source><translation>💡 팁: 색상 변경은 다음 스크린샷부터 적용됩니다.</translation></message>
-    <!-- Clipboard Appearance -->
-    <message><source>Theme</source><translation>테마</translation></message>
-    <message><source>Font Size</source><translation>글꼴 크기</translation></message>
-    <message><source>Opacity</source><translation>불투명도</translation></message>
-    <message><source>Opaque</source><translation>불투명</translation></message>
-</context>
-
-<!-- ========== Missing SettingsDialog Translations ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <!-- Clipboard page group headers -->
-    <message><source>Basic Settings</source><translation>기본 설정</translation></message>
-    <message><source>History</source><translation>기록</translation></message>
-    <message><source>Data</source><translation>데이터</translation></message>
-    <message><source>Warning</source><translation>경고</translation></message>
-    <message><source>Folder does not exist</source><translation>폴더가 존재하지 않습니다</translation></message>
-    <message><source>Error</source><translation>오류</translation></message>
-    <message><source>Success</source><translation>성공</translation></message>
-    <!-- Misc page group headers -->
-    <message><source>Startup</source><translation>시작</translation></message>
-    <message><source>Pin Window</source><translation>고정 창</translation></message>
-    <message><source>Operation</source><translation>동작</translation></message>
-    <!-- About page -->
-    <message><source>Features</source><translation>기능</translation></message>
-    <message><source>OCR text recognition · Long screenshot · Pin window · Clipboard manager · DeepL translation</source><translation>OCR 텍스트 인식 · 긴 스크린샷 · 고정 창 · 클립보드 관리자 · DeepL 번역</translation></message>
-    <message><source>Licenses</source><translation>라이선스</translation></message>
-    <message><source>Details</source><translation>자세히</translation></message>
-    <message><source>MIT License</source><translation>MIT 라이선스</translation></message>
-    <message><source>MIT License Text</source><translation>MIT License
-
-Copyright (c) 2025 RIJYAARU
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.</translation></message>
-    <message><source>Source Code</source><translation>소스 코드</translation></message>
-    <message><source>Open GitHub</source><translation>GitHub 열기</translation></message>
-    <!-- Developer page -->
-    <message><source>Long Screenshot</source><translation>긴 스크린샷</translation></message>
-    <message><source>Tools</source><translation>도구</translation></message>
-    <!-- Log page -->
-    <message><source>Storage</source><translation>저장소</translation></message>
-    <!-- Translation page -->
-    <message><source>DeepL API</source><translation>DeepL API</translation></message>
-    <message><source>Translation Options</source><translation>번역 옵션</translation></message>
-    <message><source>Ignore Line Breaks</source><translation>줄바꿈 무시</translation></message>
-    <message><source>Merge multi-line text for better translation</source><translation>더 나은 번역을 위해 여러 줄 텍스트를 합칩니다</translation></message>
-    <!-- Missing from EN only -->
-    <message><source>Clipboard Hotkey</source><translation>클립보드 단축키</translation></message>
-    <message><source>Show</source><translation>표시</translation></message>
-    <message><source>Hide</source><translation>숨기기</translation></message>
-    <!-- Changed strings (new code versions) -->
-    <message><source>Save Format</source><translation>저장 형식</translation></message>
-    <message><source>OCR</source><translation>OCR</translation></message>
-    <message><source>Keep original text formatting</source><translation>원본 텍스트 서식 유지</translation></message>
-</context>
 
 <context>
     <name>GroupBar</name>
@@ -4244,6 +5155,7 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
+
 <context>
     <name>StandardDialog</name>
     <message>
@@ -4260,6 +5172,7 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
+
 <!-- ========== Clipboard Preview ========== -->
 <context>
     <name>ClipboardPreview</name>
@@ -4273,68 +5186,40 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
-<context>
-    <name>SettingsDialog</name>
-    <message><source>Change Location</source><translation>위치 변경</translation></message>
-    <message><source>Current clipboard database path is unavailable.</source><translation>현재 클립보드 데이터베이스 위치를 가져올 수 없습니다.</translation></message>
-    <message><source>Choose Clipboard Data Folder</source><translation>클립보드 데이터 폴더 선택</translation></message>
-    <message><source>Info</source><translation>정보</translation></message>
-    <message><source>The selected folder is already the current location.</source><translation>선택한 폴더가 이미 현재 위치입니다.</translation></message>
-    <message><source>Please choose a folder outside the current clipboard images folder.</source><translation>현재 클립보드 이미지 폴더 밖의 폴더를 선택하세요.</translation></message>
-    <message><source>Replace Existing Data</source><translation>기존 데이터 교체</translation></message>
-    <message><source>The selected folder already contains clipboard data. Replace it with the current data?</source><translation>선택한 폴더에 이미 클립보드 데이터가 있습니다. 현재 데이터로 교체할까요?</translation></message>
-    <message><source>Failed to close the current clipboard database.</source><translation>현재 클립보드 데이터베이스를 닫지 못했습니다.</translation></message>
-    <message><source>Preparing migration...</source><translation>이동을 준비하는 중...</translation></message>
-    <message><source>Moving Clipboard Data</source><translation>클립보드 데이터 이동 중</translation></message>
-    <message><source>Finalizing migration...</source><translation>이동을 마무리하는 중...</translation></message>
-    <message><source>Migration complete.</source><translation>이동이 완료되었습니다.</translation></message>
-    <message><source>Clipboard data location changed successfully.</source><translation>클립보드 데이터 위치가 변경되었습니다.</translation></message>
-    <message><source>Clipboard data location changed successfully, but the old files are still in use and could not be deleted. You can remove them after restarting the app.\n{error}</source><translation>클립보드 데이터 위치가 변경되었지만, 이전 파일이 아직 사용 중이라 삭제하지 못했습니다. 앱을 다시 시작한 뒤 삭제할 수 있습니다.\n{error}</translation></message>
-    <message><source>Clipboard data moved, but reopening the database failed. Please restart the app.</source><translation>클립보드 데이터는 이동했지만 데이터베이스를 다시 열지 못했습니다. 앱을 다시 시작하세요.</translation></message>
-    <message><source>No clipboard data files were found to move.</source><translation>이동할 클립보드 데이터 파일을 찾지 못했습니다.</translation></message>
-    <message><source>Moving clipboard data... {done} / {total}</source><translation>클립보드 데이터 이동 중... {done} / {total}</translation></message>
-</context>
-
-<!-- ========== Application UI Theme ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Application</source>
-        <translation>애플리케이션</translation>
-    </message>
-    <message>
-        <source>Interface Theme</source>
-        <translation>화면 테마</translation>
-    </message>
-    <message>
-        <source>Choose a display mode.</source>
-        <translation>표시 모드를 선택하세요.</translation>
-    </message>
-    <message>
-        <source>System</source>
-        <translation>시스템</translation>
-    </message>
-    <message>
-        <source>Light</source>
-        <translation>라이트</translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation>다크</translation>
-    </message>
-</context>
 
 <!-- ========== Standard Text Editor Context Menu ========== -->
 <context>
     <name>TextEditContextMenu</name>
-    <message><source>Undo</source><translation>실행 취소</translation></message>
-    <message><source>Redo</source><translation>다시 실행</translation></message>
-    <message><source>Cut</source><translation>잘라내기</translation></message>
-    <message><source>Copy</source><translation>복사</translation></message>
-    <message><source>Paste</source><translation>붙여넣기</translation></message>
-    <message><source>Delete</source><translation>삭제</translation></message>
-    <message><source>Select All</source><translation>모두 선택</translation></message>
+    <message>
+        <source>Undo</source>
+        <translation>실행 취소</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>다시 실행</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>잘라내기</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>붙여넣기</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Select All</source>
+        <translation>모두 선택</translation>
+    </message>
 </context>
+
 
 
 <context>
@@ -4356,6 +5241,7 @@ SOFTWARE.</translation></message>
         <translation>모자이크 입자 크기 변경</translation>
     </message>
 </context>
+
 <context>
     <name>HotkeyEdit</name>
     <message>
@@ -4363,6 +5249,7 @@ SOFTWARE.</translation></message>
         <translation>이 단축키가 중복으로 지정되었습니다.</translation>
     </message>
 </context>
+
 <context>
     <name>ToolbarLayoutDialog</name>
     <message>
@@ -4481,7 +5368,32 @@ SOFTWARE.</translation></message>
         <source>Confirm</source>
         <translation>확인</translation>
     </message>
+    <message>
+        <source>Video recording</source>
+        <translation>동영상 녹화</translation>
+    </message>
+    <message>
+        <source>Straight line</source>
+        <translation>직선</translation>
+    </message>
+    <message>
+        <source>Watermark</source>
+        <translation>워터마크</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation>필터</translation>
+    </message>
+    <message>
+        <source>Smart erase</source>
+        <translation>스마트 지우기</translation>
+    </message>
+    <message>
+        <source>Insert image</source>
+        <translation>이미지 삽입</translation>
+    </message>
 </context>
+
 <context>
     <name>BarcodeResultWindow</name>
     <message>
@@ -4513,70 +5425,7 @@ SOFTWARE.</translation></message>
         <translation>링크 열기</translation>
     </message>
 </context>
-<!-- ========== 权限页（SettingsDialog） ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Permissions</source>
-        <translation>권한</translation>
-    </message>
-    <message>
-        <source>System Permissions</source>
-        <translation>시스템 권한</translation>
-    </message>
-    <message>
-        <source>jietuba needs these system permissions. Grant them here; the status refreshes by itself once granted.</source>
-        <translation>jietuba에 다음 시스템 권한이 필요합니다. 여기에서 허용하면 상태가 자동으로 갱신됩니다.</translation>
-    </message>
-    <message>
-        <source>Accessibility Permission</source>
-        <translation>손쉬운 사용 권한</translation>
-    </message>
-    <message>
-        <source>Global hotkeys only work with this permission, and smart selection uses it to detect the element under the cursor.</source>
-        <translation>전역 단축키는 이 권한이 있어야 동작하며, 스마트 선택도 커서 아래의 요소를 감지할 때 이 권한을 사용합니다.</translation>
-    </message>
-    <message>
-        <source>Screen Recording Permission</source>
-        <translation>화면 기록 권한</translation>
-    </message>
-    <message>
-        <source>Screenshots contain window contents only with this permission; without it they show the desktop wallpaper only.</source>
-        <translation>이 권한이 있어야 스크린샷에 창 내용이 포함됩니다. 없으면 바탕 화면 배경만 캡처됩니다.</translation>
-    </message>
-    <message>
-        <source>Granted</source>
-        <translation>허용됨</translation>
-    </message>
-    <message>
-        <source>Not Granted</source>
-        <translation>허용되지 않음</translation>
-    </message>
-    <message>
-        <source>Granted. Restart jietuba for it to take effect.</source>
-        <translation>허용됨. jietuba를 다시 시작하면 적용됩니다.</translation>
-    </message>
-    <message>
-        <source>Authorize</source>
-        <translation>권한 허용</translation>
-    </message>
-    <message>
-        <source>Open System Settings</source>
-        <translation>시스템 설정 열기</translation>
-    </message>
-</context>
-<!-- ========== 权限页：重启本程序（SettingsDialog） ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Restart jietuba</source>
-        <translation>jietuba 다시 시작</translation>
-    </message>
-    <message>
-        <source>jietuba will close and reopen so the newly granted permission takes effect.</source>
-        <translation>jietuba를 종료하고 다시 열면 새로 허용한 권한이 적용됩니다.</translation>
-    </message>
-</context>
+
 <!-- ========== 权限缺失提示（PermissionPrompt） ========== -->
 <context>
     <name>PermissionPrompt</name>
@@ -4613,22 +5462,7 @@ SOFTWARE.</translation></message>
         <translation>나중에</translation>
     </message>
 </context>
-<!-- ========== 向导权限步骤（WelcomeWizard） ========== -->
-<context>
-    <name>WelcomeWizard</name>
-    <message>
-        <source>权限</source>
-        <translation>권한</translation>
-    </message>
-    <message>
-        <source>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</source>
-        <translation>두 가지 모두 시스템 권한입니다. 없으면 단축키가 동작하지 않고 스크린샷에는 바탕 화면만 담깁니다.</translation>
-    </message>
-    <message>
-        <source>权限只对本机生效，随时可以在设置里复查。</source>
-        <translation>권한은 이 Mac에만 적용되며 언제든 설정에서 확인할 수 있습니다.</translation>
-    </message>
-</context>
+
 <!-- ========== Formula Result ========== -->
 <context>
     <name>FormulaResult</name>
@@ -4646,6 +5480,7 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
+
 <!-- ========== OcrResultDialog ========== -->
 <context>
     <name>OcrResultDialog</name>
@@ -4655,224 +5490,6 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
-
-<!-- ========== 视频录制 ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Video Recording</source>
-        <translation>동영상 녹화</translation>
-    </message>
-    <message>
-        <source>Video Container</source>
-        <translation>동영상 컨테이너</translation>
-    </message>
-    <message>
-        <source>File format of the recorded video.</source>
-        <translation>녹화한 동영상의 파일 형식입니다.</translation>
-    </message>
-    <message>
-        <source>Video Codec</source>
-        <translation>동영상 코덱</translation>
-    </message>
-    <message>
-        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
-        <translation>H.264는 호환성이 가장 좋고, H.265는 파일이 더 작습니다.</translation>
-    </message>
-    <message>
-        <source>Video Quality</source>
-        <translation>화질</translation>
-    </message>
-    <message>
-        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
-        <translation>선택 영역을 따르거나 1080p/720p/480p로 제한합니다.</translation>
-    </message>
-    <message>
-        <source>Follow Selection</source>
-        <translation>선택 영역에 맞춤</translation>
-    </message>
-    <message>
-        <source>Video Frame Rate</source>
-        <translation>프레임 레이트</translation>
-    </message>
-    <message>
-        <source>Higher frame rates make smoother videos and larger files.</source>
-        <translation>프레임 레이트가 높을수록 부드럽지만 파일이 커집니다.</translation>
-    </message>
-    <message>
-        <source>Bitrate Limit</source>
-        <translation>비트레이트 상한</translation>
-    </message>
-    <message>
-        <source>0 lets the encoder decide from the quality preset.</source>
-        <translation>0이면 화질 설정에 따라 인코더가 결정합니다.</translation>
-    </message>
-    <message>
-        <source>Record Audio</source>
-        <translation>소리 녹음</translation>
-    </message>
-    <message>
-        <source>Record the microphone together with the screen.</source>
-        <translation>화면과 함께 마이크를 녹음합니다.</translation>
-    </message>
-    <message>
-        <source>No Audio</source>
-        <translation>소리 없음</translation>
-    </message>
-    <message>
-        <source>Microphone</source>
-        <translation>마이크</translation>
-    </message>
-    <message>
-        <source>Microphone Device</source>
-        <translation>마이크 장치</translation>
-    </message>
-    <message>
-        <source>Device used when recording audio (empty = system default).</source>
-        <translation>소리 녹음에 사용할 장치(비워 두면 시스템 기본).</translation>
-    </message>
-    <message>
-        <source>System Default</source>
-        <translation>시스템 기본</translation>
-    </message>
-    <message>
-        <source>Maximum Duration</source>
-        <translation>최대 녹화 시간</translation>
-    </message>
-    <message>
-        <source>Automatically stop after this many seconds (0 = no limit).</source>
-        <translation>이 초를 넘으면 자동으로 중지합니다(0 = 제한 없음).</translation>
-    </message>
-    <message>
-        <source> seconds</source>
-        <translation> 초</translation>
-    </message>
-    <message>
-        <source>Video Save Folder</source>
-        <translation>동영상 저장 폴더</translation>
-    </message>
-    <message>
-        <source>Empty = follow the screenshot save folder.</source>
-        <translation>비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
-    </message>
-    <message>
-        <source>Video recording is unavailable: no encoding backend.</source>
-        <translation>동영상 녹화를 사용할 수 없습니다: 사용 가능한 인코딩 백엔드가 없습니다.</translation>
-    </message>
-    <message>
-        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
-        <translation>💡 녹화 파일을 저장할 폴더를 입력합니다. 비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
-    </message>
-
-    <message>
-        <source>Video Recording</source>
-        <translation>동영상 녹화</translation>
-    </message>
-    <message>
-        <source>Video Container</source>
-        <translation>동영상 컨테이너</translation>
-    </message>
-    <message>
-        <source>File format of the recorded video.</source>
-        <translation>녹화한 동영상의 파일 형식입니다.</translation>
-    </message>
-    <message>
-        <source>Video Codec</source>
-        <translation>동영상 코덱</translation>
-    </message>
-    <message>
-        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
-        <translation>H.264는 호환성이 가장 좋고, H.265는 파일이 더 작습니다.</translation>
-    </message>
-    <message>
-        <source>Video Quality</source>
-        <translation>화질</translation>
-    </message>
-    <message>
-        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
-        <translation>선택 영역을 따르거나 1080p/720p/480p로 제한합니다.</translation>
-    </message>
-    <message>
-        <source>Follow Selection</source>
-        <translation>선택 영역에 맞춤</translation>
-    </message>
-    <message>
-        <source>Video Frame Rate</source>
-        <translation>프레임 레이트</translation>
-    </message>
-    <message>
-        <source>Higher frame rates make smoother videos and larger files.</source>
-        <translation>프레임 레이트가 높을수록 부드럽지만 파일이 커집니다.</translation>
-    </message>
-    <message>
-        <source>Bitrate Limit</source>
-        <translation>비트레이트 상한</translation>
-    </message>
-    <message>
-        <source>0 lets the encoder decide from the quality preset.</source>
-        <translation>0이면 화질 설정에 따라 인코더가 결정합니다.</translation>
-    </message>
-    <message>
-        <source>Record Audio</source>
-        <translation>소리 녹음</translation>
-    </message>
-    <message>
-        <source>Record the microphone together with the screen.</source>
-        <translation>화면과 함께 마이크를 녹음합니다.</translation>
-    </message>
-    <message>
-        <source>No Audio</source>
-        <translation>소리 없음</translation>
-    </message>
-    <message>
-        <source>Microphone</source>
-        <translation>마이크</translation>
-    </message>
-    <message>
-        <source>Microphone Device</source>
-        <translation>마이크 장치</translation>
-    </message>
-    <message>
-        <source>Device used when recording audio (empty = system default).</source>
-        <translation>소리 녹음에 사용할 장치(비워 두면 시스템 기본).</translation>
-    </message>
-    <message>
-        <source>System Default</source>
-        <translation>시스템 기본</translation>
-    </message>
-    <message>
-        <source>Maximum Duration</source>
-        <translation>최대 녹화 시간</translation>
-    </message>
-    <message>
-        <source>Automatically stop after this many seconds (0 = no limit).</source>
-        <translation>이 초를 넘으면 자동으로 중지합니다(0 = 제한 없음).</translation>
-    </message>
-    <message>
-        <source> seconds</source>
-        <translation> 초</translation>
-    </message>
-    <message>
-        <source>Video Save Folder</source>
-        <translation>동영상 저장 폴더</translation>
-    </message>
-    <message>
-        <source>Empty = follow the screenshot save folder.</source>
-        <translation>비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
-    </message>
-    <message>
-        <source>Video recording is unavailable: no encoding backend.</source>
-        <translation>동영상 녹화를 사용할 수 없습니다: 사용 가능한 인코딩 백엔드가 없습니다.</translation>
-    </message>
-    <message>
-        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
-        <translation>💡 녹화 파일을 저장할 폴더를 입력합니다. 비워 두면 스크린샷 저장 폴더를 따릅니다.</translation>
-    </message>
-    <message>
-        <source>Browse</source>
-        <translation>찾아보기</translation>
-    </message>
-</context>
 <context>
     <name>VideoRecordToolbar</name>
     <message>
@@ -4904,6 +5521,7 @@ SOFTWARE.</translation></message>
         <translation>선택 영역에 맞춤</translation>
     </message>
 </context>
+
 <context>
     <name>VideoRecordWindow</name>
     <message>
@@ -4929,4 +5547,471 @@ SOFTWARE.</translation></message>
         <translation>확인</translation>
     </message>
 </context>
+
+
+<!-- ========== 截图历史 ========== -->
+<context>
+    <name>HistoryWindow</name>
+    <message>
+        <source>Screenshot History</source>
+        <translation>스크린샷 기록</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>출처</translation>
+    </message>
+    <message>
+        <source>Date</source>
+        <translation>날짜</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>새로 고침</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation>모든 출처</translation>
+    </message>
+    <message>
+        <source>Any time</source>
+        <translation>전체 기간</translation>
+    </message>
+    <message>
+        <source>Last 24 hours</source>
+        <translation>최근 24시간</translation>
+    </message>
+    <message>
+        <source>Last 7 days</source>
+        <translation>최근 7일</translation>
+    </message>
+    <message>
+        <source>Last 30 days</source>
+        <translation>최근 30일</translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation>창</translation>
+    </message>
+    <message>
+        <source>Window element</source>
+        <translation>창 요소</translation>
+    </message>
+    <message>
+        <source>Monitor</source>
+        <translation>모니터</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>선택 영역</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Pin to Screen</source>
+        <translation>화면에 고정</translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation>다른 이름으로 저장</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Clear History</source>
+        <translation>기록 비우기</translation>
+    </message>
+    <message>
+        <source>Save Screenshot</source>
+        <translation>스크린샷 저장</translation>
+    </message>
+    <message>
+        <source>Delete every saved screenshot? This cannot be undone.</source>
+        <translation>저장한 스크린샷을 모두 삭제할까요? 되돌릴 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>No screenshots yet.</source>
+        <translation>아직 스크린샷이 없습니다.</translation>
+    </message>
+    <message>
+        <source>{count} entries</source>
+        <translation>{count}개</translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation>보기</translation>
+    </message>
+</context>
+
+
+<!-- ========== 第二批标注工具面板 ========== -->
+<context>
+    <name>AnnotationSettingsPanel</name>
+    <message>
+        <source>Line style</source>
+        <translation>선 종류</translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation>실선</translation>
+    </message>
+    <message>
+        <source>Dashed</source>
+        <translation>파선</translation>
+    </message>
+    <message>
+        <source>Dense dashes</source>
+        <translation>촘촘한 파선</translation>
+    </message>
+    <message>
+        <source>Watermark text</source>
+        <translation>워터마크 문구</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>글자 크기</translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation>각도</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>간격</translation>
+    </message>
+    <message>
+        <source>Opacity %</source>
+        <translation>불투명도 %</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation>필터</translation>
+    </message>
+    <message>
+        <source>Grayscale</source>
+        <translation>그레이스케일</translation>
+    </message>
+    <message>
+        <source>Invert</source>
+        <translation>반전</translation>
+    </message>
+    <message>
+        <source>Gaussian blur</source>
+        <translation>가우시안 블러</translation>
+    </message>
+    <message>
+        <source>Emboss</source>
+        <translation>엠보스</translation>
+    </message>
+    <message>
+        <source>Blur radius</source>
+        <translation>블러 반경</translation>
+    </message>
+    <message>
+        <source>Emboss strength</source>
+        <translation>엠보스 강도</translation>
+    </message>
+    <message>
+        <source>Brush size</source>
+        <translation>브러시 크기</translation>
+    </message>
+    <message>
+        <source>Style template</source>
+        <translation>스타일 템플릿</translation>
+    </message>
+    <message>
+        <source>Template name</source>
+        <translation>템플릿 이름</translation>
+    </message>
+    <message>
+        <source>Save template</source>
+        <translation>템플릿 저장</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+</context>
+
+<context>
+    <name>InsertImageTool</name>
+    <message>
+        <source>Insert Image</source>
+        <translation>이미지 삽입</translation>
+    </message>
+</context>
+
+
+<!-- ========== 表格编辑器 ========== -->
+<context>
+    <name>TableEditor</name>
+    <message>
+        <source>Table Editor</source>
+        <translation>표 편집기</translation>
+    </message>
+    <message>
+        <source>Merge cells</source>
+        <translation>셀 병합</translation>
+    </message>
+    <message>
+        <source>Split cell</source>
+        <translation>셀 분할</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>붙여넣기</translation>
+    </message>
+    <message>
+        <source>Clear cells</source>
+        <translation>셀 지우기</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>실행 취소</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>다시 실행</translation>
+    </message>
+    <message>
+        <source>Copy Markdown</source>
+        <translation>Markdown 복사</translation>
+    </message>
+    <message>
+        <source>Copy HTML</source>
+        <translation>HTML 복사</translation>
+    </message>
+    <message>
+        <source>Edit cell</source>
+        <translation>셀 편집</translation>
+    </message>
+    <message>
+        <source>Paste cells</source>
+        <translation>셀 붙여넣기</translation>
+    </message>
+    <message>
+        <source>Pasted cells do not fit inside the table.</source>
+        <translation>붙여넣은 셀이 이 표에 들어가지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Tip: select a block of cells and use Merge cells; split restores them.</source>
+        <translation>팁: 셀 범위를 선택한 뒤 '셀 병합'을 사용하세요. 분할하면 되돌아갑니다.</translation>
+    </message>
+</context>
+
+<context>
+    <name>ImageViewer</name>
+    <message>
+        <source>Image Viewer</source>
+        <translation>이미지 뷰어</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>이전</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>다음</translation>
+    </message>
+    <message>
+        <source>Zoom In</source>
+        <translation>확대</translation>
+    </message>
+    <message>
+        <source>Zoom Out</source>
+        <translation>축소</translation>
+    </message>
+    <message>
+        <source>Fit Window</source>
+        <translation>창에 맞추기</translation>
+    </message>
+    <message>
+        <source>Actual Size</source>
+        <translation>실제 크기</translation>
+    </message>
+    <message>
+        <source>Rotate Right</source>
+        <translation>오른쪽으로 90° 회전</translation>
+    </message>
+    <message>
+        <source>Rotate Left</source>
+        <translation>왼쪽으로 90° 회전</translation>
+    </message>
+    <message>
+        <source>Flip Horizontal</source>
+        <translation>좌우 반전</translation>
+    </message>
+    <message>
+        <source>Flip Vertical</source>
+        <translation>상하 반전</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>복사</translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation>다른 이름으로 저장</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>flipped</source>
+        <translation>반전됨</translation>
+    </message>
+    <message>
+        <source>No image loaded.</source>
+        <translation>불러온 이미지가 없습니다.</translation>
+    </message>
+</context>
+
+<context>
+    <name>SavePathsDialog</name>
+    <message>
+        <source>Save Paths</source>
+        <translation>저장 경로</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>폴더</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>형식</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation>품질</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>추가</translation>
+    </message>
+    <message>
+        <source>Change Folder</source>
+        <translation>폴더 변경</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>미리보기</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>저장</translation>
+    </message>
+    <message>
+        <source>Choose Folder</source>
+        <translation>폴더 선택</translation>
+    </message>
+    <message>
+        <source>Preview: pick a row and press Preview.</source>
+        <translation>미리보기: 행을 선택한 뒤 '미리보기'를 누르세요.</translation>
+    </message>
+    <message>
+        <source>{count} save paths</source>
+        <translation>저장 경로 {count}개</translation>
+    </message>
+    <message>
+        <source>Preview: {format} · quality {quality} · {size}</source>
+        <translation>미리보기: {format} · 품질 {quality} · {size}</translation>
+    </message>
+    <message>
+        <source>Preview: {path}</source>
+        <translation>미리보기: {path}</translation>
+    </message>
+    <message>
+        <source>Preview failed.</source>
+        <translation>미리보기에 실패했습니다.</translation>
+    </message>
+</context>
+
+<context>
+    <name>MainWindow</name>
+    <message>
+        <source>Jietuba</source>
+        <translation>Jietuba</translation>
+    </message>
+    <message>
+        <source>Screenshot History</source>
+        <translation>스크린샷 기록</translation>
+    </message>
+    <message>
+        <source>Translation</source>
+        <translation>번역</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>설정</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>정보</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>언어</translation>
+    </message>
+    <message>
+        <source>Translate</source>
+        <translation>번역</translation>
+    </message>
+    <message>
+        <source>Copy Result</source>
+        <translation>결과 복사</translation>
+    </message>
+    <message>
+        <source>Text to translate</source>
+        <translation>번역할 텍스트</translation>
+    </message>
+    <message>
+        <source>Translation appears here</source>
+        <translation>번역 결과가 여기에 표시됩니다</translation>
+    </message>
+    <message>
+        <source>Nothing to translate.</source>
+        <translation>번역할 내용이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Translation service is unavailable.</source>
+        <translation>번역 서비스를 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Translation service is not configured.</source>
+        <translation>번역 서비스가 설정되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Translating…</source>
+        <translation>번역 중…</translation>
+    </message>
+    <message>
+        <source>Done.</source>
+        <translation>완료.</translation>
+    </message>
+    <message>
+        <source>Translation failed.</source>
+        <translation>번역에 실패했습니다.</translation>
+    </message>
+    <message>
+        <source>This page could not be created.</source>
+        <translation>이 페이지를 만들 수 없습니다.</translation>
+    </message>
+</context>
+
 </TS>

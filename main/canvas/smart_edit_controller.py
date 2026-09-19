@@ -11,7 +11,7 @@
 
 from enum import Enum
 from typing import Optional, Dict, Any
-from PySide6.QtCore import QObject, Signal, QPointF, Qt
+from PySide6.QtCore import QObject, Signal, QPointF, QRectF, Qt
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsScene
 from shiboken6 import isValid as _cpp_object_is_alive
 
@@ -20,7 +20,7 @@ from canvas.items import (
 )
 from canvas.handle_editor import HandleType, LayerEditor
 from canvas.undo import EditItemCommand
-from core.logger import log_exception
+from core.logger import log_exception, T
 
 
 # ============================================================================
@@ -849,6 +849,102 @@ class SmartEditController(QObject):
     # ========================================================================
     # 文字属性更新槽函数
     # ========================================================================
+
+    def arrange_selected(self, mode: str) -> bool:
+        """把选中元素对齐到选区（左/中/右、上/中/下），可撤销。
+
+        参照物固定是选区框：画布是单选，元素之间互相对齐需要多选；而对齐到选区恰好是
+        「把这行字贴到截图左边」这类最常见的诉求。
+        """
+        from canvas.arrange import ALIGN_MODES, alignment_delta
+
+        item = self.selected_item
+        if item is None or mode not in ALIGN_MODES:
+            return False
+        selection = self._selection_rect()
+        bounds = item.sceneBoundingRect()
+        delta = alignment_delta(bounds, selection, mode)
+        if delta.isNull():
+            return False
+
+        old_state = self._capture_layer_state(item) or {"pos": QPointF(item.pos())}
+        item.setPos(item.pos() + delta)
+        item.update()
+        new_state = self._capture_layer_state(item) or {"pos": QPointF(item.pos())}
+        self._push_edit(item, old_state, new_state, "Align Element")
+        return True
+
+    def change_z_order(self, mode: str) -> bool:
+        """调整选中元素的层级（最上/最下/上一层/下一层），可撤销。"""
+        from canvas.arrange import Z_MODES, is_adjustable_z, next_z_value
+
+        item = self.selected_item
+        if item is None or mode not in Z_MODES:
+            return False
+        scene = self.scene
+        if scene is None:
+            return False
+        others = [other.zValue() for other in scene.items()
+                  if other is not item and is_adjustable_z(other)]
+        new_z = next_z_value(others, item.zValue(), mode)
+        if new_z == item.zValue():
+            return False
+
+        old_state = {"z_value": float(item.zValue())}
+        item.setZValue(new_z)
+        item.update()
+        new_state = {"z_value": float(new_z)}
+        self._push_edit(item, old_state, new_state, "Change Layer Order")
+        return True
+
+    def _selection_rect(self):
+        """选区矩形；没有选区时退回场景矩形（整张图）。"""
+        selection_model = getattr(self.scene, "selection_model", None)
+        if selection_model is not None:
+            try:
+                rect = selection_model.rect()
+                if rect is not None and not rect.isEmpty():
+                    return rect
+            except Exception as e:
+                log_exception(e, T("读取选区矩形"))
+        return self.scene.sceneRect() if self.scene is not None else QRectF()
+
+    def _push_edit(self, item, old_state, new_state, text: str) -> None:
+        """把一次属性改动推进撤销栈（没有栈时只改不记）。"""
+        stack = getattr(self.scene, "undo_stack", None)
+        if stack is None or EditItemCommand is None:
+            return
+        stack.push_command(EditItemCommand(item, old_state, new_state, text))
+
+    def on_arrow_path_style_changed(self, path_style: str) -> bool:
+        """改选中箭头的路径样式（直线/曲线/折线），可撤销。"""
+        return self._apply_arrow_state_change("path_style", path_style)
+
+    def on_arrow_head_start_changed(self, style: str) -> bool:
+        """改选中箭头的起点端点样式。"""
+        return self._apply_arrow_state_change("head_start", style)
+
+    def on_arrow_head_end_changed(self, style: str) -> bool:
+        """改选中箭头的终点端点样式。"""
+        return self._apply_arrow_state_change("head_end", style)
+
+    def _apply_arrow_state_change(self, key: str, value: str) -> bool:
+        """把箭头外观的一项改动应用到选中的箭头，并经 EditItemCommand 记进撤销栈。"""
+        from canvas.items import ArrowItem
+
+        item = self.selected_item
+        if not isinstance(item, ArrowItem):
+            return False
+        # 快照要各留一份：直接改 arrow_state() 返回的字典会把「改动前」也一起改成新值，
+        # 撤销就变成了原地踏步
+        before = item.arrow_state()
+        after = dict(before)
+        after[key] = value
+        item.apply_arrow_state(after)
+        # 撤销命令按 "arrow_appearance" 这个键还原（与截图/钉图窗口捕获的状态格式一致）
+        self._push_edit(item, {"arrow_appearance": before},
+                        {"arrow_appearance": after}, "Edit Arrow")
+        return True
 
     def on_text_font_changed(self, font):
         """更新选中文字的字体。

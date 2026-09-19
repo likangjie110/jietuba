@@ -12,10 +12,17 @@ from core.i18n import make_tr
 from core.export import ExportService
 from core.save import SaveService
 from pin.pin_manager import PinManager
-from core.logger import log_debug, log_info, T
+from core.logger import log_debug, log_exception, log_info, T
 
 
 _tr = make_tr("ActionTools")
+
+
+def _save_filter() -> str:
+    """保存对话框的过滤器：由运行时能力派生（见 core/image_formats.py）。"""
+    from core.image_formats import save_dialog_filter
+
+    return save_dialog_filter()
 
 
 class ActionTools:
@@ -44,19 +51,17 @@ class ActionTools:
         save_kwargs = None
 
         if self.config_manager and self.config_manager.get_screenshot_save_enabled():
-            fmt = self.config_manager.get_screenshot_format()
+            # 多保存路径：每条自带格式与质量（没配过时读回来就是「单路径」那一条）
+            paths = self.config_manager.get_save_paths()
             save_service = self.save_service
-            save_kwargs = dict(
-                directory=self.config_manager.get_screenshot_save_path(),
-                prefix="",
-                image_format=fmt,
-            )
+            save_kwargs = dict(prefix="", paths=paths) if paths else None
 
         deliver_image_async(
             image,
             save_service=save_service,
             save_kwargs=save_kwargs,
         )
+        self._record_history(image)
         if save_service is not None:
             log_debug(T("已完成复制到剪贴板，已提交异步保存任务"), "Action")
         else:
@@ -83,7 +88,7 @@ class ActionTools:
             self.parent_window,
             _tr("Save Screenshot"),
             default_name,
-            "PNG (*.png);;JPG (*.jpg);;BMP (*.bmp);;WebP (*.webp);;PDF (*.pdf)",
+            _save_filter(),
         )
 
         if file_path:
@@ -97,9 +102,24 @@ class ActionTools:
             image = self.export_service.export(selection_rect)
             if self.save_service.save_qimage_to_path(image, file_path, image_format=image_format):
                 log_info(T("已保存到: {file_path}", file_path=file_path), "Action")
+                self._record_history(image)
             
             if self.parent_window:
                 self._cleanup_and_close()
+
+    def _record_history(self, image) -> None:
+        """把这次截图结果记进历史（失败只记日志，不影响截图本身）。"""
+        try:
+            from history import record_screenshot
+
+            selection = None
+            try:
+                selection = self.scene.selection_model.rect()
+            except Exception:
+                selection = None
+            record_screenshot(image, selection, self.config_manager)
+        except Exception as e:
+            log_exception(e, T("记录截图历史"))
     
     def handle_pin(self):
         """

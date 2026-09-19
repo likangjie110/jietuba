@@ -26,6 +26,9 @@ class ArrowTool(Tool):
         self.current_item = None
         # 箭头样式：single（单头）或 double（双头）
         self.arrow_style = "single"
+        self.path_style = "straight"
+        self.head_start = "inherit"
+        self.head_end = "inherit"
     
     def on_press(self, pos: QPointF, button, ctx: ToolContext):
         if button == Qt.MouseButton.LeftButton:
@@ -36,10 +39,16 @@ class ArrowTool(Tool):
             if ctx.settings_manager:
                 settings = ctx.settings_manager.get_tool_settings("arrow")
                 self.arrow_style = settings.get("arrow_style", "single")
+                self.path_style = settings.get("path_style", "straight")
+                self.head_start = settings.get("head_start", "inherit")
+                self.head_end = settings.get("head_end", "inherit")
             
             pen_color = color_with_opacity(ctx.color, ctx.opacity)
             pen = QPen(pen_color, ctx.stroke_width)
-            self.current_item = ArrowItem(pos, pos, pen, self.arrow_style)
+            self.current_item = ArrowItem(pos, pos, pen, self.arrow_style,
+                                          path_style=self.path_style,
+                                          head_start=self.head_start,
+                                          head_end=self.head_end)
             ctx.scene.addItem(self.current_item)
             
             log_debug(T("开始绘制: {pos}, 样式: {arrow_style}", pos=pos, arrow_style=self.arrow_style), "ArrowTool")

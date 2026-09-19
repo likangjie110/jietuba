@@ -177,7 +177,8 @@ class TestShortcutKeyTables:
     """常量表是冲突检测和默认值回退的数据源，结构错了两处逻辑一起失效"""
 
     def test_every_entry_is_a_key_label_default_triple(self):
-        for table in (page_hotkey.SCREENSHOT_KEYS, page_hotkey.TOOL_KEYS, page_hotkey.PIN_KEYS):
+        for table in (page_hotkey.SCREENSHOT_KEYS, page_hotkey.TOOL_KEYS,
+                      page_hotkey.LAYER_KEYS, page_hotkey.PIN_KEYS):
             for entry in table:
                 assert len(entry) == 3, entry
                 cfg_key, label, default = entry
@@ -186,19 +187,21 @@ class TestShortcutKeyTables:
                 # 默认可以为空串：表示「这一项默认不绑」，由用户在快捷键页自己设
                 assert isinstance(default, str), entry
 
-    def test_combined_table_is_the_concatenation_of_both_groups(self):
+    def test_combined_table_is_the_concatenation_of_the_groups(self):
         assert page_hotkey.INAPP_KEYS == (
-            page_hotkey.SCREENSHOT_KEYS + page_hotkey.TOOL_KEYS + page_hotkey.PIN_KEYS
+            page_hotkey.SCREENSHOT_KEYS + page_hotkey.TOOL_KEYS
+            + page_hotkey.LAYER_KEYS + page_hotkey.PIN_KEYS
         )
 
     def test_config_keys_are_unique_within_each_group(self):
-        for table in (page_hotkey.SCREENSHOT_KEYS, page_hotkey.PIN_KEYS):
+        for table in (page_hotkey.SCREENSHOT_KEYS, page_hotkey.LAYER_KEYS, page_hotkey.PIN_KEYS):
             keys = [entry[0] for entry in table]
             assert len(keys) == len(set(keys)), keys
 
 
 def _factory_default(key):
-    for table in (page_hotkey.SCREENSHOT_KEYS, page_hotkey.TOOL_KEYS, page_hotkey.PIN_KEYS):
+    for table in (page_hotkey.SCREENSHOT_KEYS, page_hotkey.TOOL_KEYS,
+                  page_hotkey.LAYER_KEYS, page_hotkey.PIN_KEYS):
         for cfg, _tr, default in table:
             if cfg == key:
                 return default

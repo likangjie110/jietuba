@@ -64,6 +64,107 @@ def _native_handle(window) -> int | None:
 # 置顶
 # ──────────────────────────────────────────────
 
+# ──────────────────────────────────────────────
+# 拖动
+# ──────────────────────────────────────────────
+
+def start_system_move(window) -> bool:
+    """把拖动交给系统：由窗口管理器移动窗口，而不是我们每个鼠标事件 move() 一次。
+
+    返回 False 表示这个平台/合成器不接受（调用方退回自己搬窗口）。系统拖动是
+    **阻塞**的——函数返回时拖动已经结束，因此调用方要在返回后收尾（复位光标、
+    摆放跟随窗口）。
+
+    Windows 也在 Qt 的实现范围内（WM_NCLBUTTONDOWN 那条路），但本机是 macOS、
+    没有实机验证；Wayland 合成器可能拒绝，因此 Linux 登记为降级。
+    """
+    from core.platform.capabilities import Capability, available
+
+    if not available(Capability.WINDOW_SYSTEM_MOVE):
+        return False
+
+    from core.logger import log_exception, T
+
+    try:
+        handle = window.windowHandle()
+        if handle is None:
+            return False
+        return bool(handle.startSystemMove())
+    except Exception as e:
+        log_exception(e, T("交给系统拖动窗口"))
+        return False
+
+
+def _native_window_of(widget):
+    """取控件自己的原生窗口（NSWindow）；不是独立窗口或句柄无效时返回 None。
+
+    必须先用 Qt 自己的判断（``isWindow`` + 非零句柄）挡一层：直接拿 ``winId()`` 去
+    解引用，遇到子部件或已销毁的窗口就是段错误——那不是「返回 False」能兜住的。
+    """
+    try:
+        checker = getattr(widget, "isWindow", None)
+        if not callable(checker) or not checker():
+            return None
+        handle = int(widget.winId())
+        if not handle:
+            return None
+        import objc
+
+        return objc.objc_object(c_void_p=handle).window()
+    except Exception:
+        return None
+
+
+def attach_follow_window(parent, child) -> bool:
+    """让 ``child`` 成为 ``parent`` 的原生跟随窗口：父窗口移动时系统带着它一起走。
+
+    macOS 上贴图工具栏是独立顶层窗口（要能伸到贴图外面，所以做不成子控件），拖动时
+    得跟着贴图走。AppKit 建立父子窗口关系后由系统同帧带动，比我们自己每个鼠标事件里
+    再 ``move()`` 一次更稳；系统原生拖动（``start_system_move``）期间我们收不到鼠标
+    事件，也只有这样工具栏才不会跟丢。其它平台没有等价关系，返回 False。
+    """
+    from core.platform.capabilities import Capability, available
+
+    if not available(Capability.WINDOW_FOLLOW_MOVE):
+        return False
+
+    from core.logger import log_exception, T
+
+    try:
+        from AppKit import NSWindowAbove
+
+        parent_ns = _native_window_of(parent)
+        child_ns = _native_window_of(child)
+        if parent_ns is None or child_ns is None:
+            return False
+        parent_ns.addChildWindow_ordered_(child_ns, NSWindowAbove)
+        return True
+    except Exception as e:
+        log_exception(e, T("建立跟随窗口关系"))
+        return False
+
+
+def detach_follow_window(parent, child) -> bool:
+    """解除 ``attach_follow_window`` 建立的父子窗口关系（父窗口销毁前调用）。"""
+    from core.platform.capabilities import Capability, available
+
+    if not available(Capability.WINDOW_FOLLOW_MOVE):
+        return False
+
+    from core.logger import log_exception, T
+
+    try:
+        parent_ns = _native_window_of(parent)
+        child_ns = _native_window_of(child)
+        if parent_ns is None or child_ns is None:
+            return False
+        parent_ns.removeChildWindow_(child_ns)
+        return True
+    except Exception as e:
+        log_exception(e, T("解除跟随窗口关系"))
+        return False
+
+
 def keep_visible_when_inactive(window) -> bool:
     """让窗口在应用不在前台时也保持可见；返回是否走了原生实现。
 

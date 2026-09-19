@@ -40,6 +40,8 @@ class Capability(str, Enum):
     APPLICATION_ICON = "application_icon"
     WINDOW_CLICK_THROUGH = "window_click_through"
     WINDOW_EXCLUDE_FROM_CAPTURE = "window_exclude_from_capture"
+    WINDOW_SYSTEM_MOVE = "window_system_move"
+    WINDOW_FOLLOW_MOVE = "window_follow_move"
 
     # 全局热键
     HOTKEY_KEYBOARD = "hotkey_keyboard"
@@ -103,6 +105,20 @@ _SUPPORT_TABLE: dict[Capability, dict[str, Support]] = {
     Capability.WINDOW_EXCLUDE_FROM_CAPTURE: {
         _W: Support.FULL,          # SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE)
         _M: Support.NONE,          # 没有等价 API，只能靠抓屏后自行裁掉
+        _L: Support.NONE,
+    },
+    Capability.WINDOW_SYSTEM_MOVE: {
+        # 把拖动交给窗口管理器（Qt 的 QWindow.startSystemMove）：窗口由系统搬，
+        # 应用侧每帧不做任何窗口操作，拖动因此与原生窗口一样跟手
+        _W: Support.FULL,          # 未在 Windows 实机验证（本机是 macOS）
+        _M: Support.FULL,          # performWindowDragWithEvent（阻塞到松开鼠标）
+        _L: Support.DEGRADED,      # X11 一般可以；Wayland 合成器可能拒绝，届时退回自搬
+    },
+    Capability.WINDOW_FOLLOW_MOVE: {
+        # 「跟随窗口」：父窗口移动时系统带着子窗口一起走（AppKit 的 addChildWindow:）。
+        # 贴图工具栏是独立顶层窗口，靠这条才能在不逐个搬它的前提下跟住贴图
+        _W: Support.NONE,          # 未实现（Windows 的 owned window 语义未验证）
+        _M: Support.FULL,
         _L: Support.NONE,
     },
     Capability.WINDOW_ACRYLIC: {
@@ -224,6 +240,8 @@ _BACKEND_NAMES: dict[Capability, dict[str, str]] = {
     Capability.APPLICATION_ICON: {_W: "", _M: "appkit", _L: ""},
     Capability.WINDOW_CLICK_THROUGH: {_W: "win32", _M: "objc", _L: ""},
     Capability.WINDOW_EXCLUDE_FROM_CAPTURE: {_W: "win32", _M: "", _L: ""},
+    Capability.WINDOW_SYSTEM_MOVE: {_W: "qt", _M: "appkit", _L: "qt"},
+    Capability.WINDOW_FOLLOW_MOVE: {_W: "", _M: "appkit", _L: ""},
     Capability.HOTKEY_KEYBOARD: {_W: "win32", _M: "pynput", _L: "pynput"},
     Capability.HOTKEY_MOUSE: {_W: "pynput", _M: "", _L: ""},
     Capability.POINTER_POSITION: {_W: "win32", _M: "quartz", _L: "qt"},

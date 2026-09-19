@@ -3,11 +3,13 @@
 import importlib.util
 
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QScrollArea, QLabel, QCheckBox,
+    QWidget, QVBoxLayout, QHBoxLayout, QScrollArea, QLabel, QCheckBox, QLineEdit,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QColorDialog
+
+from core.logger import T, log_warning
 from ui.fluent_lite import (
     SwitchSettingCard, SettingCard as FSettingCard,
     FluentIcon, ComboBox, SpinBox, DoubleSpinBox, CaptionLabel,
@@ -15,6 +17,144 @@ from ui.fluent_lite import (
 )
 from .components import SettingCardGroup, WhiteCard, apply_theme_text_style
 from .page_appearance import _make_color_btn, _update_color_btn
+from .page_misc import _select_combo
+
+
+
+def _save_paths_summary(dialog) -> str:
+    """保存路径卡片右侧的一行摘要：几条 + 第一条。"""
+    try:
+        paths = dialog.config_manager.get_save_paths()
+    except Exception:
+        return ""
+    if not paths:
+        return ""
+    first = str(paths[0].get("path", ""))
+    if len(paths) == 1:
+        return first
+    return f"{first}  (+{len(paths) - 1})"
+
+
+def _open_save_paths(dialog) -> None:
+    """打开保存路径管理器；关掉之后刷新卡片摘要。"""
+    from ui.save_paths_dialog import open_save_paths_dialog
+
+    window = open_save_paths_dialog(dialog.config_manager, dialog)
+    window.destroyed.connect(lambda *_args: _refresh_save_paths(dialog))
+
+
+def _refresh_save_paths(dialog) -> None:
+    if hasattr(dialog, "save_paths_label"):
+        try:
+            dialog.save_paths_label.setText(_save_paths_summary(dialog))
+        except Exception as e:
+            from core.logger import log_exception
+
+            log_exception(e, T("刷新保存路径摘要"))
+
+
+def _build_ocr_engine_rows(dialog, group) -> None:
+    """OCR 引擎组新增两项：模型档位（只列本机真的有的）与视觉模型（转 Markdown/HTML）。
+
+    档位下拉**按文件是否存在现算**：没放的模型不出现，避免用户选到一个点了就报错的档位。
+    """
+    from ocr.model_tiers import available_tiers
+    from ocr.vision_models import load_models, selected_model
+
+    tier_card = FSettingCard(
+        FluentIcon.SEARCH,
+        dialog.tr("OCR Model"),
+        dialog.tr("Which PP-OCR model pair to load (only installed tiers are listed)."),
+        parent=group,
+    )
+    dialog.ocr_tier_combo = ComboBox(tier_card)
+    dialog.ocr_tier_combo.setFixedWidth(200)
+    tiers = available_tiers()
+    for tier_id, label in tiers:
+        dialog.ocr_tier_combo.addItem(label, userData=tier_id)
+    if tiers:
+        _select_combo(dialog.ocr_tier_combo, dialog.config_manager.get_ocr_model_tier())
+    else:
+        dialog.ocr_tier_combo.addItem(dialog.tr("No OCR model found"), userData="")
+        dialog.ocr_tier_combo.setEnabled(False)
+    tier_card.hBoxLayout.addWidget(dialog.ocr_tier_combo, 0, Qt.AlignmentFlag.AlignRight)
+    tier_card.hBoxLayout.addSpacing(16)
+    group.addSettingCard(tier_card)
+
+    vision_card = FSettingCard(
+        FluentIcon.DOCUMENT,
+        dialog.tr("Vision Model"),
+        dialog.tr("OpenAI-compatible endpoint that converts an image to Markdown or HTML."),
+        parent=group,
+    )
+    dialog.ocr_vision_combo = ComboBox(vision_card)
+    dialog.ocr_vision_combo.setFixedWidth(180)
+    for model in load_models(dialog.config_manager):
+        dialog.ocr_vision_combo.addItem(model.name, userData=model.name)
+    current = selected_model(dialog.config_manager)
+    if current is not None:
+        index = dialog.ocr_vision_combo.findData(current.name)
+        if index >= 0:
+            dialog.ocr_vision_combo.setCurrentIndex(index)
+    dialog.ocr_vision_url_input = LineEdit(vision_card)
+    dialog.ocr_vision_url_input.setFixedWidth(220)
+    dialog.ocr_vision_url_input.setPlaceholderText("https://api.example.com/v1")
+    dialog.ocr_vision_model_input = LineEdit(vision_card)
+    dialog.ocr_vision_model_input.setFixedWidth(160)
+    dialog.ocr_vision_model_input.setPlaceholderText("gpt-4o-mini")
+    dialog.ocr_vision_key_input = LineEdit(vision_card)
+    dialog.ocr_vision_key_input.setFixedWidth(160)
+    dialog.ocr_vision_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+    if current is not None:
+        dialog.ocr_vision_url_input.setText(current.base_url)
+        dialog.ocr_vision_model_input.setText(current.model_id)
+        dialog.ocr_vision_key_input.setText(current.api_key)
+    save_btn = PushButton(dialog.tr("Save"), vision_card)
+    save_btn.clicked.connect(lambda: _save_vision_model(dialog))
+    for widget in (dialog.ocr_vision_combo, dialog.ocr_vision_url_input,
+                   dialog.ocr_vision_model_input, dialog.ocr_vision_key_input, save_btn):
+        vision_card.hBoxLayout.addWidget(widget, 0, Qt.AlignmentFlag.AlignRight)
+        vision_card.hBoxLayout.addSpacing(6)
+    group.addSettingCard(vision_card)
+
+    target_card = FSettingCard(
+        FluentIcon.EDIT,
+        dialog.tr("Image Conversion Output"),
+        dialog.tr("Convert images to Markdown (tables) or HTML."),
+        parent=group,
+    )
+    dialog.ocr_vision_target_combo = ComboBox(target_card)
+    dialog.ocr_vision_target_combo.setFixedWidth(150)
+    dialog.ocr_vision_target_combo.addItem(dialog.tr("Markdown"), userData="markdown")
+    dialog.ocr_vision_target_combo.addItem(dialog.tr("HTML"), userData="html")
+    _select_combo(dialog.ocr_vision_target_combo, dialog.config_manager.get_ocr_vision_target())
+    target_card.hBoxLayout.addWidget(
+        dialog.ocr_vision_target_combo, 0, Qt.AlignmentFlag.AlignRight)
+    target_card.hBoxLayout.addSpacing(16)
+    group.addSettingCard(target_card)
+
+
+def _save_vision_model(dialog) -> bool:
+    """把当前输入存的视觉模型保存下来（同名覆盖）。"""
+    from ocr.vision_models import VisionModel, upsert_model
+
+    name = dialog.ocr_vision_combo.currentData() or dialog.ocr_vision_combo.currentText()
+    name = str(name or "").strip()
+    url = dialog.ocr_vision_url_input.text().strip()
+    model_id = dialog.ocr_vision_model_input.text().strip()
+    if not name or not url or not model_id:
+        log_warning(T("视觉模型需要名称、地址与模型 ID"), "SettingsDialog")
+        return False
+    upsert_model(dialog.config_manager, VisionModel(
+        name=name, base_url=url, model_id=model_id,
+        api_key=dialog.ocr_vision_key_input.text().strip()))
+    dialog.config_manager.set_app_setting("ocr_vision_model", name)
+    index = dialog.ocr_vision_combo.findData(name)
+    if index < 0:
+        dialog.ocr_vision_combo.addItem(name, userData=name)
+        index = dialog.ocr_vision_combo.findData(name)
+    dialog.ocr_vision_combo.setCurrentIndex(max(0, index))
+    return True
 
 
 def create_capture_page(dialog) -> QWidget:
@@ -179,22 +319,53 @@ def create_capture_page(dialog) -> QWidget:
         dialog.tr("File format for auto-saved screenshots."),
         parent=grp_save,
     )
+    # 格式清单由运行时能力派生（见 core/image_formats.py）：本构建没有编码器的格式
+    # 不会出现在这里——列出来却写不出去，比不给选更糟
+    from core.image_formats import available_formats, preferred_format
+
     dialog.screenshot_format_combo = ComboBox(fmt_card)
-    dialog.screenshot_format_combo.addItem("PNG", userData="PNG")
-    dialog.screenshot_format_combo.addItem("JPG", userData="JPG")
-    dialog.screenshot_format_combo.addItem("BMP", userData="BMP")
-    dialog.screenshot_format_combo.addItem("WebP", userData="WEBP")
-    dialog.screenshot_format_combo.addItem("PDF", userData="PDF")
+    for fmt, _filter in available_formats():
+        dialog.screenshot_format_combo.addItem(fmt if fmt != "JPG" else "JPG",
+                                               userData=fmt)
     dialog.screenshot_format_combo.setFixedWidth(110)
-    _fmt_idx = {"PNG": 0, "JPG": 1, "BMP": 2, "WEBP": 3, "PDF": 4}.get(
-        dialog.config_manager.get_screenshot_format().upper(), 0
-    )
-    dialog.screenshot_format_combo.setCurrentIndex(_fmt_idx)
+    _select_combo(dialog.screenshot_format_combo,
+                  preferred_format(dialog.config_manager.get_screenshot_format()))
     fmt_card.hBoxLayout.addWidget(
         dialog.screenshot_format_combo, 0, Qt.AlignmentFlag.AlignRight
     )
     fmt_card.hBoxLayout.addSpacing(16)
     grp_save.addSettingCard(fmt_card)
+
+    # 多保存路径：一次截图同时落到几个目录（每条自带格式与质量）
+    paths_card = FSettingCard(
+        FluentIcon.FOLDER,
+        dialog.tr("Save Paths"),
+        dialog.tr("Save every screenshot into one or more folders, each with its own format."),
+        parent=grp_save,
+    )
+    dialog.save_paths_label = CaptionLabel(_save_paths_summary(dialog), paths_card)
+    manage_btn = PushButton(dialog.tr("Manage…"), paths_card)
+    manage_btn.clicked.connect(lambda: _open_save_paths(dialog))
+    for widget in (dialog.save_paths_label, manage_btn):
+        paths_card.hBoxLayout.addWidget(widget, 0, Qt.AlignmentFlag.AlignRight)
+        paths_card.hBoxLayout.addSpacing(8)
+    grp_save.addSettingCard(paths_card)
+
+    page_card = FSettingCard(
+        FluentIcon.DOCUMENT,
+        dialog.tr("PDF Page Size"),
+        dialog.tr("Page size used when saving as PDF."),
+        parent=grp_save,
+    )
+    dialog.pdf_page_combo = ComboBox(page_card)
+    dialog.pdf_page_combo.setFixedWidth(150)
+    dialog.pdf_page_combo.addItem(dialog.tr("Original size"), userData="original")
+    dialog.pdf_page_combo.addItem(dialog.tr("A4 portrait"), userData="a4_portrait")
+    dialog.pdf_page_combo.addItem(dialog.tr("A4 landscape"), userData="a4_landscape")
+    _select_combo(dialog.pdf_page_combo, dialog.config_manager.get_pdf_page_size())
+    page_card.hBoxLayout.addWidget(dialog.pdf_page_combo, 0, Qt.AlignmentFlag.AlignRight)
+    page_card.hBoxLayout.addSpacing(16)
+    grp_save.addSettingCard(page_card)
 
     layout.addWidget(grp_save)
 
@@ -403,6 +574,7 @@ def create_capture_page(dialog) -> QWidget:
         grp_ocr.addSettingCard(no_ocr_card)
 
     _build_ocr_options(dialog, grp_ocr)
+    _build_ocr_engine_rows(dialog, grp_ocr)
     _build_formula_cards(dialog, grp_ocr)
 
     layout.addWidget(grp_ocr)

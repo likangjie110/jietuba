@@ -138,6 +138,12 @@ class MockConfig:
     def get_ocr_upscale_enabled(self): return False
     def set_ocr_upscale_enabled(self, v): pass
     def get_ocr_upscale_factor(self): return 2.0
+    def get_ocr_text_layout(self): return "auto"
+    def get_ocr_punctuation(self): return "none"
+    def get_ocr_language(self): return "follow_app"
+    def get_ocr_dialog_triggers(self): return []
+    def get_ocr_model_tier(self): return "v6_small"
+    def get_ocr_vision_target(self): return "markdown"
     def set_ocr_upscale_factor(self, v): pass
     def get_pin_auto_toolbar(self): return True
     def set_pin_auto_toolbar(self, v): pass

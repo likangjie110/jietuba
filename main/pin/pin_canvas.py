@@ -566,6 +566,15 @@ class PinCanvas(QObject):
 
         # 箭头样式
         toolbar.arrow_style_changed.connect(lambda s: self._on_arrow_style_changed(s, view))
+        toolbar.arrow_path_style_changed.connect(
+            lambda s: self._on_arrow_appearance_changed(view, lambda item: item.set_path_style(s),
+                                                        "修改箭头路径"))
+        toolbar.arrow_head_start_changed.connect(
+            lambda s: self._on_arrow_appearance_changed(view, lambda item: item.set_head_start(s),
+                                                        "修改箭头起点"))
+        toolbar.arrow_head_end_changed.connect(
+            lambda s: self._on_arrow_appearance_changed(view, lambda item: item.set_head_end(s),
+                                                        "修改箭头终点"))
 
         # 马赛克种类（马赛克/模糊，钉图里同样要能切）
         if hasattr(toolbar, "mosaic_style_changed"):
@@ -696,6 +705,24 @@ class PinCanvas(QObject):
                 self.undo_stack.push(cmd)
             item.update()
 
+    def _on_arrow_appearance_changed(self, view, mutate, text: str) -> bool:
+        """钉图里的箭头外观改动（路径样式 / 端点），与截图窗口同一套撤销做法。"""
+        if not view or not hasattr(view, 'smart_edit_controller'):
+            return False
+        item = view.smart_edit_controller.selected_item
+        from canvas.items import ArrowItem
+        if not isinstance(item, ArrowItem):
+            return False
+        old_state = self._capture_arrow_state(item)
+        if not mutate(item):
+            return False
+        new_state = self._capture_arrow_state(item)
+        from canvas.undo import EditItemCommand
+        if self.undo_stack:
+            self.undo_stack.push(EditItemCommand(item, old_state, new_state, text))
+        item.update()
+        return True
+
     def _on_mosaic_style_changed(self, style: str, view):
         """钉图里切换马赛克种类，与截图窗口共用 MosaicTool 里的同一份策略。"""
         from tools.mosaic import MosaicTool
@@ -744,6 +771,8 @@ class PinCanvas(QObject):
             state['control_modified'] = item._control_modified
         if hasattr(item, '_arrow_style'):
             state['arrow_style'] = item._arrow_style
+        if hasattr(item, "arrow_state"):
+            state["arrow_appearance"] = item.arrow_state()
         return state
 
     # ==================== 样式管理方法 ====================

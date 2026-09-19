@@ -97,6 +97,7 @@ class PpOcrRustEngine(OcrEngine):
     def __init__(self):
         super().__init__()
         self._engine = None          # ppocr_rust.Engine 实例，None 即未初始化
+        self._tier = ""              # 当前加载的模型档位（见 ocr/model_tiers.py）
         self._init_lock = threading.Lock()
         self._probe: Optional[Tuple[bool, Optional[str], Optional[str]]] = None
 
@@ -108,17 +109,36 @@ class PpOcrRustEngine(OcrEngine):
     def is_available(self) -> bool:
         return self._probe_once()[0]
 
-    def initialize(self, language: Optional[str] = None) -> bool:
+    def _resolve_models(self, tier: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+        """档位 → (det, rec)；没指定档位或档位不可用时退回探测到的默认模型。"""
+        if tier:
+            from ocr.model_tiers import resolve
+
+            _engine, det, rec = resolve(tier)
+            if det and rec:
+                self._tier = tier
+                return det, rec
+            ocr_log(T("OCR 档位不可用，改用默认模型: {tier}", tier=tier), "WARN")
+        self._tier = ""
+        return self._probe_once()[1:]
+
+    def initialize(self, language: Optional[str] = None, tier: Optional[str] = None) -> bool:
+        """按档位加载模型；``tier`` 为空时用仓库默认的那一档（见 ocr/model_tiers.py）。
+
+        换了档位要重新加载模型：不同档位的 det/rec 是两套权重，沿用旧引擎等于没换。
+        """
         if not self.is_available():
             self.last_error = "ppocr_rust 引擎不可用"
             ocr_log(T("ppocr_rust 引擎不可用"), "WARN")
             return False
+        if tier and tier != self._tier and self._engine is not None:
+            self.release()
         if self._engine is not None:
             return True
         with self._init_lock:
             if self._engine is not None:
                 return True
-            det, rec = self._probe_once()[1:]
+            det, rec = self._resolve_models(tier)
             try:
                 ocr_log(T("正在初始化 ppocr_rust 引擎 (Rust + ort)..."), "DEBUG")
                 import ppocr_rust

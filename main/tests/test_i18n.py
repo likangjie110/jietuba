@@ -803,3 +803,47 @@ def test_video_recording_settings_are_compiled_in_the_settings_dialog_context(la
         "Video recording is unavailable: no encoding backend.",
     )
     _assert_sources_in_context(language, "SettingsDialog", sources)
+
+
+#: 第二批标注工具的面板与端点文案（各自的上下文）
+ANNOTATION_PANEL_SOURCES = (
+    "Line style", "Solid", "Dashed", "Dense dashes",
+    "Watermark text", "Font size", "Angle", "Spacing", "Opacity %",
+    "Filter", "Grayscale", "Invert", "Gaussian blur", "Emboss",
+    "Blur radius", "Emboss strength", "Brush size",
+    "Style template", "Template name", "Save template", "Apply", "Delete",
+)
+
+ARROW_EXTRA_SOURCES = (
+    "Straight", "Curve", "Elbow", "Arrow path", "Start arrowhead", "End arrowhead",
+    "Follow style", "None", "Triangle", "Triangle outline", "Circle", "Diamond", "Bar",
+)
+
+LAYER_SHORTCUT_SOURCES = (
+    "Layer & Alignment", "Bring to Front", "Send to Back", "Bring Forward",
+    "Send Backward", "Align Left", "Align Horizontal Center", "Align Right",
+    "Align Top", "Align Vertical Center", "Align Bottom",
+)
+
+
+@pytest.mark.parametrize("language", ["en", "ja", "ko", "zh"])
+def test_annotation_panel_texts_are_compiled_in_their_own_context(language):
+    """第二批标注工具面板的文案（直线/水印/滤镜/擦除/模板行）。"""
+    _assert_sources_in_context(language, "AnnotationSettingsPanel", ANNOTATION_PANEL_SOURCES)
+
+
+@pytest.mark.parametrize("language", ["en", "ja", "ko", "zh"])
+def test_arrow_path_and_head_texts_are_compiled(language):
+    """箭头路径样式与起止端点。"""
+    _assert_sources_in_context(language, "ArrowSettingsPanel", ARROW_EXTRA_SOURCES)
+
+
+@pytest.mark.parametrize("language", ["en", "ja", "ko", "zh"])
+def test_layer_and_align_shortcut_labels_are_compiled(language):
+    """层级与对齐那一组应用内快捷键的行标签。"""
+    _assert_sources_in_context(language, "SettingsDialog", LAYER_SHORTCUT_SOURCES)
+
+
+@pytest.mark.parametrize("language", ["en", "ja", "ko", "zh"])
+def test_insert_image_dialog_title_is_compiled(language):
+    _assert_sources_in_context(language, "InsertImageTool", ("Insert Image",))

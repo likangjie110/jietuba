@@ -1,4 +1,4 @@
-"""main/video/ 与 core/platform/video.py 目录下 log_* 调用的中→英翻译表。"""
+"""main/video/、main/history/ 与 core/platform/video.py 里 log_* 调用的中→英翻译表。"""
 
 TRANSLATIONS: dict[str, str] = {
     # core/platform/video.py
@@ -50,4 +50,35 @@ TRANSLATIONS: dict[str, str] = {
     "关闭录制窗口部件失败: {e}": "Failed to close a recording window widget: {e}",
     "设置录制窗口失焦保持可见失败: {e}":
         "Failed to keep the recording window visible when inactive: {e}",
+
+    # history/store.py
+    "读取截图历史索引": "Reading the screenshot history index",
+    "截图历史索引格式不对，按空历史处理":
+        "The screenshot history index has an unexpected format, treating it as empty",
+    "写入截图历史索引": "Writing the screenshot history index",
+    "截图历史写入图片失败: {path}": "Failed to write a screenshot history image: {path}",
+    "截图历史写入图片": "Writing a screenshot history image",
+    "截图历史新增: {entry_id} ({source}, {width}x{height}, {size} 字节)":
+        "Screenshot history entry added: {entry_id} ({source}, {width}x{height}, {size} bytes)",
+    "删除截图历史文件": "Deleting a screenshot history image",
+    "截图历史保留策略: 淘汰 {count} 条 ({reasons})":
+        "Screenshot history retention: evicted {count} entries ({reasons})",
+    "清空截图历史": "Clearing the screenshot history",
+
+    # history/source.py
+    "判断截图来源": "Determining the screenshot source",
+    "读取窗口标题": "Reading the window title",
+    "截图来源: {source}{label} (选区 {rect})":
+        "Screenshot source: {source}{label} (selection {rect})",
+
+    # history/recorder.py
+    "截图历史已关闭，跳过记录": "Screenshot history is off, skipping",
+    "记录截图历史": "Recording the screenshot history",
+    "读取截图历史保留策略": "Reading the screenshot history retention settings",
+
+    # history/window.py
+    "复制历史截图": "Copying a history screenshot",
+    "历史截图已复制: {entry_id}": "History screenshot copied: {entry_id}",
+    "历史截图已钉图: {entry_id}": "History screenshot pinned: {entry_id}",
+    "历史截图已另存: {path}": "History screenshot saved as: {path}",
 }

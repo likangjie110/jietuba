@@ -11,6 +11,14 @@ from PySide6.QtCore import Qt, QRectF, QPointF
 from core import log_debug, log_warning, safe_event
 from core.logger import T
 
+def _unit(vector: QPointF) -> QPointF:
+    """把向量归一化；零向量给一个稳定方向（向右），避免除零后端点画出 NaN。"""
+    length = math.hypot(vector.x(), vector.y())
+    if length < 1e-6:
+        return QPointF(1.0, 0.0)
+    return QPointF(vector.x() / length, vector.y() / length)
+
+
 class DrawingItemMixin:
     """绘图图元通用属性"""
     def _init_drawing_mixin(self):
@@ -537,8 +545,28 @@ class ArrowItem(QGraphicsPathItem, DrawingItemMixin):
     STYLE_DOUBLE = "double"
     STYLE_BAR = "bar"
     CLICK_MARGIN = 4  # 点击旷量（像素/每侧）
+
+    #: 路径样式：直线 / 曲线（拖控制点）/ 折线（先横后竖的直角折线）
+    PATH_STRAIGHT = "straight"
+    PATH_CURVE = "curve"
+    PATH_ELBOW = "elbow"
+    PATH_STYLES = (PATH_STRAIGHT, PATH_CURVE, PATH_ELBOW)
+
+    #: 端点样式。``inherit`` 表示沿用上面的 arrow_style（保持老箭头的外观不动），
+    #: 其余取值走「箭杆 + 单独画的端点」，起止两端可以各选各的。
+    HEAD_INHERIT = "inherit"
+    HEAD_NONE = "none"
+    HEAD_TRIANGLE = "triangle"
+    HEAD_TRIANGLE_OUTLINE = "triangle_outline"
+    HEAD_CIRCLE = "circle"
+    HEAD_DIAMOND = "diamond"
+    HEAD_BAR = "bar"
+    HEAD_STYLES = (HEAD_INHERIT, HEAD_NONE, HEAD_TRIANGLE, HEAD_TRIANGLE_OUTLINE,
+                   HEAD_CIRCLE, HEAD_DIAMOND, HEAD_BAR)
     
-    def __init__(self, start_pos: QPointF, end_pos: QPointF, pen: QPen, arrow_style: str = "single"):
+    def __init__(self, start_pos: QPointF, end_pos: QPointF, pen: QPen,
+                 arrow_style: str = "single", *, path_style: str = "straight",
+                 head_start: str = "inherit", head_end: str = "inherit"):
         super().__init__()
         self._init_drawing_mixin()
         self.setPen(QPen(Qt.PenStyle.NoPen))  # 不使用轮廓线
@@ -561,6 +589,11 @@ class ArrowItem(QGraphicsPathItem, DrawingItemMixin):
         self._shape_cache = None
         # 箭头样式：single（单头）或 double（双头）
         self._arrow_style = arrow_style if arrow_style in (self.STYLE_SINGLE, self.STYLE_DOUBLE, self.STYLE_BAR) else self.STYLE_SINGLE
+        self._path_style = path_style if path_style in self.PATH_STYLES else self.PATH_STRAIGHT
+        self._head_start = head_start if head_start in self.HEAD_STYLES else self.HEAD_INHERIT
+        self._head_end = head_end if head_end in self.HEAD_STYLES else self.HEAD_INHERIT
+        #: 自定义端点模式下画在箭杆两端的小图形：(位置, 方向单位向量, 样式, 是否起点)
+        self._head_marks = []
         self.update_geometry()
 
     def setPath(self, path: QPainterPath):
@@ -581,6 +614,70 @@ class ArrowItem(QGraphicsPathItem, DrawingItemMixin):
         stroker.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
         self._shape_cache = stroker.createStroke(path)
         return self._shape_cache
+
+    @property
+    def path_style(self) -> str:
+        """路径样式：straight / curve / elbow。"""
+        return self._path_style
+
+    @property
+    def head_start(self) -> str:
+        return self._head_start
+
+    @property
+    def head_end(self) -> str:
+        return self._head_end
+
+    def uses_custom_heads(self) -> bool:
+        """两端都用 arrow_style 自带的头时走老几何，否则走「箭杆 + 单独端点」。"""
+        return (self._head_start != self.HEAD_INHERIT
+                or self._head_end != self.HEAD_INHERIT)
+
+    def set_path_style(self, path_style: str) -> bool:
+        """切换路径样式；值不认识或没变化时返回 False。"""
+        if path_style not in self.PATH_STYLES or path_style == self._path_style:
+            return False
+        self._path_style = path_style
+        self.prepareGeometryChange()
+        self.update_geometry()
+        return True
+
+    def set_head_start(self, style: str) -> bool:
+        if style not in self.HEAD_STYLES or style == self._head_start:
+            return False
+        self._head_start = style
+        self.prepareGeometryChange()
+        self.update_geometry()
+        return True
+
+    def set_head_end(self, style: str) -> bool:
+        if style not in self.HEAD_STYLES or style == self._head_end:
+            return False
+        self._head_end = style
+        self.prepareGeometryChange()
+        self.update_geometry()
+        return True
+
+    def arrow_state(self) -> dict:
+        """可撤销的箭头外观快照（路径样式与两端端点）。"""
+        return {"path_style": self._path_style, "head_start": self._head_start,
+                "head_end": self._head_end, "arrow_style": self._arrow_style}
+
+    def apply_arrow_state(self, state: dict) -> None:
+        """按快照恢复外观（撤销与样式模板都走这里）。"""
+        if not state:
+            return
+        path_style = state.get("path_style", self._path_style)
+        self._path_style = path_style if path_style in self.PATH_STYLES else self.PATH_STRAIGHT
+        head_start = state.get("head_start", self._head_start)
+        self._head_start = head_start if head_start in self.HEAD_STYLES else self.HEAD_INHERIT
+        head_end = state.get("head_end", self._head_end)
+        self._head_end = head_end if head_end in self.HEAD_STYLES else self.HEAD_INHERIT
+        style = state.get("arrow_style", self._arrow_style)
+        if style in (self.STYLE_SINGLE, self.STYLE_DOUBLE, self.STYLE_BAR):
+            self._arrow_style = style
+        self.prepareGeometryChange()
+        self.update_geometry()
 
     @property
     def arrow_style(self) -> str:
@@ -655,19 +752,142 @@ class ArrowItem(QGraphicsPathItem, DrawingItemMixin):
         return self.control_pos
     
     def is_curved(self) -> bool:
-        """是否是弯曲箭头"""
-        return self._control_modified
+        """是否是弯曲箭头（路径样式为曲线，或用户拖过控制点）。"""
+        return self._path_style == self.PATH_CURVE or self._control_modified
         
     def update_geometry(self):
-        """更新箭头几何形状"""
-        if self._control_modified:
+        """更新箭头几何形状。
+
+        三种路径样式：直线（老几何）、曲线（拖控制点的贝塞尔）、折线（先横后竖）。
+        选了自定义端点时，箭杆统一走「描边中线」的几何，端点另外画。
+        """
+        if self.uses_custom_heads():
+            self._update_pluggable_geometry()
+        elif self._path_style == self.PATH_ELBOW:
+            self._update_elbow_geometry()
+        elif self._control_modified or self._path_style == self.PATH_CURVE:
             self._update_curved_geometry()
         else:
             self._update_straight_geometry()
     
+    def _centerline(self) -> QPainterPath:
+        """当前路径样式的中心线（不含箭杆宽度）。"""
+        path = QPainterPath(self.start_pos)
+        if self._path_style == self.PATH_ELBOW:
+            # 折线：先横后竖的直角折线（拐点取终点的 x）
+            path.lineTo(QPointF(self.end_pos.x(), self.start_pos.y()))
+            path.lineTo(self.end_pos)
+            return path
+        if self._path_style == self.PATH_CURVE or self._control_modified:
+            mid = self.control_pos
+            control = QPointF(2 * mid.x() - 0.5 * self.start_pos.x() - 0.5 * self.end_pos.x(),
+                              2 * mid.y() - 0.5 * self.start_pos.y() - 0.5 * self.end_pos.y())
+            path.quadTo(control, self.end_pos)
+            return path
+        path.lineTo(self.end_pos)
+        return path
+
+    def _update_elbow_geometry(self):
+        """折线箭头：走箭杆 + 端点两条路里的「描边中线」几何（端点沿用 arrow_style）。"""
+        centerline = self._centerline()
+        self.setPath(self._stroked_centerline(centerline, self.base_width * 0.9))
+        self._head_marks = self._builtin_elbow_marks()
+
+    def _builtin_elbow_marks(self) -> list:
+        """折线模式下用 arrow_style 语义补端点：single 只在终点，double 两端都补。"""
+        if self._arrow_style == self.STYLE_BAR:
+            return []
+        marks = [self._mark_at(self.end_pos, self._incoming_direction(), self.HEAD_TRIANGLE)]
+        if self._arrow_style == self.STYLE_DOUBLE:
+            marks.append(self._mark_at(self.start_pos, self._reverse(self._outgoing_direction()),
+                                       self.HEAD_TRIANGLE))
+        return marks
+
+    def _update_pluggable_geometry(self):
+        """自定义端点：箭杆 = 中心线的描边，端点 = 单独画的小图形。"""
+        centerline = self._centerline()
+        self.setPath(self._stroked_centerline(centerline, self.base_width * 0.9))
+
+        marks = []
+        if self._head_end != self.HEAD_INHERIT and self._head_end != self.HEAD_NONE:
+            marks.append(self._mark_at(self.end_pos, self._incoming_direction(), self._head_end))
+        if self._head_start != self.HEAD_INHERIT and self._head_start != self.HEAD_NONE:
+            marks.append(self._mark_at(self.start_pos, self._reverse(self._outgoing_direction()),
+                                       self._head_start))
+        self._head_marks = marks
+
+    def _stroked_centerline(self, centerline: QPainterPath, width: float) -> QPainterPath:
+        """把中心线按宽度描成可填充的路径（QPainterPathStroker 负责圆头圆角）。"""
+        stroker = QPainterPathStroker()
+        stroker.setWidth(max(1.0, float(width)))
+        stroker.setCapStyle(Qt.PenCapStyle.RoundCap)
+        stroker.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        return stroker.createStroke(centerline)
+
+    @staticmethod
+    def _reverse(point: QPointF) -> QPointF:
+        return QPointF(-point.x(), -point.y())
+
+    def _outgoing_direction(self) -> QPointF:
+        """从起点出发的方向（折线取第一段，其余取首尾连线）。"""
+        if self._path_style == self.PATH_ELBOW:
+            return _unit(QPointF(self.end_pos.x() - self.start_pos.x(), 0.0))
+        return _unit(self.end_pos - self.start_pos)
+
+    def _incoming_direction(self) -> QPointF:
+        """到达终点的方向（折线取最后一段）。"""
+        if self._path_style == self.PATH_ELBOW:
+            return _unit(QPointF(0.0, self.end_pos.y() - self.start_pos.y()))
+        if self._path_style == self.PATH_CURVE or self._control_modified:
+            return _unit(self.end_pos - self.control_pos)
+        return _unit(self.end_pos - self.start_pos)
+
+    def _mark_at(self, position: QPointF, direction: QPointF, style: str) -> tuple:
+        """端点标记：(位置, 方向, 样式, 尺寸)。尺寸随箭杆粗细走，粗细改了端点跟着变。"""
+        size = max(8.0, self.base_width * 3.2)
+        return (QPointF(position), QPointF(direction), style, size)
+
+    def _paint_head(self, painter: QPainter, mark) -> None:
+        """画一个端点：多边形填充 + 描边，方向是单位向量。"""
+        position, direction, style, size = mark
+        angle = math.degrees(math.atan2(direction.y(), direction.x()))
+        painter.save()
+        painter.translate(position)
+        painter.rotate(angle)
+        color = QColor(self.color)
+        painter.setBrush(QBrush(color))
+        painter.setPen(QPen(color, max(1.0, self.base_width * 0.35)))
+        if style == self.HEAD_TRIANGLE:
+            path = QPainterPath(QPointF(0, 0))
+            path.lineTo(QPointF(-size, -size * 0.55))
+            path.lineTo(QPointF(-size, size * 0.55))
+            path.closeSubpath()
+            painter.drawPath(path)
+        elif style == self.HEAD_TRIANGLE_OUTLINE:
+            path = QPainterPath(QPointF(0, 0))
+            path.lineTo(QPointF(-size, -size * 0.55))
+            path.lineTo(QPointF(-size, size * 0.55))
+            path.closeSubpath()
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawPath(path)
+        elif style == self.HEAD_CIRCLE:
+            radius = size * 0.45
+            painter.drawEllipse(QPointF(-radius, 0), radius, radius)
+        elif style == self.HEAD_DIAMOND:
+            path = QPainterPath(QPointF(0, 0))
+            path.lineTo(QPointF(-size * 0.5, -size * 0.5))
+            path.lineTo(QPointF(-size, 0))
+            path.lineTo(QPointF(-size * 0.5, size * 0.5))
+            path.closeSubpath()
+            painter.drawPath(path)
+        elif style == self.HEAD_BAR:
+            half = size * 0.5
+            painter.drawLine(QPointF(0, -half), QPointF(0, half))
+        painter.restore()
+
     def _update_straight_geometry(self):
         """直线箭头几何（支持单头和双头）"""
-        
+        self._head_marks = []
         dx = self.end_pos.x() - self.start_pos.x()
         dy = self.end_pos.y() - self.start_pos.y()
         length = math.sqrt(dx * dx + dy * dy)
@@ -883,7 +1103,8 @@ class ArrowItem(QGraphicsPathItem, DrawingItemMixin):
     
     def _update_curved_geometry(self):
         """弯曲箭头几何 - 中间点在曲线上（三点定曲线），支持单头和双头"""
-        
+        self._head_marks = []
+
         # 中间点 M 是用户拖拽的点，它应该在曲线上
         # 对于二次贝塞尔曲线 B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
         # 我们要让 B(0.5) = M，需要计算真正的控制点 P1
@@ -1251,6 +1472,9 @@ class ArrowItem(QGraphicsPathItem, DrawingItemMixin):
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(self.color)
         painter.drawPath(self.path())
+        # 自定义端点/折线端点：单独画在箭杆之上
+        for mark in self._head_marks:
+            self._paint_head(painter, mark)
 
         if (self.isSelected() or self._hovered) and self._can_show_hover():
             selection_pen = QPen(QColor(0, 180, 255, 230), 2, Qt.PenStyle.DashLine)

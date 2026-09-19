@@ -35,6 +35,14 @@ def _gesture_label(dialog, gesture: str) -> str:
         platform_pointer.GESTURE_MIDDLE_CLICK: dialog.tr("Middle Click"),
         platform_pointer.GESTURE_BACK_CLICK: dialog.tr("Back Button"),
         platform_pointer.GESTURE_FORWARD_CLICK: dialog.tr("Forward Button"),
+        platform_pointer.GESTURE_LEFT_DRAG_UP: dialog.tr("Left drag up"),
+        platform_pointer.GESTURE_LEFT_DRAG_DOWN: dialog.tr("Left drag down"),
+        platform_pointer.GESTURE_LEFT_DRAG_LEFT: dialog.tr("Left drag left"),
+        platform_pointer.GESTURE_LEFT_DRAG_RIGHT: dialog.tr("Left drag right"),
+        platform_pointer.GESTURE_RIGHT_DRAG_UP: dialog.tr("Right drag up"),
+        platform_pointer.GESTURE_RIGHT_DRAG_DOWN: dialog.tr("Right drag down"),
+        platform_pointer.GESTURE_RIGHT_DRAG_LEFT: dialog.tr("Right drag left"),
+        platform_pointer.GESTURE_RIGHT_DRAG_RIGHT: dialog.tr("Right drag right"),
     }.get(gesture, gesture)
 
 

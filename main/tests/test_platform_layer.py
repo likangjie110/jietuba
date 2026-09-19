@@ -168,6 +168,19 @@ class TestTruthTable:
         assert support(Capability.FRAME_CAPTURE, "macos") is Support.DEGRADED
         assert support(Capability.FRAME_CAPTURE, "linux") is Support.DEGRADED
 
+    def test_system_move_is_degraded_on_linux(self):
+        """把拖动交给窗口管理器：macOS/Windows 有原生实现；Wayland 合成器可能拒绝，
+        所以 Linux 登记降级而不是「不支持」——调用方拿到 False 才自己搬窗口。"""
+        assert support(Capability.WINDOW_SYSTEM_MOVE, "windows") is Support.FULL
+        assert support(Capability.WINDOW_SYSTEM_MOVE, "macos") is Support.FULL
+        assert support(Capability.WINDOW_SYSTEM_MOVE, "linux") is Support.DEGRADED
+
+    def test_follow_window_is_macos_only(self):
+        """跟随窗口（父子窗口关系，父窗口一动系统带着子窗口走）只有 AppKit 这条。"""
+        assert support(Capability.WINDOW_FOLLOW_MOVE, "macos") is Support.FULL
+        assert available(Capability.WINDOW_FOLLOW_MOVE, "windows") is False
+        assert available(Capability.WINDOW_FOLLOW_MOVE, "linux") is False
+
     def test_current_platform_answers_are_consistent_with_detection(self):
         """当前平台的答案要跟 detection 的常量对得上（防止表里键名写错）。"""
         declared = PLATFORM_NAME if PLATFORM_NAME in PLATFORMS else "linux"

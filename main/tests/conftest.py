@@ -156,4 +156,46 @@ def tmp_settings(tmp_path):
     from PySide6.QtCore import QSettings
     settings_file = str(tmp_path / "test_settings.ini")
     return QSettings(settings_file, QSettings.Format.IniFormat)
- 
+
+
+@pytest.fixture(scope="session")
+def history_store_dir(tmp_path_factory):
+    """本会话里截图历史存储用的临时目录（会话内所有隔离都指向它）。"""
+    return tmp_path_factory.mktemp("history")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def isolated_history_store(history_store_dir):
+    """让截图历史的共享存储落在临时目录上，而不是开发机真实的历史目录。
+
+    测试里走真实动作入口（``run_action("screenshot_copy")``、表格识别、图片转 Markdown
+    等）时会调 ``history.record_screenshot``，它写的是**进程共享存储**——不隔离的话每跑
+    一次测试就往开发机的历史目录里塞几十张 80×40 的图（这事发生过两次）。
+    """
+    from history import HistoryStore, reset_store
+
+    previous = getattr(recorder_module(), "_store", None)
+    reset_store(HistoryStore(history_store_dir))
+    yield
+    reset_store(previous)
+
+
+@pytest.fixture(autouse=True)
+def history_store_guard(history_store_dir):
+    """每个用例开始前把共享历史存储指回会话临时目录。
+
+    为什么单靠上面那个会话级夹具不够：文件里还有自己的夹具（例如 ``test_screenshot_history``
+    的 autouse 夹具），它们的 teardown 可能把共享存储置空或换成别的目录；一旦置空，**同一次
+    会话里后面所有**会入史的用例就会写进真实的 ``~/Library/Application Support/Jietuba/history``。
+    这个用例级守卫把「每次开跑前一定指向临时目录」变成不依赖各文件自觉的事实。
+    """
+    from history import HistoryStore, reset_store
+
+    reset_store(HistoryStore(history_store_dir))
+    yield
+
+
+def recorder_module():
+    from history import recorder
+
+    return recorder

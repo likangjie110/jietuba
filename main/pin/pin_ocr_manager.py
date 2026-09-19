@@ -304,6 +304,33 @@ class PinOCRManager:
             finally:
                 self.ocr_text_layer = None
 
+    def clear_result(self):
+        """清掉识别结果（换图时用）：文字层销毁、翻译状态复位，线程安全地收掉旧线程。
+
+        与 ``cleanup`` 的区别：这个之后还要继续用（窗口还开着），所以不清 `_win` 相关
+        的其它引用，下次识别会重新建层。
+        """
+        self._translate_pending = False
+        self._ocr_has_result = False
+        if self.ocr_thread is not None:
+            try:
+                if not self.ocr_thread.isRunning():
+                    self.ocr_thread.deleteLater()
+            except Exception as e:
+                log_exception(e, T("清理OCR线程"))
+            finally:
+                self.ocr_thread = None
+        if self.ocr_text_layer is not None:
+            try:
+                self.ocr_text_layer.set_enabled(False)
+                if hasattr(self.ocr_text_layer, "cleanup"):
+                    self.ocr_text_layer.cleanup()
+                self.ocr_text_layer.deleteLater()
+            except Exception as e:
+                log_exception(e, T("清理OCR文字层"))
+            finally:
+                self.ocr_text_layer = None
+
     # ------------------------------------------------------------------
     # OCR 层状态控制（供 PinWindow / 缩略图模式 调用）
     # ------------------------------------------------------------------

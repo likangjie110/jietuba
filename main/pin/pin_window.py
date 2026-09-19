@@ -12,7 +12,7 @@
 - PinTranslationHelper：翻译功能助手
 """
 
-from PySide6.QtWidgets import QWidget, QLabel
+from PySide6.QtWidgets import QApplication, QLabel, QWidget
 from PySide6.QtCore import Qt, QPoint, QTimer, Signal, QRectF, QEvent
 from PySide6.QtGui import (
     QColor, QPixmap, QImage, QPainter, QMouseEvent, QWheelEvent, QKeyEvent,
@@ -34,6 +34,21 @@ from core.platform import window_ops
 from ui.fluent_lite.theme import ACCENT
 from settings.tool_settings import PIN_OPACITY_RANGE
 from . import pin_actions
+
+
+def _save_filter() -> str:
+    """保存对话框的过滤器：由运行时能力派生（见 core/image_formats.py）。"""
+    from core.image_formats import save_dialog_filter
+
+    return save_dialog_filter()
+
+
+#: 交给系统拖动时，窗口最多占屏幕可用区的多少（两边都算）。
+#:
+#: 系统的窗口拖动会把窗口夹在屏幕可用区里（实测可拖动范围 = 可用区 − 窗口尺寸），
+#: 贴图越大余地越小：整屏截图钉出来的贴图交给系统就几乎动不了。留不到四分之一余地时
+#: 「贴图能自由摆放」比「拖动跟手」更重要，那种尺寸继续自己搬窗口。
+DRAG_MAX_WINDOW_SHARE = 0.75
 
 
 def pin_config_value(config_manager, getter_name: str, default):
@@ -114,6 +129,8 @@ class PinWindow(QWidget):
         self._drag_start_pos = QPoint()
         self._drag_start_window_pos = QPoint()
         self._last_hover_state = False
+        #: 工具栏是否已挂成本窗口的原生跟随窗口（系统搬贴图时一起带走）
+        self._toolbar_follows_natively = False
 
         # ====== 设置窗口属性 ======
         self.setWindowFlags(
@@ -351,6 +368,44 @@ class PinWindow(QWidget):
         self._drag_start_pos = global_pos
         self._drag_start_window_pos = self.pos()
         self.setCursor(Qt.CursorShape.ClosedHandCursor)
+        handed = self._let_system_drag()
+        log_debug(
+            T("贴图拖动开始: 起点 ({x}, {y})，系统接管: {system}",
+              x=global_pos.x(), y=global_pos.y(), system=handed),
+            "PinWindow")
+        if handed:
+            # 系统拖动是阻塞的（返回时用户已经松开鼠标），鼠标事件不会再到我们这里，
+            # 所以在这里直接收尾。
+            self.end_window_drag()
+
+    def _let_system_drag(self) -> bool:
+        """把这张贴图的拖动交给系统；返回 True 表示拖动已经结束。
+
+        交给系统的好处是窗口由窗口管理器搬，应用侧每个鼠标事件不做任何窗口操作——
+        快速移动鼠标时（高刷新率鼠标一秒能发几百个事件）不会像自己搬那样跟不上。
+        代价是拖动期间收不到鼠标事件，所以三条限制：
+
+        - 成组拖动不走这条路：系统一次只搬一个窗口，同组其它贴图得由我们每帧搬；
+        - 平台/合成器不接受（``start_system_move`` 返回 False）时退回手动搬窗口；
+        - 贴图太大时不走：系统的窗口拖动会把窗口夹在屏幕可用区里（实测可拖动范围 =
+          可用区 − 窗口尺寸），贴着屏幕大小的贴图交给系统就等于动不了，那时「能自由
+          摆放」比「原生顺滑」更重要。
+        """
+        if self.is_selected() or not self._system_drag_has_room():
+            return False
+        if not window_ops.start_system_move(self):
+            return False
+        log_debug(T("贴图拖动已交给系统"), "PinWindow")
+        return True
+
+    def _system_drag_has_room(self) -> bool:
+        """窗口在屏幕可用区里是否还留得下足够的移动余地（见 ``DRAG_MAX_WINDOW_SHARE``）。"""
+        screen = self.screen() or QApplication.primaryScreen()
+        if screen is None:
+            return False
+        available = screen.availableGeometry()
+        return (self.width() <= available.width() * DRAG_MAX_WINDOW_SHARE
+                and self.height() <= available.height() * DRAG_MAX_WINDOW_SHARE)
 
     def update_window_drag(self, global_pos: QPoint):
         if not self._is_dragging:
@@ -358,16 +413,34 @@ class PinWindow(QWidget):
         delta = global_pos - self._drag_start_pos
         moved = (self._drag_start_window_pos + delta) - self.pos()
         self.move(self._drag_start_window_pos + delta)
-        if self.toolbar and self.toolbar.isVisible():
-            self.toolbar.sync_with_pin_window()
         # 拖着选中的一张时，整组一起动（多选的用途就在这里）
         if moved and self.is_selected():
             self._selection_manager().move_selected(self, moved)
 
     def end_window_drag(self):
-        if self._is_dragging:
-            self._is_dragging = False
-            self.setCursor(Qt.CursorShape.ArrowCursor)
+        if not self._is_dragging:
+            return
+        self._is_dragging = False
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+        log_debug(
+            T("贴图拖动结束: 位移 ({dx}, {dy})",
+              dx=self.x() - self._drag_start_window_pos.x(),
+              dy=self.y() - self._drag_start_window_pos.y()),
+            "PinWindow")
+        # 拖动结束后再摆一次工具栏：拖动中贴到屏幕边缘时，位置规则会翻到另一侧
+        self._sync_toolbar_with_window()
+
+    def _sync_toolbar_with_window(self):
+        """让工具栏跟住贴图。
+
+        macOS 上工具栏是原生跟随窗口（``window_ops.attach_follow_window``）：系统搬贴图
+        时同帧带着它走，我们不必再逐个鼠标事件搬它一次。
+        """
+        if getattr(self, "_toolbar_follows_natively", False):
+            return
+        toolbar = getattr(self, "toolbar", None)
+        if toolbar and toolbar.isVisible():
+            toolbar.sync_with_pin_window()
 
     # ==================================================================
     # 视图 / 缩放
@@ -488,6 +561,9 @@ class PinWindow(QWidget):
     @safe_event
     def moveEvent(self, event):
         super().moveEvent(event)
+        # 工具栏（以及它下面的二级面板）跟着贴图走。以前只在鼠标拖动里同步，所以
+        # 系统拖动、贴图位置被别处改掉时就不同步了。
+        self._sync_toolbar_with_window()
 
     @safe_event
     def paintEvent(self, event):
@@ -525,11 +601,13 @@ class PinWindow(QWidget):
 
     @safe_event
     def mouseMoveEvent(self, event: QMouseEvent):
-        self._set_hover_state(True)
         if self._is_dragging:
+            # 拖动中不再每次鼠标移动都刷一遍悬停状态（按钮的 show/raise 与工具栏的
+            # 悬停回调都在这条路上，每个事件白跑一次只会拖慢跟手）
             self.update_window_drag(event.globalPosition().toPoint())
             event.accept()
             return
+        self._set_hover_state(True)
         super().mouseMoveEvent(event)
 
     @safe_event
@@ -747,6 +825,15 @@ class PinWindow(QWidget):
         else:
             self.toolbar.enable_auto_hide(False)
         self.toolbar.show()
+        self._attach_toolbar_as_follow_window()
+
+    def _attach_toolbar_as_follow_window(self):
+        """把工具栏挂成贴图的原生跟随窗口（挂不上就继续每帧自己同步位置）。"""
+        if self._toolbar_follows_natively or not self.toolbar:
+            return
+        self._toolbar_follows_natively = window_ops.attach_follow_window(self, self.toolbar)
+        if self._toolbar_follows_natively:
+            log_debug(T("工具栏已挂为跟随窗口，拖动时由系统带动"), "PinWindow")
 
     def hide_toolbar(self):
         if self.toolbar:
@@ -820,9 +907,141 @@ class PinWindow(QWidget):
                 'text_selection_enabled': self._text_selection_enabled,
                 'thumbnail_mode': self._thumbnail_mode,
                 'locked': self.is_locked(),
+                'click_through': self.is_click_through(),
+                'focus_mode': self._selection_manager().is_focus_mode(self),
+                'group': getattr(self, 'group_name', ''),
                 'selected_count': len(self._selection_manager().selected_pins()),
             }
             self._context_menu.show(global_pos, state)
+
+
+    # ==================================================================
+    # 点击穿透
+    # ==================================================================
+
+    def is_click_through(self) -> bool:
+        """贴图是否处于点击穿透状态（鼠标事件穿过窗口落到下面的程序）。"""
+        return bool(getattr(self, "_click_through", False))
+
+    def set_click_through(self, enabled: bool) -> bool:
+        """开关点击穿透；平台不支持时返回 False 并记日志（不假装成功）。
+
+        开启后窗口不再接收鼠标，右键菜单自然也就点不出来——所以它同时是一个可绑定的
+        贴图动作（手势/快捷键），用户有一条退路；提示里也会说明怎么取消。
+        """
+        from core.platform import window_ops
+
+        ok = False
+        try:
+            ok = bool(window_ops.set_click_through(self, bool(enabled), layered=True))
+        except Exception as e:
+            log_exception(e, T("设置点击穿透"))
+        if not ok:
+            log_warning(T("当前平台不支持点击穿透"), "PinWindow")
+            return False
+        self._click_through = bool(enabled)
+        self._show_hint_label(self.tr("Click-through on") if enabled
+                              else self.tr("Click-through off"))
+        log_debug(T("贴图点击穿透: {enabled}", enabled=enabled), "PinWindow")
+        return True
+
+    def toggle_click_through(self) -> bool:
+        """切换点击穿透。"""
+        return self.set_click_through(not self.is_click_through())
+
+    # ==================================================================
+    # 焦点模式 / 关闭其它
+    # ==================================================================
+
+    def toggle_focus_mode(self) -> bool:
+        """焦点模式：只留这一张可见，再按一次还原（由 PinManager 统一做，见 pin_manager）。"""
+        from .pin_manager import PinManager
+
+        return PinManager.instance().toggle_focus_mode(self)
+
+    def close_other_pins(self) -> int:
+        """关掉除自己以外的所有贴图，返回关掉的数量。"""
+        from .pin_manager import PinManager
+
+        return PinManager.instance().close_other_pins(self)
+
+    # ==================================================================
+    # 加载新内容
+    # ==================================================================
+
+    def load_image(self, image) -> bool:
+        """把一张新图片装进这张贴图（含重跑识别）。
+
+        换底图要成套地换：底图像素、原始尺寸、缩放/旋转状态、画布里的绘制元素、OCR 结果。
+        只换其中几项会留下「图变了但识别结果还是旧的」这类错位——所以这里整体重来一遍。
+        """
+        if image is None or image.isNull():
+            return False
+        try:
+            self._orig_size = image.size()
+            self._base_pixmap = QPixmap.fromImage(image)
+            if hasattr(self, "_image_transform"):
+                self._image_transform.reset()
+            self.scale_factor = 1.0
+            self._view_scale_x = 1.0
+            self._view_scale_y = 1.0
+            self._last_background_scale_size = None
+            canvas = getattr(self, "canvas", None)
+            if canvas is not None:
+                scene = canvas.scene
+                # 不能 scene.clear()：那会把 BackgroundItem 一起删掉（Python 侧还留着引用，
+                # 下一步 update_image 就会撞上已销毁的 C++ 对象）。只清画布上的绘制元素。
+                background = getattr(scene, "background", None)
+                keep = {item for item in (background, getattr(scene, "selection_item", None))
+                        if item is not None}
+                for item in list(scene.items()):
+                    if item not in keep:
+                        scene.removeItem(item)
+                scene.setSceneRect(QRectF(0, 0, image.width(), image.height()))
+                if background is not None:
+                    background.update_image(image)
+                    background.setPos(0, 0)
+                canvas.base_size = image.size()
+                if hasattr(canvas, "_initialize_selection"):
+                    canvas._initialize_selection()
+            self.setGeometry(self.x(), self.y(), image.width(), image.height())
+            if self.view is not None:
+                self.view.setGeometry(0, 0, self.width(), self.height())
+            self._update_view_transform()
+
+            # 旧的识别结果必须清掉：它对应的是上一张图（管理器继续用，只清结果）
+            if hasattr(self, "_ocr_mgr"):
+                self._ocr_mgr.clear_result()
+                if self.config_manager is None or self.config_manager.get_ocr_enabled():
+                    self._ocr_mgr.init_now(force=True)
+            self.update()
+            log_info(T("贴图已加载新内容: {w}x{h}", w=image.width(), h=image.height()),
+                     "PinWindow")
+            return True
+        except Exception as e:
+            log_exception(e, T("加载贴图新内容"))
+            return False
+
+    def load_image_from_file(self) -> bool:
+        """选一张本地图片替换当前贴图（右键菜单入口）。"""
+        from PySide6.QtWidgets import QFileDialog
+
+        path, _selected = QFileDialog.getOpenFileName(
+            self, self.tr("Load New Content"), "",
+            "Images (*.png *.jpg *.jpeg *.bmp *.webp *.gif);;All files (*)")
+        if not path:
+            return False
+        image = QImage(path)
+        if image.isNull():
+            log_warning(T("读取图片失败: {path}", path=path), "PinWindow")
+            return False
+        return self.load_image(image)
+
+    def recognize_text_now(self) -> bool:
+        """重新识别当前贴图上的文字（换图之后、或第一次自动识别失败时用）。"""
+        if not hasattr(self, "_ocr_mgr"):
+            return False
+        return bool(self._ocr_mgr.init_now(force=True))
 
     def is_locked(self) -> bool:
         """贴图是否被锁定（锁定期间不能拖动、缩放，避免挪位置时被误改）。"""
@@ -958,7 +1177,7 @@ class PinWindow(QWidget):
             self,
             self.tr("Save Pin Image"),
             default_name,
-            "PNG (*.png);;JPG (*.jpg);;BMP (*.bmp);;WebP (*.webp);;PDF (*.pdf)",
+            _save_filter(),
         )
         if not file_path:
             return
@@ -1082,6 +1301,9 @@ class PinWindow(QWidget):
             # 工具栏
             if hasattr(self, 'toolbar') and self.toolbar:
                 try:
+                    if self._toolbar_follows_natively:
+                        window_ops.detach_follow_window(self, self.toolbar)
+                        self._toolbar_follows_natively = False
                     for pn in ('paint_panel', 'shape_panel', 'arrow_panel', 'number_panel', 'text_panel'):
                         panel = getattr(self.toolbar, pn, None)
                         if panel:

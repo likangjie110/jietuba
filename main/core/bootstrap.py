@@ -471,9 +471,17 @@ class PreloadManager:
             # 首次运行（走向导）那条分支不恢复——向导正开着，贴图会盖在上面。
             self.app.restore_pins_if_enabled()
 
+            # 截图历史：启动时按配置收拾一次（用户上次把上限调小、或隔了很久没开机，
+            # 这一步才会真的删东西；平时只是读一遍索引）
+            from history import apply_configured_retention
+
+            apply_configured_retention(self.config)
+
             # 根据用户设置决定是否显示设置窗口
             if self.config.should_show_main_window_on_start():
-                self.app.open_settings()
+                # 「启动时显示主界面」= 打开主窗口（历史/翻译/设置/关于都收在里面）；
+                # 旧的「打开设置对话框」入口仍在托盘菜单的「设置」里
+                self.app.open_main_window()
             else:
                 self._preload_clipboard_window()
         except Exception as e:

@@ -9,13 +9,14 @@ import os
 
 from PySide6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QLabel, QStackedWidget, QWidget, QDialogButtonBox,
-    QFileDialog,
+    QFileDialog, QListWidget, QListWidgetItem,
 )
 from PySide6.QtCore import QSize, Qt, Signal
 from ui.dialogs import show_info_dialog, show_warning_dialog
 from PySide6.QtGui import QColor, QFont, QIcon
 
 from ui.fluent_lite import (
+    LineEdit,
     NavigationInterface, NavigationItemPosition,
     FluentIcon, BodyLabel,
     PushButton as FluentPushButton,
@@ -26,7 +27,7 @@ from ui.fluent_lite import FluentTitleBar, scrollbar_qss
 from ui.fluent_lite.theme import ACCENT, ACCENT_HOVER, ACCENT_PRESSED
 
 from core import log_info, safe_event
-from core.logger import log_exception, T
+from core.logger import log_debug, log_exception, T
 from core.constants import CSS_FONT_FAMILY, DEFAULT_FONT_FAMILY
 from core.platform import permissions, shell, window_ops
 
@@ -237,6 +238,7 @@ class SettingsDialog(FrostedFramelessDialog):
         if self._permission_page_index is not None:
             self.content_stack.addWidget(create_permission_page(self))   # 12
 
+        right_layout.addWidget(self._create_search_box())
         right_layout.addWidget(self.content_title)
         right_layout.addWidget(self.content_stack)
         right_layout.setStretchFactor(self.content_stack, 1)
@@ -246,6 +248,65 @@ class SettingsDialog(FrostedFramelessDialog):
         self._apply_dialog_stylesheet()
 
         self._set_current_nav("shortcuts")
+
+    def _create_search_box(self):
+        """顶部的设置搜索：输入关键字 → 列出命中的设置项 → 点一下跳到那一页。
+
+        索引从真实的页面部件现算（见 ui/settings_ui/search.py），不手抄清单；
+        空关键字返回空表，因此清空输入框不会弹出一整屏结果。
+        """
+        box = QWidget()
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(0, 4, 0, 0)
+        layout.setSpacing(4)
+
+        self.search_input = LineEdit(box)
+        self.search_input.setPlaceholderText(self.tr("Search settings and functions"))
+        self.search_input.setClearButtonEnabled(True)
+        self.search_input.textChanged.connect(self._on_search_changed)
+        layout.addWidget(self.search_input)
+
+        self.search_results = QListWidget(box)
+        self.search_results.setMaximumHeight(160)
+        self.search_results.itemClicked.connect(self._on_search_result_clicked)
+        self.search_results.hide()
+        layout.addWidget(self.search_results)
+        self._search_entries = []
+        return box
+
+    def _ensure_search_index(self):
+        """懒建索引：页面已经建好了，第一次搜索时才去遍历（启动不为此多花时间）。"""
+        if self._search_entries:
+            return self._search_entries
+        from .search import index_from_widgets
+
+        names = {index: text for _key, _icon, text, index, _pos in self._nav_items}
+        pages = [self.content_stack.widget(index)
+                 for index in range(self.content_stack.count())]
+        self._search_entries = index_from_widgets(names, pages)
+        return self._search_entries
+
+    def _on_search_changed(self, text: str):
+        from .search import search
+
+        hits = search(self._ensure_search_index(), text)
+        self.search_results.clear()
+        for hit in hits:
+            item = QListWidgetItem(f"{hit.entry.title}  ·  {hit.entry.page_name}")
+            item.setData(Qt.ItemDataRole.UserRole, hit.entry.page_index)
+            self.search_results.addItem(item)
+        self.search_results.setVisible(bool(hits))
+
+    def _on_search_result_clicked(self, item):
+        if item is None:
+            return
+        index = int(item.data(Qt.ItemDataRole.UserRole) or 0)
+        self.content_stack.setCurrentIndex(index)
+        for route_key, _icon, _text, stack_index, _pos in self._nav_items:
+            if stack_index == index:
+                self._set_current_nav(route_key)
+                break
+        log_debug(T("设置搜索跳转: 第 {index} 页", index=index), "SettingsDialog")
 
     def _create_navigation(self, parent=None):
         """创建左侧导航栏"""
@@ -1475,6 +1536,10 @@ class SettingsDialog(FrostedFramelessDialog):
             config.set_desktop_toolbar_mode(self.desktop_toolbar_combo.currentData())
         if hasattr(self, "tray_click_combo"):
             config.set_tray_click_action(self.tray_click_combo.currentData())
+        if hasattr(self, "tray_scroll_combo"):
+            config.set_tray_scroll_action(self.tray_scroll_combo.currentData() or "")
+        if hasattr(self, "pdf_page_combo"):
+            config.set_pdf_page_size(self.pdf_page_combo.currentData())
 
         # 网络代理（进程级，不必等重启）
         if hasattr(self, "proxy_mode_combo"):
@@ -1509,6 +1574,13 @@ class SettingsDialog(FrostedFramelessDialog):
             new_language = self.ocr_language_combo.currentData()
             language_changed = new_language != config.get_ocr_language()
             config.set_ocr_language(new_language)
+        if hasattr(self, "ocr_tier_combo"):
+            config.set_ocr_model_tier(self.ocr_tier_combo.currentData() or "")
+        if hasattr(self, "ocr_vision_target_combo"):
+            config.set_ocr_vision_target(self.ocr_vision_target_combo.currentData())
+        if hasattr(self, "ocr_vision_combo"):
+            config.set_app_setting("ocr_vision_model",
+                                   self.ocr_vision_combo.currentData() or "")
         if hasattr(self, "ocr_dialog_checks"):
             config.set_ocr_dialog_triggers(
                 [trigger for trigger, check in self.ocr_dialog_checks.items()
@@ -1543,6 +1615,23 @@ class SettingsDialog(FrostedFramelessDialog):
             config.set_video_max_duration_s(int(self.video_duration_spin.value()))
         if hasattr(self, "video_save_path_input"):
             config.set_video_save_path(self.video_save_path_input.text().strip())
+
+        # 截图历史：开关与三个上限（保存后立刻按新策略收拾一次，用户马上能看到效果）
+        if hasattr(self, "history_enabled_toggle"):
+            config.set_history_enabled(self.history_enabled_toggle.isChecked())
+        if hasattr(self, "history_retention_combo"):
+            config.set_history_retention_days(int(self.history_retention_combo.currentData()))
+        if hasattr(self, "history_entries_spin"):
+            config.set_history_max_entries(int(self.history_entries_spin.value()))
+        if hasattr(self, "history_disk_spin"):
+            config.set_history_max_disk_mb(int(self.history_disk_spin.value()))
+        if hasattr(self, "history_enabled_toggle"):
+            try:
+                from history import apply_configured_retention
+
+                apply_configured_retention(config)
+            except Exception as e:
+                log_exception(e, T("按新策略清理截图历史"))
 
         app = None
         try:
@@ -1813,6 +1902,10 @@ def _reset_integration_controls(dialog) -> None:
             _select_combo(dialog.desktop_toolbar_combo, defaults["desktop_toolbar_mode"])
         if hasattr(dialog, "tray_click_combo"):
             _select_combo(dialog.tray_click_combo, defaults["tray_click_action"])
+        if hasattr(dialog, "tray_scroll_combo"):
+            _select_combo(dialog.tray_scroll_combo, defaults["tray_scroll_action"])
+        if hasattr(dialog, "pdf_page_combo"):
+            _select_combo(dialog.pdf_page_combo, defaults["pdf_page_size"])
         if hasattr(dialog, "proxy_mode_combo"):
             _select_combo(dialog.proxy_mode_combo, defaults["proxy_mode"])
             dialog.proxy_host_input.setText(defaults["proxy_host"])
@@ -1832,6 +1925,10 @@ def _reset_integration_controls(dialog) -> None:
             _select_combo(dialog.ocr_punctuation_combo, defaults["ocr_punctuation"])
         if hasattr(dialog, "ocr_language_combo"):
             _select_combo(dialog.ocr_language_combo, defaults["ocr_language"])
+        if hasattr(dialog, "ocr_tier_combo"):
+            _select_combo(dialog.ocr_tier_combo, defaults["ocr_model_tier"])
+        if hasattr(dialog, "ocr_vision_target_combo"):
+            _select_combo(dialog.ocr_vision_target_combo, defaults["ocr_vision_target"])
         if hasattr(dialog, "ocr_dialog_checks"):
             enabled = set(defaults["ocr_dialog_triggers"])
             for trigger, check in dialog.ocr_dialog_checks.items():
@@ -1859,6 +1956,14 @@ def _reset_integration_controls(dialog) -> None:
             dialog.video_duration_spin.setValue(int(defaults["video_max_duration_s"]))
         if hasattr(dialog, "video_save_path_input"):
             dialog.video_save_path_input.setText(defaults["video_save_path"])
+        if hasattr(dialog, "history_enabled_toggle"):
+            dialog.history_enabled_toggle.setChecked(defaults["history_enabled"])
+        if hasattr(dialog, "history_retention_combo"):
+            _select_combo(dialog.history_retention_combo, defaults["history_retention_days"])
+        if hasattr(dialog, "history_entries_spin"):
+            dialog.history_entries_spin.setValue(int(defaults["history_max_entries"]))
+        if hasattr(dialog, "history_disk_spin"):
+            dialog.history_disk_spin.setValue(int(defaults["history_max_disk_mb"]))
 
 def _refresh_integration_controls(dialog) -> None:
         """外部改过配置时（例如另一处保存过）把新控件刷新成配置里的值。"""
@@ -1870,6 +1975,10 @@ def _refresh_integration_controls(dialog) -> None:
             _select_combo(dialog.desktop_toolbar_combo, config.get_desktop_toolbar_mode())
         if hasattr(dialog, "tray_click_combo"):
             _select_combo(dialog.tray_click_combo, config.get_tray_click_action())
+        if hasattr(dialog, "tray_scroll_combo"):
+            _select_combo(dialog.tray_scroll_combo, config.get_tray_scroll_action())
+        if hasattr(dialog, "pdf_page_combo"):
+            _select_combo(dialog.pdf_page_combo, config.get_pdf_page_size())
         if hasattr(dialog, "proxy_mode_combo"):
             proxy = config.get_proxy_config()
             _select_combo(dialog.proxy_mode_combo, proxy["mode"])
@@ -1892,6 +2001,10 @@ def _refresh_integration_controls(dialog) -> None:
             _select_combo(dialog.ocr_punctuation_combo, config.get_ocr_punctuation())
         if hasattr(dialog, "ocr_language_combo"):
             _select_combo(dialog.ocr_language_combo, config.get_ocr_language())
+        if hasattr(dialog, "ocr_tier_combo"):
+            _select_combo(dialog.ocr_tier_combo, config.get_ocr_model_tier())
+        if hasattr(dialog, "ocr_vision_target_combo"):
+            _select_combo(dialog.ocr_vision_target_combo, config.get_ocr_vision_target())
         if hasattr(dialog, "ocr_dialog_checks"):
             enabled = set(config.get_ocr_dialog_triggers())
             for trigger, check in dialog.ocr_dialog_checks.items():
@@ -1920,29 +2033,45 @@ def _refresh_integration_controls(dialog) -> None:
             dialog.video_duration_spin.setValue(config.get_video_max_duration_s())
         if hasattr(dialog, "video_save_path_input"):
             dialog.video_save_path_input.setText(config.get_video_save_path())
+        if hasattr(dialog, "history_enabled_toggle"):
+            dialog.history_enabled_toggle.setChecked(config.get_history_enabled())
+        if hasattr(dialog, "history_retention_combo"):
+            _select_combo(dialog.history_retention_combo, config.get_history_retention_days())
+        if hasattr(dialog, "history_entries_spin"):
+            dialog.history_entries_spin.setValue(config.get_history_max_entries())
+        if hasattr(dialog, "history_disk_spin"):
+            dialog.history_disk_spin.setValue(config.get_history_max_disk_mb())
 
 def _snapshot_integration_controls(dialog, snap: dict) -> None:
         """把新控件也算进「未保存变更」快照。"""
         for attr in ("desktop_toolbar_combo", "tray_click_combo", "proxy_mode_combo",
                      "clipboard_image_mode_combo", "ocr_layout_combo",
                      "ocr_punctuation_combo", "ocr_language_combo",
-                     "formula_engine_combo", "video_container_combo", "video_codec_combo",
+                     "formula_engine_combo", "ocr_tier_combo", "ocr_vision_combo",
+                     "tray_scroll_combo", "pdf_page_combo",
+                     "ocr_vision_target_combo", "video_container_combo", "video_codec_combo",
                      "video_quality_combo", "video_fps_combo", "video_audio_combo",
                      "video_audio_device_combo"):
             widget = getattr(dialog, attr, None)
             if widget is not None:
                 snap[attr] = widget.currentIndex()
         for attr in ("proxy_host_input", "update_source_input", "formula_url_input",
-                     "formula_key_input", "video_save_path_input"):
+                     "formula_key_input", "video_save_path_input",
+                     "ocr_vision_url_input", "ocr_vision_model_input", "ocr_vision_key_input"):
             widget = getattr(dialog, attr, None)
             if widget is not None:
                 snap[attr] = widget.text()
         if hasattr(dialog, "proxy_port_spin"):
             snap["proxy_port_spin"] = dialog.proxy_port_spin.value()
-        for attr in ("video_bitrate_spin", "video_duration_spin"):
+        for attr in ("video_bitrate_spin", "video_duration_spin",
+                     "history_entries_spin", "history_disk_spin"):
             widget = getattr(dialog, attr, None)
             if widget is not None:
                 snap[attr] = widget.value()
+        if hasattr(dialog, "history_enabled_toggle"):
+            snap["history_enabled_toggle"] = dialog.history_enabled_toggle.isChecked()
+        if hasattr(dialog, "history_retention_combo"):
+            snap["history_retention_combo"] = dialog.history_retention_combo.currentIndex()
         if hasattr(dialog, "clipboard_ignore_own_toggle"):
             snap["clipboard_ignore_own_toggle"] = dialog.clipboard_ignore_own_toggle.isChecked()
         if hasattr(dialog, "ocr_dialog_checks"):

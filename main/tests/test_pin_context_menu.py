@@ -42,6 +42,12 @@ CALLBACKS = (
     "close_selected_pins",
     "toggle_thumbnail_mode",
     "close_window",
+    # 块 4 新增的入口：点击穿透 / 焦点模式 / 关闭其它 / 加载新内容 / 重新识别
+    "toggle_click_through",
+    "toggle_focus_mode",
+    "close_other_pins",
+    "load_image_from_file",
+    "recognize_text_now",
 )
 
 
@@ -103,7 +109,16 @@ def _labels(menu):
 
 
 def _find(menu, prefix):
-    for action in menu.actions():
+    """按标签找菜单项：先精确匹配，再退回前缀匹配。
+
+    菜单里已经出现共享前缀的项（"Close" 与 "Close other pins"、"Group" 与 "Group …"），
+    只按前缀取会拿到错的那一个——精确优先才不依赖菜单顺序。
+    """
+    actions = list(menu.actions())
+    for action in actions:
+        if action.text() == prefix:
+            return action
+    for action in actions:
         if action.text().startswith(prefix):
             return action
     raise AssertionError(f"菜单里没有以 {prefix!r} 开头的项：{_labels(menu)}")

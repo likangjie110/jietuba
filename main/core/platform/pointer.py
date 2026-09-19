@@ -174,13 +174,80 @@ GESTURE_WHEEL_DOWN = "wheel_down"
 GESTURE_MIDDLE_CLICK = "middle_click"
 GESTURE_BACK_CLICK = "back_click"
 GESTURE_FORWARD_CLICK = "forward_click"
+# 「按住键拖动」类手势：按下某个键、移动够远、松手，方向由位移决定。
+# 与滚轮/中键互不冲突（那三个是「点一下」），但拖动会占用该键的正常拖拽——
+# 因此默认只在用户显式绑定之后才参与匹配（见 core/shortcut_manager 的启停）。
+GESTURE_LEFT_DRAG_UP = "left_drag_up"
+GESTURE_LEFT_DRAG_DOWN = "left_drag_down"
+GESTURE_LEFT_DRAG_LEFT = "left_drag_left"
+GESTURE_LEFT_DRAG_RIGHT = "left_drag_right"
+GESTURE_RIGHT_DRAG_UP = "right_drag_up"
+GESTURE_RIGHT_DRAG_DOWN = "right_drag_down"
+GESTURE_RIGHT_DRAG_LEFT = "right_drag_left"
+GESTURE_RIGHT_DRAG_RIGHT = "right_drag_right"
+DRAG_GESTURES = (
+    GESTURE_LEFT_DRAG_UP,
+    GESTURE_LEFT_DRAG_DOWN,
+    GESTURE_LEFT_DRAG_LEFT,
+    GESTURE_LEFT_DRAG_RIGHT,
+    GESTURE_RIGHT_DRAG_UP,
+    GESTURE_RIGHT_DRAG_DOWN,
+    GESTURE_RIGHT_DRAG_LEFT,
+    GESTURE_RIGHT_DRAG_RIGHT,
+)
+
 MOUSE_GESTURES = (
     GESTURE_WHEEL_UP,
     GESTURE_WHEEL_DOWN,
     GESTURE_MIDDLE_CLICK,
     GESTURE_BACK_CLICK,
     GESTURE_FORWARD_CLICK,
-)
+) + DRAG_GESTURES
+
+#: 拖动判定：位移超过这个像素数才算一次拖动（避免把抖动当成手势）
+DRAG_THRESHOLD = 60
+
+
+class DragTracker:
+    """把「按下 → 移动 → 松手」判成四个方向之一。
+
+    纯状态机，不碰 pynput：喂进来的是按键名、坐标与按下/松开，因此可以穷举测试。
+    判定用**位移的主轴**：横向位移更大就判左右，否则判上下——斜着拖时给一个确定答案，
+    而不是要求用户拖出精确的水平线。
+    """
+
+    #: 参与拖动的按键名（pynput 的 Button.name）
+    SUPPORTED_BUTTONS = ("left", "right")
+
+    def __init__(self, threshold: int = DRAG_THRESHOLD):
+        self.threshold = max(4, int(threshold))
+        self._button = ""
+        self._origin = (0, 0)
+
+    def press(self, button_name: str, x: int, y: int) -> None:
+        name = (button_name or "").lower()
+        if name in self.SUPPORTED_BUTTONS:
+            self._button = name
+            self._origin = (int(x), int(y))
+
+    def move(self, x: int, y: int) -> None:
+        """移动不需要处理：方向在松手时用「起点 → 终点」算，中途抖动不影响结果。"""
+
+    def release(self, button_name: str, x: int, y: int) -> str | None:
+        """松手时给出方向手势名；没超过阈值或不是拖动中的键则返回 None。"""
+        name = (button_name or "").lower()
+        if name != self._button:
+            return None
+        self._button = ""
+        dx = int(x) - self._origin[0]
+        dy = int(y) - self._origin[1]
+        if max(abs(dx), abs(dy)) < self.threshold:
+            return None
+        if abs(dx) >= abs(dy):
+            horizontal = "right" if dx > 0 else "left"
+            return f"{name}_drag_{horizontal}"
+        vertical = "down" if dy > 0 else "up"
+        return f"{name}_drag_{vertical}"
 
 # pynput 的 Button 名字 → 手势名（侧键在 pynput 里叫 x1/x2）
 BUTTON_NAME_TO_GESTURE = {

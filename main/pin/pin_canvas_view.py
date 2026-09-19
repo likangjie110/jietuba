@@ -100,12 +100,13 @@ class PinCanvasView(CanvasView):
 
     @safe_event
     def mouseMoveEvent(self, event):
-        if hasattr(self.pin_window, "_set_hover_state"):
-            self.pin_window._set_hover_state(True)
         if self._window_dragging:
+            # 拖动中不刷悬停状态：那会每个鼠标事件都去 show/raise 一遍控制按钮与工具栏
             self.pin_window.update_window_drag(event.globalPosition().toPoint())
             event.accept()
             return
+        if hasattr(self.pin_window, "_set_hover_state"):
+            self.pin_window._set_hover_state(True)
         super().mouseMoveEvent(event)
 
     @safe_event

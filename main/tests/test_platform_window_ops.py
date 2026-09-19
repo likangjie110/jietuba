@@ -412,6 +412,100 @@ class TestHandleAcquisition:
         assert window_ops.set_taskbar_icon(None, str(icon)) is False
 
 
+class TestSystemMove:
+    """把拖动交给窗口管理器（Qt 的 QWindow.startSystemMove）。
+
+    这一步的成功与否决定了调用方走哪条路：接受就由系统搬窗口（拖动期间收不到鼠标
+    事件），被拒就自己每帧 move()。所以「被拒」必须是返回值而不是异常。
+    """
+
+    @staticmethod
+    def _window(answer):
+        calls = []
+
+        def start():
+            calls.append("startSystemMove")
+            return answer
+
+        return SimpleNamespace(
+            windowHandle=lambda: SimpleNamespace(startSystemMove=start)), calls
+
+    def test_reports_the_window_managers_answer(self):
+        window, calls = self._window(True)
+        assert window_ops.start_system_move(window) is True
+        assert calls == ["startSystemMove"]
+
+    def test_refusal_is_reported_not_raised(self):
+        window, _calls = self._window(False)
+        assert window_ops.start_system_move(window) is False
+
+    def test_a_window_without_a_native_handle_is_a_no_op(self):
+        assert window_ops.start_system_move(
+            SimpleNamespace(windowHandle=lambda: None)) is False
+
+    def test_errors_are_reported_not_raised(self):
+        def boom():
+            raise RuntimeError("窗口已销毁")
+
+        assert window_ops.start_system_move(SimpleNamespace(windowHandle=boom)) is False
+
+    def test_unavailable_platform_does_not_even_try(self, monkeypatch):
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: False)
+        window, calls = self._window(True)
+        assert window_ops.start_system_move(window) is False
+        assert calls == []
+
+
+class TestFollowWindow:
+    """跟随窗口：父窗口移动时系统带着子窗口走（AppKit 的父子窗口关系）。
+
+    macOS 真机路径直接驱动真实实现（断言 AppKit 那边真的建立了关系、也真的能解除）；
+    没有这条能力的平台必须返回 False，调用方继续自己同步子窗口位置。
+    """
+
+    def test_unsupported_platforms_return_false(self, monkeypatch):
+        monkeypatch.setattr("core.platform.capabilities.available", lambda *a, **k: False)
+        assert window_ops.attach_follow_window(object(), object()) is False
+        assert window_ops.detach_follow_window(object(), object()) is False
+
+    def test_non_window_objects_return_false(self, qapp):
+        """子部件/假对象没有独立原生窗口：直接解引用 winId 会段错误，所以先由 Qt 挡一层。
+
+        ``keep_visible_when_inactive`` 那条路也是同样的契约（失败返回 False，不抛也不崩）。
+        """
+        if sys.platform != "darwin":
+            pytest.skip("macOS 专属分支")
+        assert window_ops.attach_follow_window(_FakeWindow(), _FakeWindow()) is False
+        assert window_ops.detach_follow_window(_FakeWindow(), _FakeWindow()) is False
+
+    def test_macos_attaches_and_detaches_the_child_window(self, qapp):
+        """真机：AppKit 的 childWindows 里真的有它，解除后真的没有了。"""
+        if sys.platform != "darwin":
+            pytest.skip("macOS 专属分支")
+
+        import objc
+
+        def ns_window(widget):
+            return objc.objc_object(c_void_p=int(widget.winId())).window()
+
+        parent, child = QWidget(), QWidget()
+        parent.resize(200, 120)
+        child.resize(80, 30)
+        parent.show()
+        child.show()
+        QApplication.processEvents()
+        try:
+            assert window_ops.attach_follow_window(parent, child) is True
+            assert ns_window(child) in list(ns_window(parent).childWindows())
+
+            assert window_ops.detach_follow_window(parent, child) is True
+            assert ns_window(child) not in list(ns_window(parent).childWindows())
+        finally:
+            child.close()
+            parent.close()
+        QApplication.processEvents()
+
+
 class TestAcrylicBackground:
     """窗口毛玻璃/亚克力背景：把「背后的内容模糊」交给系统原生实现。
 

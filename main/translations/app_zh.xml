@@ -44,15 +44,9 @@
         <source>Developer</source>
         <translation>开发者</translation>
     </message>
-
-    <!-- Page Titles -->
     <message>
         <source>Shortcut Settings</source>
         <translation>快捷键设置</translation>
-    </message>
-    <message>
-        <source>Capture Settings</source>
-        <translation>截图设定</translation>
     </message>
     <message>
         <source>Clipboard Settings</source>
@@ -78,7 +72,6 @@
         <source>Developer Options</source>
         <translation>开发者选项</translation>
     </message>
-    <!-- Capture Settings page section headers -->
     <message>
         <source>Smart Selection</source>
         <translation>智能选区</translation>
@@ -91,8 +84,6 @@
         <source>OCR Settings</source>
         <translation>OCR设置</translation>
     </message>
-
-    <!-- Setup Wizard -->
     <message>
         <source>Setup Wizard</source>
         <translation>初始向导</translation>
@@ -105,8 +96,6 @@
         <source>Open Wizard</source>
         <translation>打开向导</translation>
     </message>
-    
-    <!-- Startup Preload -->
     <message>
         <source>Startup Preload</source>
         <translation>启动预加载</translation>
@@ -163,8 +152,6 @@
         <source>Initialize clipboard monitoring on startup</source>
         <translation>启动时初始化剪贴板监听</translation>
     </message>
-
-    <!-- Selection Info Panel -->
     <message>
         <source>Selection Info Panel</source>
         <translation>选区信息面板</translation>
@@ -181,8 +168,6 @@
         <source>Hide the info panel while dragging the selection area</source>
         <translation>拖拽选区时隐藏信息面板</translation>
     </message>
-
-    <!-- Buttons -->
     <message>
         <source>Reset This Page</source>
         <translation>重置此页面</translation>
@@ -223,8 +208,6 @@
         <source>Latest Log</source>
         <translation>最新日志</translation>
     </message>
-    
-    <!-- Hotkey Page -->
     <message>
         <source>Global Hotkeys</source>
         <translation>全局快捷键</translation>
@@ -249,18 +232,54 @@
         <source>Screenshot Shortcuts</source>
         <translation>截图快捷键</translation>
     </message>
-    <message><source>Annotation Tools</source><translation>标注工具</translation></message>
-    <message><source>Select / Cursor</source><translation>选择 / 光标</translation></message>
-    <message><source>Pen</source><translation>画笔</translation></message>
-    <message><source>Highlighter</source><translation>荧光笔</translation></message>
-    <message><source>Mosaic</source><translation>马赛克</translation></message>
-    <message><source>Arrow</source><translation>箭头</translation></message>
-    <message><source>Number</source><translation>序号</translation></message>
-    <message><source>Rectangle</source><translation>矩形</translation></message>
-    <message><source>Ellipse</source><translation>椭圆</translation></message>
-    <message><source>Text</source><translation>文字</translation></message>
-    <message><source>Eraser</source><translation>橡皮擦</translation></message>
-    <message><source>💡 Configured shortcuts take priority over WASD and C. Arrow keys remain available; Esc is reserved.</source><translation>💡 已配置的快捷键优先于 WASD 和 C；方向键仍可用，Esc 为保留键。</translation></message>
+    <message>
+        <source>Annotation Tools</source>
+        <translation>标注工具</translation>
+    </message>
+    <message>
+        <source>Select / Cursor</source>
+        <translation>选择 / 光标</translation>
+    </message>
+    <message>
+        <source>Pen</source>
+        <translation>画笔</translation>
+    </message>
+    <message>
+        <source>Highlighter</source>
+        <translation>荧光笔</translation>
+    </message>
+    <message>
+        <source>Mosaic</source>
+        <translation>马赛克</translation>
+    </message>
+    <message>
+        <source>Arrow</source>
+        <translation>箭头</translation>
+    </message>
+    <message>
+        <source>Number</source>
+        <translation>序号</translation>
+    </message>
+    <message>
+        <source>Rectangle</source>
+        <translation>矩形</translation>
+    </message>
+    <message>
+        <source>Ellipse</source>
+        <translation>椭圆</translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation>文字</translation>
+    </message>
+    <message>
+        <source>Eraser</source>
+        <translation>橡皮擦</translation>
+    </message>
+    <message>
+        <source>💡 Configured shortcuts take priority over WASD and C. Arrow keys remain available; Esc is reserved.</source>
+        <translation>💡 已配置的快捷键优先于 WASD 和 C；方向键仍可用，Esc 为保留键。</translation>
+    </message>
     <message>
         <source>Pin Shortcuts</source>
         <translation>钉图快捷键</translation>
@@ -343,8 +362,6 @@ Replace it?</source>
         <source>💡 Hint: You can use modifier keys like Ctrl, Shift, Alt.</source>
         <translation>💡 提示: 可以使用 Ctrl, Shift, Alt 等修饰键组合。</translation>
     </message>
-    
-    <!-- Long Screenshot Page -->
     <message>
         <source>Stitching Engine</source>
         <translation>拼接引擎</translation>
@@ -373,8 +390,6 @@ Replace it?</source>
         <source>Skip this many top pixels on subsequent captures during matching</source>
         <translation>匹配时跳过后续截图顶部的像素行数</translation>
     </message>
-
-    <!-- Capture Behavior -->
     <message>
         <source>Capture Behavior</source>
         <translation>截图行为</translation>
@@ -411,8 +426,6 @@ Replace it?</source>
         <source>Start new text annotations at about 30 characters wide and keep them inside the selection.</source>
         <translation>新建文字标注默认约 30 个字符宽，并限制在选区内。</translation>
     </message>
-    
-    <!-- Smart Selection Page -->
     <message>
         <source>Enable Smart Selection</source>
         <translation>启用智能选区</translation>
@@ -437,8 +450,6 @@ Replace it?</source>
         <source>3. Click to select that area</source>
         <translation>3. 点击选择该区域</translation>
     </message>
-    
-    <!-- Save Page -->
     <message>
         <source>Auto-save Screenshots</source>
         <translation>自动保存截图</translation>
@@ -475,8 +486,6 @@ Replace it?</source>
         <source>Select Screenshot Save Folder</source>
         <translation>选择截图保存文件夹</translation>
     </message>
-    
-    <!-- OCR Page -->
     <message>
         <source>No OCR Version / OCR module not found</source>
         <translation>无OCR版本 / 未找到OCR模块</translation>
@@ -521,8 +530,6 @@ Replace it?</source>
         <source>💡 Supports 100+ languages: Chinese, English, Japanese, Korean, Arabic, etc.</source>
         <translation>💡 支持100+种语言：中文、英语、日语、韩语、阿拉伯语等</translation>
     </message>
-    
-    <!-- Log Page -->
     <message>
         <source>Save Logs</source>
         <translation>保存日志</translation>
@@ -541,7 +548,7 @@ Replace it?</source>
     </message>
     <message>
         <source>Retention Period</source>
-        <translation>保留期限</translation>
+        <translation>保留天数</translation>
     </message>
     <message>
         <source>Auto-delete old logs after the selected period</source>
@@ -587,8 +594,6 @@ Replace it?</source>
         <source>*Changes will fully take effect after restart.</source>
         <translation>*更改将在重启后完全生效。</translation>
     </message>
-    
-    <!-- Misc Page -->
     <message>
         <source>Launch on Startup</source>
         <translation>开机自启</translation>
@@ -629,8 +634,6 @@ Replace it?</source>
         <source>💡 Hint: Even with background startup, you can operate from system tray.</source>
         <translation>💡 提示: 即使后台启动，也可以通过系统托盘操作。</translation>
     </message>
-    
-    <!-- Info Page -->
     <message>
         <source>Jietuba - Screenshot Tool</source>
         <translation>截图吧 - 截图工具</translation>
@@ -660,11 +663,9 @@ Replace it?</source>
         <translation>👨‍💻 开发者: jyaaru</translation>
     </message>
     <message>
-    <source>🛠️ Tech: Python、Rust、PyQt6、Oneocr、DeepLAPI</source>
-    <translation>🛠️ 技术: Python、Rust、PyQt6、Oneocr、DeepLAPI</translation>
+        <source>🛠️ Tech: Python、Rust、PyQt6、Oneocr、DeepLAPI</source>
+        <translation>🛠️ 技术: Python、Rust、PyQt6、Oneocr、DeepLAPI</translation>
     </message>
-
-    <!-- Translation Settings Page -->
     <message>
         <source>Translation Engine</source>
         <translation>翻译引擎</translation>
@@ -691,7 +692,7 @@ Replace it?</source>
     </message>
     <message>
         <source>Enable if you have a paid DeepL subscription</source>
-        <translation>付费订阅用户请启用</translation>
+        <translation>如果您有DeepL付费订阅请启用</translation>
     </message>
     <message>
         <source>Amazon Translate</source>
@@ -775,7 +776,7 @@ Replace it?</source>
     </message>
     <message>
         <source>Keep original text formatting</source>
-        <translation>保持原文格式</translation>
+        <translation>保留原文格式</translation>
     </message>
     <message>
         <source>UI Detection</source>
@@ -1785,7 +1786,928 @@ This action cannot be undone.</source>
         <translation>剪贴板数据位置已切换成功，但旧文件仍被占用、删不掉。重启程序后可以手动删除。
 {error}</translation>
     </message>
+    <message>
+        <source>Delete</source>
+        <translation>删除</translation>
+    </message>
+    <message>
+        <source>Offline Models</source>
+        <translation>离线模型</translation>
+    </message>
+    <message>
+        <source>Offline translation runtime is missing from this build: {reason}</source>
+        <translation>此版本的离线翻译运行库缺失：{reason}</translation>
+    </message>
+    <message>
+        <source>No offline model is available for download yet.</source>
+        <translation>暂时没有可下载的离线模型。</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>安装</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>已安装</translation>
+    </message>
+    <message>
+        <source>Installed (in memory)</source>
+        <translation>已安装（已载入内存）</translation>
+    </message>
+    <message>
+        <source>Incomplete ({size} downloaded)</source>
+        <translation>未下载完（已下载 {size}）</translation>
+    </message>
+    <message>
+        <source>Not installed</source>
+        <translation>未安装</translation>
+    </message>
+    <message>
+        <source>Translation Hotkey</source>
+        <translation>翻译快捷键</translation>
+    </message>
+    <message>
+        <source>Get your API key from DeepL website (free tier available)</source>
+        <translation>从Deepl网站获取API密钥（有免费版）</translation>
+    </message>
+    <message>
+        <source>Show Key</source>
+        <translation>显示密钥</translation>
+    </message>
+    <message>
+        <source>Hide Key</source>
+        <translation>隐藏密钥</translation>
+    </message>
+    <message>
+        <source>Leave empty to follow system language</source>
+        <translation>留空则跟随系统语言</translation>
+    </message>
+    <message>
+        <source>Advanced Options</source>
+        <translation>高级选项</translation>
+    </message>
+    <message>
+        <source>Auto Split Sentences</source>
+        <translation>自动分句</translation>
+    </message>
+    <message>
+        <source>Automatically split text into sentences for better translation</source>
+        <translation>自动将文本分割成句子以获得更好的翻译</translation>
+    </message>
+    <message>
+        <source>Keep original text formatting in translation</source>
+        <translation>在翻译中保留原文格式</translation>
+    </message>
+    <message>
+        <source>DeepL free tier: 500,000 chars/month. Get API key at</source>
+        <translation>DeepL免费版：每月50万字符。获取API密钥：</translation>
+    </message>
+    <message>
+        <source>DeepL offers a free API tier with 500,000 characters/month.</source>
+        <translation>DeepL提供免费API，每月50万字符额度。</translation>
+    </message>
+    <message>
+        <source>Visit https://www.deepl.com/pro-api to get your API key.</source>
+        <translation>访问 https://www.deepl.com/pro-api 获取您的API密钥。</translation>
+    </message>
+    <message>
+        <source>Enable Clipboard Manager</source>
+        <translation>启用剪贴板管理器</translation>
+    </message>
+    <message>
+        <source>Monitor and manage clipboard history</source>
+        <translation>监控并管理剪贴板历史记录</translation>
+    </message>
+    <message>
+        <source>Auto Paste After Selection</source>
+        <translation>选择后自动粘贴</translation>
+    </message>
+    <message>
+        <source>Automatically send Ctrl+V after selecting an item</source>
+        <translation>选择项目后自动发送 Ctrl+V</translation>
+    </message>
+    <message>
+        <source>History Limit</source>
+        <translation>历史记录限制</translation>
+    </message>
+    <message>
+        <source>Maximum number of items to keep (0 = unlimited)</source>
+        <translation>保留的最大项目数（0 = 无限制）</translation>
+    </message>
+    <message>
+        <source>Auto Cleanup Old Items</source>
+        <translation>自动清理旧项目</translation>
+    </message>
+    <message>
+        <source>Automatically remove items exceeding the limit</source>
+        <translation>自动删除超出限制的项目</translation>
+    </message>
+    <message>
+        <source>Data Storage Location</source>
+        <translation>数据存储位置</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
+        <source>Clipboard module not available</source>
+        <translation>剪贴板模块不可用</translation>
+    </message>
+    <message>
+        <source>Open Folder</source>
+        <translation>打开</translation>
+    </message>
+    <message>
+        <source>Clear Clipboard History</source>
+        <translation>清空剪贴板历史</translation>
+    </message>
+    <message>
+        <source>Delete all clipboard history records</source>
+        <translation>删除所有剪贴板历史记录</translation>
+    </message>
+    <message>
+        <source>← Get storage size</source>
+        <translation>← 获取数据占用大小</translation>
+    </message>
+    <message>
+        <source>Clear History</source>
+        <translation>清空历史</translation>
+    </message>
+    <message>
+        <source>Image Data Optimization</source>
+        <translation>图片数据优化</translation>
+    </message>
+    <message>
+        <source>If PNG is available, skip storing DIB to save space</source>
+        <translation>若剪贴板含PNG格式，跳过DIB存储以节省空间</translation>
+    </message>
+    <message>
+        <source>💡 Hint: Set clipboard hotkey in Shortcuts settings.</source>
+        <translation>💡 提示：在快捷键设置中设置剪贴板热键。</translation>
+    </message>
+    <message>
+        <source>Confirm Clear</source>
+        <translation>确认清空</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to clear all clipboard history?\nThis action cannot be undone.</source>
+        <translation>确定要清空所有剪贴板历史吗？\n此操作不可恢复。</translation>
+    </message>
+    <message>
+        <source>Also delete saved content in groups</source>
+        <translation>同时删除分组中保存的内容</translation>
+    </message>
+    <message>
+        <source>Clipboard history cleared successfully</source>
+        <translation>剪贴板历史已清空</translation>
+    </message>
+    <message>
+        <source>Failed to clear clipboard history</source>
+        <translation>清空剪贴板历史失败</translation>
+    </message>
+    <message>
+        <source>Color Copy Format</source>
+        <translation>颜色复制格式</translation>
+    </message>
+    <message>
+        <source>Used when copying color info in magnifier.</source>
+        <translation>按 C 复制颜色信息时使用</translation>
+    </message>
+    <message>
+        <source>RGB+HEX</source>
+        <translation>RGB+HEX</translation>
+    </message>
+    <message>
+        <source>RGB only</source>
+        <translation>单RGB</translation>
+    </message>
+    <message>
+        <source>HEX only</source>
+        <translation>单HEX</translation>
+    </message>
+    <message>
+        <source>Screenshot</source>
+        <translation>截图</translation>
+    </message>
+    <message>
+        <source>Theme Color</source>
+        <translation>主题颜色</translation>
+    </message>
+    <message>
+        <source>Affects selection border, toolbar border, magnifier crosshair, etc. Restart recommended after change.</source>
+        <translation>影响选区边框、工具栏描边、放大镜十字线等。修改后建议重启应用。</translation>
+    </message>
+    <message>
+        <source>Select Theme Color</source>
+        <translation>选择主题颜色</translation>
+    </message>
+    <message>
+        <source>Used for selection border, toolbar accent, magnifier crosshair.</source>
+        <translation>用于选区边框、工具栏强调色、放大镜十字线。</translation>
+    </message>
+    <message>
+        <source>Screenshot Overlay</source>
+        <translation>截图遮罩</translation>
+    </message>
+    <message>
+        <source>The semi-transparent overlay color outside the selection area during screenshot.</source>
+        <translation>截图时选区外部的半透明遮罩颜色。</translation>
+    </message>
+    <message>
+        <source>Select Mask Color</source>
+        <translation>选择遮罩颜色</translation>
+    </message>
+    <message>
+        <source>Mask Color</source>
+        <translation>遮罩颜色</translation>
+    </message>
+    <message>
+        <source>The overlay color for unselected area. Supports transparency.</source>
+        <translation>未选中区域的覆盖颜色，支持透明度。</translation>
+    </message>
+    <message>
+        <source>Reset to Defaults</source>
+        <translation>恢复默认</translation>
+    </message>
+    <message>
+        <source>💡 Hint: Color changes take effect on the next screenshot.</source>
+        <translation>💡 提示：颜色修改在下次截图时生效。</translation>
+    </message>
+    <message>
+        <source>Theme</source>
+        <translation>主题</translation>
+    </message>
+    <message>
+        <source>Font Size</source>
+        <translation>字体大小</translation>
+    </message>
+    <message>
+        <source>Opacity</source>
+        <translation>透明度</translation>
+    </message>
+    <message>
+        <source>Opaque</source>
+        <translation>不透明</translation>
+    </message>
+    <message>
+        <source>Basic Settings</source>
+        <translation>基本设置</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>历史记录</translation>
+    </message>
+    <message>
+        <source>Data</source>
+        <translation>数据管理</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <source>Folder does not exist</source>
+        <translation>文件夹不存在</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>错误</translation>
+    </message>
+    <message>
+        <source>Success</source>
+        <translation>成功</translation>
+    </message>
+    <message>
+        <source>Startup</source>
+        <translation>启动</translation>
+    </message>
+    <message>
+        <source>Pin Window</source>
+        <translation>钉图窗口</translation>
+    </message>
+    <message>
+        <source>Operation</source>
+        <translation>操作</translation>
+    </message>
+    <message>
+        <source>Features</source>
+        <translation>功能特色</translation>
+    </message>
+    <message>
+        <source>OCR text recognition · Long screenshot · Pin window · Clipboard manager · DeepL translation</source>
+        <translation>OCR文字识别 · 长截图 · 钉图窗口 · 剪贴板管理 · DeepL翻译</translation>
+    </message>
+    <message>
+        <source>Licenses</source>
+        <translation>许可证</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>详情</translation>
+    </message>
+    <message>
+        <source>MIT License</source>
+        <translation>MIT License</translation>
+    </message>
+    <message>
+        <source>MIT License Text</source>
+        <translation>MIT License
+
+Copyright (c) 2025 RIJYAARU
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</translation>
+    </message>
+    <message>
+        <source>Source Code</source>
+        <translation>源代码</translation>
+    </message>
+    <message>
+        <source>Open GitHub</source>
+        <translation>打开GitHub</translation>
+    </message>
+    <message>
+        <source>Long Screenshot</source>
+        <translation>长截图</translation>
+    </message>
+    <message>
+        <source>Tools</source>
+        <translation>工具</translation>
+    </message>
+    <message>
+        <source>Storage</source>
+        <translation>存储位置</translation>
+    </message>
+    <message>
+        <source>Save Format</source>
+        <translation>保存格式</translation>
+    </message>
+    <message>
+        <source>OCR</source>
+        <translation>OCR</translation>
+    </message>
+    <message>
+        <source>Change Location</source>
+        <translation>更改</translation>
+    </message>
+    <message>
+        <source>Current clipboard database path is unavailable.</source>
+        <translation>无法获取当前剪贴板数据库路径。</translation>
+    </message>
+    <message>
+        <source>Choose Clipboard Data Folder</source>
+        <translation>选择剪贴板数据文件夹</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>提示</translation>
+    </message>
+    <message>
+        <source>The selected folder is already the current location.</source>
+        <translation>所选文件夹已经是当前位置。</translation>
+    </message>
+    <message>
+        <source>Please choose a folder outside the current clipboard images folder.</source>
+        <translation>请选择当前剪贴板图片文件夹之外的位置。</translation>
+    </message>
+    <message>
+        <source>Replace Existing Data</source>
+        <translation>替换现有数据</translation>
+    </message>
+    <message>
+        <source>The selected folder already contains clipboard data. Replace it with the current data?</source>
+        <translation>所选文件夹已包含剪贴板数据。要用当前数据替换吗？</translation>
+    </message>
+    <message>
+        <source>Failed to close the current clipboard database.</source>
+        <translation>关闭当前剪贴板数据库失败。</translation>
+    </message>
+    <message>
+        <source>Preparing migration...</source>
+        <translation>正在准备迁移...</translation>
+    </message>
+    <message>
+        <source>Moving Clipboard Data</source>
+        <translation>正在移动剪贴板数据</translation>
+    </message>
+    <message>
+        <source>Finalizing migration...</source>
+        <translation>正在完成迁移...</translation>
+    </message>
+    <message>
+        <source>Migration complete.</source>
+        <translation>迁移完成。</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully.</source>
+        <translation>剪贴板数据位置已更改。</translation>
+    </message>
+    <message>
+        <source>Clipboard data location changed successfully, but the old files are still in use and could not be deleted. You can remove them after restarting the app.\n{error}</source>
+        <translation>剪贴板数据位置已更改，但旧文件仍被占用，暂时无法删除。重启应用后可以手动删除。\n{error}</translation>
+    </message>
+    <message>
+        <source>Clipboard data moved, but reopening the database failed. Please restart the app.</source>
+        <translation>剪贴板数据已移动，但重新打开数据库失败。请重启应用。</translation>
+    </message>
+    <message>
+        <source>No clipboard data files were found to move.</source>
+        <translation>没有找到可移动的剪贴板数据文件。</translation>
+    </message>
+    <message>
+        <source>Moving clipboard data... {done} / {total}</source>
+        <translation>正在移动剪贴板数据... {done} / {total}</translation>
+    </message>
+    <message>
+        <source>Application</source>
+        <translation>应用程序</translation>
+    </message>
+    <message>
+        <source>Interface Theme</source>
+        <translation>界面主题</translation>
+    </message>
+    <message>
+        <source>Choose a display mode.</source>
+        <translation>选择显示模式。</translation>
+    </message>
+    <message>
+        <source>System</source>
+        <translation>系统</translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation>浅色</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>深色</translation>
+    </message>
+    <message>
+        <source>Permissions</source>
+        <translation>权限</translation>
+    </message>
+    <message>
+        <source>System Permissions</source>
+        <translation>系统权限</translation>
+    </message>
+    <message>
+        <source>jietuba needs these system permissions. Grant them here; the status refreshes by itself once granted.</source>
+        <translation>jietuba 需要以下系统权限。在这里授权即可，授权后状态会自动更新。</translation>
+    </message>
+    <message>
+        <source>Accessibility Permission</source>
+        <translation>辅助功能权限</translation>
+    </message>
+    <message>
+        <source>Global hotkeys only work with this permission, and smart selection uses it to detect the element under the cursor.</source>
+        <translation>全局热键需要这项权限才能生效；智能选区也用它识别光标下的元素。</translation>
+    </message>
+    <message>
+        <source>Screen Recording Permission</source>
+        <translation>屏幕录制权限</translation>
+    </message>
+    <message>
+        <source>Screenshots contain window contents only with this permission; without it they show the desktop wallpaper only.</source>
+        <translation>截图只有获得这项权限后才包含窗口内容，否则只有桌面壁纸。</translation>
+    </message>
+    <message>
+        <source>Granted</source>
+        <translation>已授权</translation>
+    </message>
+    <message>
+        <source>Not Granted</source>
+        <translation>未授权</translation>
+    </message>
+    <message>
+        <source>Granted. Restart jietuba for it to take effect.</source>
+        <translation>已授权。重启 jietuba 后生效。</translation>
+    </message>
+    <message>
+        <source>Authorize</source>
+        <translation>去授权</translation>
+    </message>
+    <message>
+        <source>Open System Settings</source>
+        <translation>打开系统设置</translation>
+    </message>
+    <message>
+        <source>Restart jietuba</source>
+        <translation>重启 jietuba</translation>
+    </message>
+    <message>
+        <source>jietuba will close and reopen so the newly granted permission takes effect.</source>
+        <translation>jietuba 会退出并重新打开，新授权的权限才会生效。</translation>
+    </message>
+    <message>
+        <source>Video Recording</source>
+        <translation>视频录制</translation>
+    </message>
+    <message>
+        <source>Video Container</source>
+        <translation>视频容器</translation>
+    </message>
+    <message>
+        <source>File format of the recorded video.</source>
+        <translation>录下来的视频存成哪种文件格式。</translation>
+    </message>
+    <message>
+        <source>Video Codec</source>
+        <translation>视频编码</translation>
+    </message>
+    <message>
+        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
+        <translation>H.264 兼容性最好；H.265 文件更小。</translation>
+    </message>
+    <message>
+        <source>Video Quality</source>
+        <translation>清晰度</translation>
+    </message>
+    <message>
+        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
+        <translation>跟随所选区域，或把输出限制在 1080p/720p/480p。</translation>
+    </message>
+    <message>
+        <source>Follow Selection</source>
+        <translation>跟随区域</translation>
+    </message>
+    <message>
+        <source>Video Frame Rate</source>
+        <translation>帧率</translation>
+    </message>
+    <message>
+        <source>Higher frame rates make smoother videos and larger files.</source>
+        <translation>帧率越高越流畅，文件也越大。</translation>
+    </message>
+    <message>
+        <source>Bitrate Limit</source>
+        <translation>码率上限</translation>
+    </message>
+    <message>
+        <source>0 lets the encoder decide from the quality preset.</source>
+        <translation>0 表示交给编码器按清晰度决定。</translation>
+    </message>
+    <message>
+        <source>Record Audio</source>
+        <translation>录制声音</translation>
+    </message>
+    <message>
+        <source>Record the microphone together with the screen.</source>
+        <translation>录屏时同时录麦克风。</translation>
+    </message>
+    <message>
+        <source>No Audio</source>
+        <translation>不录声音</translation>
+    </message>
+    <message>
+        <source>Microphone</source>
+        <translation>麦克风</translation>
+    </message>
+    <message>
+        <source>Microphone Device</source>
+        <translation>麦克风设备</translation>
+    </message>
+    <message>
+        <source>Device used when recording audio (empty = system default).</source>
+        <translation>录制声音时使用的设备（留空表示系统默认）。</translation>
+    </message>
+    <message>
+        <source>System Default</source>
+        <translation>系统默认</translation>
+    </message>
+    <message>
+        <source>Maximum Duration</source>
+        <translation>最长录制时长</translation>
+    </message>
+    <message>
+        <source>Automatically stop after this many seconds (0 = no limit).</source>
+        <translation>超过这个秒数自动停止（0 = 不限制）。</translation>
+    </message>
+    <message>
+        <source> seconds</source>
+        <translation> 秒</translation>
+    </message>
+    <message>
+        <source>Video Save Folder</source>
+        <translation>视频保存目录</translation>
+    </message>
+    <message>
+        <source>Empty = follow the screenshot save folder.</source>
+        <translation>留空则跟随截图保存目录。</translation>
+    </message>
+    <message>
+        <source>Video recording is unavailable: no encoding backend.</source>
+        <translation>视频录制不可用：没有可用的编码后端。</translation>
+    </message>
+    <message>
+        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
+        <translation>💡 填录屏文件的保存目录；清空则跟随截图保存目录。</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>浏览</translation>
+    </message>
+    <message>
+        <source>Screenshot History Settings</source>
+        <translation>截图历史</translation>
+    </message>
+    <message>
+        <source>Screenshot History</source>
+        <translation>截图历史</translation>
+    </message>
+    <message>
+        <source>Keep every confirmed screenshot and browse it later.</source>
+        <translation>把确认过的截图存一份，之后可以随时翻回来用。</translation>
+    </message>
+    <message>
+        <source>Delete history entries older than this (0 = keep forever).</source>
+        <translation>超过这个天数的历史会被删掉（0 = 永久保留）。</translation>
+    </message>
+    <message>
+        <source>Keep forever</source>
+        <translation>永久保留</translation>
+    </message>
+    <message>
+        <source>{days} days</source>
+        <translation>{days} 天</translation>
+    </message>
+    <message>
+        <source>Maximum Entries</source>
+        <translation>最多保留条数</translation>
+    </message>
+    <message>
+        <source>Keep at most this many entries (0 = no limit).</source>
+        <translation>最多留这么多条，超出的从最旧的开始删（0 = 不限制）。</translation>
+    </message>
+    <message>
+        <source>Maximum Disk Usage</source>
+        <translation>磁盘占用上限</translation>
+    </message>
+    <message>
+        <source>Oldest entries are deleted first once this is exceeded.</source>
+        <translation>超过上限就从最旧的开始删，磁盘占用会真的降下来。</translation>
+    </message>
+    <message>
+        <source> MiB</source>
+        <translation> MiB</translation>
+    </message>
+    <message>
+        <source>History Tools</source>
+        <translation>历史工具</translation>
+    </message>
+    <message>
+        <source>Open the history window or clean up old entries now.</source>
+        <translation>打开历史窗口，或立刻按上面的策略清理一次。</translation>
+    </message>
+    <message>
+        <source>Open History</source>
+        <translation>打开历史</translation>
+    </message>
+    <message>
+        <source>Clean Up Now</source>
+        <translation>立即清理</translation>
+    </message>
+    <message>
+        <source>Removed {removed} entries; {remaining} left.</source>
+        <translation>已删除 {removed} 条，剩余 {remaining} 条。</translation>
+    </message>
+    <message>
+        <source>Layer &amp; Alignment</source>
+        <translation>层级与对齐</translation>
+    </message>
+    <message>
+        <source>Bring to Front</source>
+        <translation>移到最前</translation>
+    </message>
+    <message>
+        <source>Send to Back</source>
+        <translation>移到最后</translation>
+    </message>
+    <message>
+        <source>Bring Forward</source>
+        <translation>上移一层</translation>
+    </message>
+    <message>
+        <source>Send Backward</source>
+        <translation>下移一层</translation>
+    </message>
+    <message>
+        <source>Align Left</source>
+        <translation>左对齐</translation>
+    </message>
+    <message>
+        <source>Align Horizontal Center</source>
+        <translation>水平居中</translation>
+    </message>
+    <message>
+        <source>Align Right</source>
+        <translation>右对齐</translation>
+    </message>
+    <message>
+        <source>Align Top</source>
+        <translation>顶对齐</translation>
+    </message>
+    <message>
+        <source>Align Vertical Center</source>
+        <translation>垂直居中</translation>
+    </message>
+    <message>
+        <source>Align Bottom</source>
+        <translation>底对齐</translation>
+    </message>
+    <message>
+        <source>Toggle Click-through</source>
+        <translation>切换点击穿透</translation>
+    </message>
+    <message>
+        <source>Focus Mode</source>
+        <translation>焦点模式</translation>
+    </message>
+    <message>
+        <source>Close Other Pins</source>
+        <translation>关闭其它贴图</translation>
+    </message>
+    <message>
+        <source>Load New Content</source>
+        <translation>加载新内容</translation>
+    </message>
+    <message>
+        <source>Recognize Text Again</source>
+        <translation>重新识别文字</translation>
+    </message>
+    <message>
+        <source>OCR Model</source>
+        <translation>识别模型</translation>
+    </message>
+    <message>
+        <source>Which PP-OCR model pair to load (only installed tiers are listed).</source>
+        <translation>加载哪一套 PP-OCR 模型（只列出本机已有的档位）。</translation>
+    </message>
+    <message>
+        <source>No OCR model found</source>
+        <translation>没有找到 OCR 模型</translation>
+    </message>
+    <message>
+        <source>Vision Model</source>
+        <translation>视觉模型</translation>
+    </message>
+    <message>
+        <source>OpenAI-compatible endpoint that converts an image to Markdown or HTML.</source>
+        <translation>OpenAI 兼容接口，把图片转成 Markdown 或 HTML。</translation>
+    </message>
+    <message>
+        <source>Image Conversion Output</source>
+        <translation>图片转换输出</translation>
+    </message>
+    <message>
+        <source>Convert images to Markdown (tables) or HTML.</source>
+        <translation>把图片转成 Markdown（表格）或 HTML。</translation>
+    </message>
+    <message>
+        <source>Markdown</source>
+        <translation>Markdown</translation>
+    </message>
+    <message>
+        <source>HTML</source>
+        <translation>HTML</translation>
+    </message>
+    <message>
+        <source>Table Recognition</source>
+        <translation>表格识别</translation>
+    </message>
+    <message>
+        <source>Convert Image to Markdown</source>
+        <translation>图片转 Markdown</translation>
+    </message>
+    <message>
+        <source>Backup</source>
+        <translation>备份</translation>
+    </message>
+    <message>
+        <source>Backup and Restore</source>
+        <translation>备份与恢复</translation>
+    </message>
+    <message>
+        <source>Export every setting to a zip file, or restore one.</source>
+        <translation>把全部设置导出成一个 zip，或从 zip 恢复。</translation>
+    </message>
+    <message>
+        <source>Export settings</source>
+        <translation>导出设置</translation>
+    </message>
+    <message>
+        <source>Import settings</source>
+        <translation>导入设置</translation>
+    </message>
+    <message>
+        <source>This replaces every setting with the archive content. Continue?</source>
+        <translation>当前设置会被压缩包里的内容整体替换，确定继续？</translation>
+    </message>
+    <message>
+        <source>Search settings and functions</source>
+        <translation>搜索设置与功能</translation>
+    </message>
+    <message>
+        <source>检查更新失败</source>
+        <translation>检查更新失败</translation>
+    </message>
+    <message>
+        <source>PDF Page Size</source>
+        <translation>PDF 页尺寸</translation>
+    </message>
+    <message>
+        <source>Page size used when saving as PDF.</source>
+        <translation>存成 PDF 时用的页面尺寸。</translation>
+    </message>
+    <message>
+        <source>Original size</source>
+        <translation>原始尺寸</translation>
+    </message>
+    <message>
+        <source>A4 portrait</source>
+        <translation>A4 纵向</translation>
+    </message>
+    <message>
+        <source>A4 landscape</source>
+        <translation>A4 横向</translation>
+    </message>
+    <message>
+        <source>Tray Scroll Action</source>
+        <translation>托盘滚轮动作</translation>
+    </message>
+    <message>
+        <source>What a scroll-wheel click (middle click) on the tray icon does.</source>
+        <translation>在托盘图标上滚轮点击（中键）时执行什么。</translation>
+    </message>
+    <message>
+        <source>Left drag up</source>
+        <translation>左键上拖</translation>
+    </message>
+    <message>
+        <source>Left drag down</source>
+        <translation>左键下拖</translation>
+    </message>
+    <message>
+        <source>Left drag left</source>
+        <translation>左键左拖</translation>
+    </message>
+    <message>
+        <source>Left drag right</source>
+        <translation>左键右拖</translation>
+    </message>
+    <message>
+        <source>Right drag up</source>
+        <translation>右键上拖</translation>
+    </message>
+    <message>
+        <source>Right drag down</source>
+        <translation>右键下拖</translation>
+    </message>
+    <message>
+        <source>Right drag left</source>
+        <translation>右键左拖</translation>
+    </message>
+    <message>
+        <source>Right drag right</source>
+        <translation>右键右拖</translation>
+    </message>
+    <message>
+        <source>Image Viewer</source>
+        <translation>图片查看器</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>主窗口</translation>
+    </message>
+    <message>
+        <source>Save Paths</source>
+        <translation>保存路径</translation>
+    </message>
+    <message>
+        <source>Save every screenshot into one or more folders, each with its own format.</source>
+        <translation>把每张截图存进一个或多个目录，每条可以有自己的格式与质量。</translation>
+    </message>
+    <message>
+        <source>Manage…</source>
+        <translation>管理…</translation>
+    </message>
 </context>
+
 
 <context>
     <name>ActionTools</name>
@@ -1819,6 +2741,7 @@ This action cannot be undone.</source>
     </message>
 </context>
 
+
 <context>
     <name>PinTranslationHelper</name>
     <message>
@@ -1830,6 +2753,7 @@ This action cannot be undone.</source>
         <translation>请先在设置中配置 DeepL API 密钥</translation>
     </message>
 </context>
+
 
 <!-- ========== Toolbar ========== -->
 <context>
@@ -1866,7 +2790,6 @@ This action cannot be undone.</source>
         <source>GIF recording</source>
         <translation>GIF 录制</translation>
     </message>
-    
     <message>
         <source>Copy image</source>
         <translation>复制图片</translation>
@@ -1996,6 +2919,7 @@ This action cannot be undone.</source>
         <translation>录屏</translation>
     </message>
 </context>
+
 
 <!-- ========== Pin Window ========== -->
 <context>
@@ -2132,7 +3056,56 @@ This action cannot be undone.</source>
         <source>Close Selected Pins</source>
         <translation>关闭选中的贴图</translation>
     </message>
+    <message>
+        <source>Click-through</source>
+        <translation>点击穿透</translation>
+    </message>
+    <message>
+        <source>Click-through on</source>
+        <translation>已开启点击穿透</translation>
+    </message>
+    <message>
+        <source>Click-through off</source>
+        <translation>已关闭点击穿透</translation>
+    </message>
+    <message>
+        <source>Focus mode</source>
+        <translation>焦点模式</translation>
+    </message>
+    <message>
+        <source>Close other pins</source>
+        <translation>关闭其它贴图</translation>
+    </message>
+    <message>
+        <source>Load new content</source>
+        <translation>加载新内容…</translation>
+    </message>
+    <message>
+        <source>Recognize text again</source>
+        <translation>重新识别文字</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>分组</translation>
+    </message>
+    <message>
+        <source>Remove from group</source>
+        <translation>移出分组</translation>
+    </message>
+    <message>
+        <source>New group…</source>
+        <translation>新建分组…</translation>
+    </message>
+    <message>
+        <source>New group</source>
+        <translation>新建分组</translation>
+    </message>
+    <message>
+        <source>Group name</source>
+        <translation>分组名</translation>
+    </message>
 </context>
+
 
 <!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
 <context>
@@ -2199,6 +3172,7 @@ This action cannot be undone.</source>
     </message>
 </context>
 
+
 <!-- ========== System Tray ========== -->
 <context>
     <name>SystemTray</name>
@@ -2230,16 +3204,46 @@ This action cannot be undone.</source>
         <source>Exit</source>
         <translation>退出</translation>
     </message>
-    <message><source>Close all pinned windows</source><translation>关闭所有钉图窗口</translation></message>
-    <message><source>Current pinned windows: {count}</source><translation>当前 {count} 个钉图</translation></message>
-    <message><source>Move all pins to center</source><translation>移动所有钉图到中心</translation></message>
-    <message><source>Thumbnail all pins</source><translation>缩略图所有钉图</translation></message>
-    <message><source>Restore all pin thumbnails</source><translation>取消缩略所有钉图</translation></message>
-    <message><source>Close all pins</source><translation>关闭所有钉图</translation></message>
-    <message><source>Save all pins as...</source><translation>所有钉图另存为</translation></message>
-    <message><source>Choose folder to save pinned images</source><translation>选择保存钉图的文件夹</translation></message>
-    <message><source>Save Failed</source><translation>保存失败</translation></message>
-    <message><source>Saved {saved} pinned images, failed {failed}.</source><translation>已保存 {saved} 个钉图，失败 {failed} 个。</translation></message>
+    <message>
+        <source>Close all pinned windows</source>
+        <translation>关闭所有钉图窗口</translation>
+    </message>
+    <message>
+        <source>Current pinned windows: {count}</source>
+        <translation>当前 {count} 个钉图</translation>
+    </message>
+    <message>
+        <source>Move all pins to center</source>
+        <translation>移动所有钉图到中心</translation>
+    </message>
+    <message>
+        <source>Thumbnail all pins</source>
+        <translation>缩略图所有钉图</translation>
+    </message>
+    <message>
+        <source>Restore all pin thumbnails</source>
+        <translation>取消缩略所有钉图</translation>
+    </message>
+    <message>
+        <source>Close all pins</source>
+        <translation>关闭所有钉图</translation>
+    </message>
+    <message>
+        <source>Save all pins as...</source>
+        <translation>所有钉图另存为</translation>
+    </message>
+    <message>
+        <source>Choose folder to save pinned images</source>
+        <translation>选择保存钉图的文件夹</translation>
+    </message>
+    <message>
+        <source>Save Failed</source>
+        <translation>保存失败</translation>
+    </message>
+    <message>
+        <source>Saved {saved} pinned images, failed {failed}.</source>
+        <translation>已保存 {saved} 个钉图，失败 {failed} 个。</translation>
+    </message>
     <message>
         <source>Screenshot and Copy</source>
         <translation>截图并复制</translation>
@@ -2296,7 +3300,28 @@ This action cannot be undone.</source>
         <source>Video Recording</source>
         <translation>视频录制</translation>
     </message>
+    <message>
+        <source>Screenshot History</source>
+        <translation>截图历史</translation>
+    </message>
+    <message>
+        <source>Table Recognition</source>
+        <translation>表格识别</translation>
+    </message>
+    <message>
+        <source>Convert Image to Markdown</source>
+        <translation>图片转 Markdown</translation>
+    </message>
+    <message>
+        <source>Image Viewer</source>
+        <translation>图片查看器</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>主窗口</translation>
+    </message>
 </context>
+
 
 <!-- ========== Main App (Tray Menu) ========== -->
 <context>
@@ -2393,7 +3418,28 @@ This action cannot be undone.</source>
         <source>Video Recording</source>
         <translation>视频录制</translation>
     </message>
+    <message>
+        <source>Screenshot History</source>
+        <translation>截图历史</translation>
+    </message>
+    <message>
+        <source>Table Recognition</source>
+        <translation>表格识别</translation>
+    </message>
+    <message>
+        <source>Convert Image to Markdown</source>
+        <translation>图片转 Markdown</translation>
+    </message>
+    <message>
+        <source>Image Viewer</source>
+        <translation>图片查看器</translation>
+    </message>
+    <message>
+        <source>Main Window</source>
+        <translation>主窗口</translation>
+    </message>
 </context>
+
 
 <!-- ========== Translation Dialog ========== -->
 <context>
@@ -2466,7 +3512,6 @@ This action cannot be undone.</source>
         <source>Translation will appear here...</source>
         <translation>翻译结果将显示在这里...</translation>
     </message>
-    <!-- Languages -->
     <message>
         <source>Auto Detect</source>
         <translation>自动检测</translation>
@@ -2528,14 +3573,6 @@ This action cannot be undone.</source>
         <translation>从右向左翻译</translation>
     </message>
     <message>
-        <source>Swap languages</source>
-        <translation>交换语言</translation>
-    </message>
-    <message>
-        <source>Translate text</source>
-        <translation>翻译文本</translation>
-    </message>
-    <message>
         <source>Pin</source>
         <translation>置顶</translation>
     </message>
@@ -2555,9 +3592,18 @@ This action cannot be undone.</source>
         <source>API key not configured</source>
         <translation>未配置 API 密钥，请前往设置中配置。</translation>
     </message>
-    <message><source>Open full window</source><translation>打开完整窗口</translation></message>
-    <message><source>No translation result</source><translation>无翻译结果</translation></message>
-    <message><source>Copied</source><translation>已复制</translation></message>
+    <message>
+        <source>Open full window</source>
+        <translation>打开完整窗口</translation>
+    </message>
+    <message>
+        <source>No translation result</source>
+        <translation>无翻译结果</translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation>已复制</translation>
+    </message>
     <message>
         <source>%1 characters</source>
         <translation>%1 个字符</translation>
@@ -2578,7 +3624,6 @@ This action cannot be undone.</source>
         <source>Translation failed:</source>
         <translation>翻译失败:</translation>
     </message>
-
     <message>
         <source>Switch target language</source>
         <translation>切换目标语言</translation>
@@ -2589,131 +3634,6 @@ This action cannot be undone.</source>
     </message>
 </context>
 
-<!-- ========== Translation Settings ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Delete</source>
-        <translation>删除</translation>
-    </message>
-    <message>
-        <source>Offline Models</source>
-        <translation>离线模型</translation>
-    </message>
-    <message>
-        <source>Offline translation runtime is missing from this build: {reason}</source>
-        <translation>此版本的离线翻译运行库缺失：{reason}</translation>
-    </message>
-    <message>
-        <source>No offline model is available for download yet.</source>
-        <translation>暂时没有可下载的离线模型。</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation>安装</translation>
-    </message>
-    <message>
-        <source>Installed</source>
-        <translation>已安装</translation>
-    </message>
-    <message>
-        <source>Installed (in memory)</source>
-        <translation>已安装（已载入内存）</translation>
-    </message>
-    <message>
-        <source>Incomplete ({size} downloaded)</source>
-        <translation>未下载完（已下载 {size}）</translation>
-    </message>
-    <message>
-        <source>Not installed</source>
-        <translation>未安装</translation>
-    </message>
-    <message>
-        <source>Translation</source>
-        <translation>翻译</translation>
-    </message>
-    <message><source>Translation Hotkey</source><translation>翻译快捷键</translation></message>
-    <message>
-        <source>Translation Settings</source>
-        <translation>翻译设置</translation>
-    </message>
-    <message>
-        <source>DeepL API Key</source>
-        <translation>DeepL API 密钥</translation>
-    </message>
-    <message>
-        <source>Get your API key from DeepL website (free tier available)</source>
-        <translation>从Deepl网站获取API密钥（有免费版）</translation>
-    </message>
-    <message>
-        <source>Show Key</source>
-        <translation>显示密钥</translation>
-    </message>
-    <message>
-        <source>Hide Key</source>
-        <translation>隐藏密钥</translation>
-    </message>
-    <message>
-        <source>Show</source>
-        <translation>显示</translation>
-    </message>
-    <message>
-        <source>Hide</source>
-        <translation>隐藏</translation>
-    </message>
-    <message>
-        <source>Use DeepL Pro API</source>
-        <translation>使用 DeepL Pro API</translation>
-    </message>
-    <message>
-        <source>Enable if you have a paid DeepL subscription</source>
-        <translation>如果您有DeepL付费订阅请启用</translation>
-    </message>
-    <message>
-        <source>Target Language</source>
-        <translation>目标语言</translation>
-    </message>
-    <message>
-        <source>Leave empty to follow system language</source>
-        <translation>留空则跟随系统语言</translation>
-    </message>
-    <message>
-        <source>Auto (System)</source>
-        <translation>自动（跟随系统）</translation>
-    </message>
-    <message>
-        <source>Advanced Options</source>
-        <translation>高级选项</translation>
-    </message>
-    <message>
-        <source>Auto Split Sentences</source>
-        <translation>自动分句</translation>
-    </message>
-    <message>
-        <source>Automatically split text into sentences for better translation</source>
-        <translation>自动将文本分割成句子以获得更好的翻译</translation>
-    </message>
-    <message>
-        <source>Preserve Formatting</source>
-        <translation>保留格式</translation>
-    </message>
-    <message>
-        <source>Keep original text formatting in translation</source>
-        <translation>在翻译中保留原文格式</translation>
-    </message>
-    <message>
-        <source>DeepL free tier: 500,000 chars/month. Get API key at</source>
-        <translation>DeepL免费版：每月50万字符。获取API密钥：</translation>
-    </message>
-    <message>
-        <source>DeepL offers a free API tier with 500,000 characters/month.</source>
-        <translation>DeepL提供免费API，每月50万字符额度。</translation>
-    </message>
-    <message>
-        <source>Visit https://www.deepl.com/pro-api to get your API key.</source>
-        <translation>访问 https://www.deepl.com/pro-api 获取您的API密钥。</translation>    
-    </message>
-</context>
 
 <!-- ========== Clipboard Window ========== -->
 <context>
@@ -3006,6 +3926,7 @@ This action cannot be undone.</source>
     </message>
 </context>
 
+
 <!-- ========== Clipboard Management Dialog ========== -->
 <context>
     <name>ManageDialog</name>
@@ -3048,10 +3969,6 @@ This action cannot be undone.</source>
     <message>
         <source>Add Content</source>
         <translation>添加内容</translation>
-    </message>
-    <message>
-        <source>New Group</source>
-        <translation>新建分组</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -3156,10 +4073,6 @@ This action cannot be undone.</source>
     <message>
         <source>(No content in group)</source>
         <translation>（分组内暂无内容）</translation>
-    </message>
-    <message>
-        <source>Add Content</source>
-        <translation>添加内容</translation>
     </message>
     <message>
         <source>Add</source>
@@ -3313,7 +4226,6 @@ This action cannot be undone.</source>
         <source>Failed to delete item</source>
         <translation>删除内容失败</translation>
     </message>
-    <!-- Import/Export -->
     <message>
         <source>📦 Import/Export</source>
         <translation>📦 导入/导出</translation>
@@ -3416,106 +4328,6 @@ This action cannot be undone.</source>
     </message>
 </context>
 
-<!-- ========== 设置对话框 - 剪贴板设置 ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Enable Clipboard Manager</source>
-        <translation>启用剪贴板管理器</translation>
-    </message>
-    <message>
-        <source>Monitor and manage clipboard history</source>
-        <translation>监控并管理剪贴板历史记录</translation>
-    </message>
-    <message>
-        <source>Auto Paste After Selection</source>
-        <translation>选择后自动粘贴</translation>
-    </message>
-    <message>
-        <source>Automatically send Ctrl+V after selecting an item</source>
-        <translation>选择项目后自动发送 Ctrl+V</translation>
-    </message>
-    <message>
-        <source>History Limit</source>
-        <translation>历史记录限制</translation>
-    </message>
-    <message>
-        <source>Maximum number of items to keep (0 = unlimited)</source>
-        <translation>保留的最大项目数（0 = 无限制）</translation>
-    </message>
-    <message>
-        <source>Auto Cleanup Old Items</source>
-        <translation>自动清理旧项目</translation>
-    </message>
-    <message>
-        <source>Automatically remove items exceeding the limit</source>
-        <translation>自动删除超出限制的项目</translation>
-    </message>
-    <message>
-        <source>Data Storage Location</source>
-        <translation>数据存储位置</translation>
-    </message>
-    <message>
-        <source>Unknown</source>
-        <translation>未知</translation>
-    </message>
-    <message>
-        <source>Clipboard module not available</source>
-        <translation>剪贴板模块不可用</translation>
-    </message>
-    <message>
-        <source>Open Folder</source>
-        <translation>打开</translation>
-    </message>
-    <message>
-        <source>Clear Clipboard History</source>
-        <translation>清空剪贴板历史</translation>
-    </message>
-    <message>
-        <source>Delete all clipboard history records</source>
-        <translation>删除所有剪贴板历史记录</translation>
-    </message>
-    <message>
-        <source>← Get storage size</source>
-        <translation>← 获取数据占用大小</translation>
-    </message>
-    <message>
-        <source>Clear History</source>
-        <translation>清空历史</translation>
-    </message>
-    <message>
-        <source>Image Data Optimization</source>
-        <translation>图片数据优化</translation>
-    </message>
-    <message>
-        <source>If PNG is available, skip storing DIB to save space</source>
-        <translation>若剪贴板含PNG格式，跳过DIB存储以节省空间</translation>
-    </message>
-    <message>
-        <source>💡 Hint: Set clipboard hotkey in Shortcuts settings.</source>
-        <translation>💡 提示：在快捷键设置中设置剪贴板热键。</translation>
-    </message>
-    <message>
-        <source>Confirm Clear</source>
-        <translation>确认清空</translation>
-    </message>
-    <message>
-        <source>Are you sure you want to clear all clipboard history?\nThis action cannot be undone.</source>
-        <translation>确定要清空所有剪贴板历史吗？\n此操作不可恢复。</translation>
-    </message>
-    <message>
-        <source>Also delete saved content in groups</source>
-        <translation>同时删除分组中保存的内容</translation>
-    </message>
-    <message>
-        <source>Clipboard history cleared successfully</source>
-        <translation>剪贴板历史已清空</translation>
-    </message>
-    <message>
-        <source>Failed to clear clipboard history</source>
-        <translation>清空剪贴板历史失败</translation>
-    </message>
-</context>
 
 <context>
     <name>ArrowSettingsPanel</name>
@@ -3623,7 +4435,60 @@ This action cannot be undone.</source>
         <source>Strength: Maximum</source>
         <translation>强度：最强</translation>
     </message>
+    <message>
+        <source>Straight</source>
+        <translation>直线</translation>
+    </message>
+    <message>
+        <source>Curve</source>
+        <translation>曲线</translation>
+    </message>
+    <message>
+        <source>Elbow</source>
+        <translation>折线</translation>
+    </message>
+    <message>
+        <source>Arrow path</source>
+        <translation>箭头路径</translation>
+    </message>
+    <message>
+        <source>Start arrowhead</source>
+        <translation>起点端点</translation>
+    </message>
+    <message>
+        <source>End arrowhead</source>
+        <translation>终点端点</translation>
+    </message>
+    <message>
+        <source>Follow style</source>
+        <translation>跟随样式</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>无</translation>
+    </message>
+    <message>
+        <source>Triangle</source>
+        <translation>三角</translation>
+    </message>
+    <message>
+        <source>Triangle outline</source>
+        <translation>空心三角</translation>
+    </message>
+    <message>
+        <source>Circle</source>
+        <translation>圆点</translation>
+    </message>
+    <message>
+        <source>Diamond</source>
+        <translation>菱形</translation>
+    </message>
+    <message>
+        <source>Bar</source>
+        <translation>横杠</translation>
+    </message>
 </context>
+
 
 <context>
     <name>TextSettingsPanel</name>
@@ -3685,6 +4550,7 @@ This action cannot be undone.</source>
     </message>
 </context>
 
+
 <context>
     <name>MagnifierOverlay</name>
     <message>
@@ -3693,34 +4559,10 @@ This action cannot be undone.</source>
     </message>
 </context>
 
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Color Copy Format</source>
-        <translation>颜色复制格式</translation>
-    </message>
-    <message>
-        <source>Used when copying color info in magnifier.</source>
-        <translation>按 C 复制颜色信息时使用</translation>
-    </message>
-    <message>
-        <source>RGB+HEX</source>
-        <translation>RGB+HEX</translation>
-    </message>
-    <message>
-        <source>RGB only</source>
-        <translation>单RGB</translation>
-    </message>
-    <message>
-        <source>HEX only</source>
-        <translation>单HEX</translation>
-    </message>
-</context>
 
 <!-- ========== Welcome Wizard ========== -->
 <context>
     <name>WelcomeWizard</name>
-    <!-- window / nav -->
     <message>
         <source>欢迎使用截图吧</source>
         <translation>欢迎使用截图吧</translation>
@@ -3753,7 +4595,6 @@ This action cannot be undone.</source>
         <source>完成</source>
         <translation>完成</translation>
     </message>
-    <!-- page1 -->
     <message>
         <source>欢迎使用截图吧 👋</source>
         <translation>欢迎使用截图吧 👋</translation>
@@ -3778,7 +4619,6 @@ This action cannot be undone.</source>
         <source>选择后立即生效，欢迎界面将随之切换语言。</source>
         <translation>选择后立即生效，欢迎界面将随之切换语言。</translation>
     </message>
-    <!-- page2 tool names & descriptions (illus carousel) -->
     <message>
         <source>工具_画笔</source>
         <translation>画笔</translation>
@@ -3891,25 +4731,62 @@ This action cannot be undone.</source>
         <source>工具描述_完成截图</source>
         <translation>复制到剪贴板或保存文件</translation>
     </message>
-    <!-- page2 -->
     <message>
         <source>📸 截图设置</source>
         <translation>📸 截图设置</translation>
     </message>
-    <!-- page3 -->
-    <message><source>剪贴板</source><translation>剪贴板</translation></message>
-    <message><source>历史记录</source><translation>历史记录</translation></message>
-    <message><source>内容分组</source><translation>内容分组</translation></message>
-    <message><source>快速启动</source><translation>快速启动</translation></message>
-    <message><source>文字</source><translation>文字</translation></message>
-    <message><source>图片</source><translation>图片</translation></message>
-    <message><source>文件</source><translation>文件</translation></message>
-    <message><source>会议时间改为 14:00</source><translation>会议时间改为 14:00</translation></message>
-    <message><source>产品封面.png</source><translation>产品封面.png</translation></message>
-    <message><source>项目说明.pdf</source><translation>项目说明.pdf</translation></message>
-    <message><source>感谢您的联系</source><translation>感谢您的联系</translation></message>
-    <message><source>设计预览.png</source><translation>设计预览.png</translation></message>
-    <message><source>下周一 10:00 开会</source><translation>下周一 10:00 开会</translation></message>
+    <message>
+        <source>剪贴板</source>
+        <translation>剪贴板</translation>
+    </message>
+    <message>
+        <source>历史记录</source>
+        <translation>历史记录</translation>
+    </message>
+    <message>
+        <source>内容分组</source>
+        <translation>内容分组</translation>
+    </message>
+    <message>
+        <source>快速启动</source>
+        <translation>快速启动</translation>
+    </message>
+    <message>
+        <source>文字</source>
+        <translation>文字</translation>
+    </message>
+    <message>
+        <source>图片</source>
+        <translation>图片</translation>
+    </message>
+    <message>
+        <source>文件</source>
+        <translation>文件</translation>
+    </message>
+    <message>
+        <source>会议时间改为 14:00</source>
+        <translation>会议时间改为 14:00</translation>
+    </message>
+    <message>
+        <source>产品封面.png</source>
+        <translation>产品封面.png</translation>
+    </message>
+    <message>
+        <source>项目说明.pdf</source>
+        <translation>项目说明.pdf</translation>
+    </message>
+    <message>
+        <source>感谢您的联系</source>
+        <translation>感谢您的联系</translation>
+    </message>
+    <message>
+        <source>设计预览.png</source>
+        <translation>设计预览.png</translation>
+    </message>
+    <message>
+        <source>下周一 10:00 开会</source>
+        <translation>下周一 10:00 开会</translation>
+    </message>
     <message>
         <source>剪贴板管理</source>
         <translation>剪贴板管理</translation>
@@ -3928,12 +4805,10 @@ This action cannot be undone.</source>
         <source>关闭后不会记录复制内容，快捷键也不会激活窗口。</source>
         <translation>关闭后不会记录复制内容，快捷键也不会激活窗口。</translation>
     </message>
-    <!-- page4 -->
     <message>
         <source>智能选区</source>
         <translation>智能选区</translation>
     </message>
-    <!-- page5 -->
     <message>
         <source>🌐 翻译设置</source>
         <translation>🌐 翻译设置</translation>
@@ -3988,7 +4863,6 @@ This action cannot be undone.</source>
         <source>翻译目标语言</source>
         <translation>翻译目标语言</translation>
     </message>
-    <!-- page6 -->
     <message>
         <source>🎉 一切就绪！</source>
         <translation>🎉 一切就绪！</translation>
@@ -4035,7 +4909,6 @@ This action cannot be undone.</source>
         <source>完成向导时在桌面创建截图吧快捷方式。</source>
         <translation>完成向导时在桌面创建截图吧快捷方式。</translation>
     </message>
-    <!-- illus strings -->
     <message>
         <source>截图 · 标注 · 剪贴板 · 翻译，一站搞定</source>
         <translation>截图 · 标注 · 剪贴板 · 翻译，一站搞定</translation>
@@ -4144,155 +5017,160 @@ This action cannot be undone.</source>
         <source>悬停时自动框出窗口或控件，单击即可精准截取。</source>
         <translation>悬停时自动框出窗口或控件，单击即可精准截取。</translation>
     </message>
+    <message>
+        <source>权限</source>
+        <translation>权限</translation>
+    </message>
+    <message>
+        <source>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</source>
+        <translation>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</translation>
+    </message>
+    <message>
+        <source>权限只对本机生效，随时可以在设置里复查。</source>
+        <translation>权限只对本机生效，随时可以在设置里复查。</translation>
+    </message>
 </context>
+
 
 <!-- ========== GIF Record Toolbar ========== -->
 <context>
     <name>GifRecordToolbar</name>
-    <message><source>开始录制</source><translation>开始录制</translation></message>
-    <message><source>停止录制</source><translation>停止录制</translation></message>
-    <message><source>暂停录制</source><translation>暂停录制</translation></message>
-    <message><source>恢复录制</source><translation>恢复录制</translation></message>
-    <message><source>录制中无法移动</source><translation>录制中无法移动</translation></message>
-    <message><source>关闭</source><translation>关闭</translation></message>
-    <message><source>画笔</source><translation>画笔</translation></message>
-    <message><source>矩形</source><translation>矩形</translation></message>
-    <message><source>椭圆</source><translation>椭圆</translation></message>
-    <message><source>箭头</source><translation>箭头</translation></message>
-    <message><source>文字</source><translation>文字</translation></message>
-    <message><source>橡皮擦</source><translation>橡皮擦</translation></message>
+    <message>
+        <source>开始录制</source>
+        <translation>开始录制</translation>
+    </message>
+    <message>
+        <source>停止录制</source>
+        <translation>停止录制</translation>
+    </message>
+    <message>
+        <source>暂停录制</source>
+        <translation>暂停录制</translation>
+    </message>
+    <message>
+        <source>恢复录制</source>
+        <translation>恢复录制</translation>
+    </message>
+    <message>
+        <source>录制中无法移动</source>
+        <translation>录制中无法移动</translation>
+    </message>
+    <message>
+        <source>关闭</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <source>画笔</source>
+        <translation>画笔</translation>
+    </message>
+    <message>
+        <source>矩形</source>
+        <translation>矩形</translation>
+    </message>
+    <message>
+        <source>椭圆</source>
+        <translation>椭圆</translation>
+    </message>
+    <message>
+        <source>箭头</source>
+        <translation>箭头</translation>
+    </message>
+    <message>
+        <source>文字</source>
+        <translation>文字</translation>
+    </message>
+    <message>
+        <source>橡皮擦</source>
+        <translation>橡皮擦</translation>
+    </message>
 </context>
+
 
 <!-- ========== GIF Playback Toolbar ========== -->
 <context>
     <name>GifPlaybackToolbar</name>
-    <message><source>播放</source><translation>播放</translation></message>
-    <message><source>暂停</source><translation>暂停</translation></message>
-    <message><source>重新录制</source><translation>重新录制</translation></message>
-    <message><source>复制到剪贴板</source><translation>复制到剪贴板</translation></message>
-    <message><source>另存为</source><translation>另存为</translation></message>
-    <message><source>关闭</source><translation>关闭</translation></message>
-    <message><source>显示鼠标光标</source><translation>显示鼠标光标</translation></message>
+    <message>
+        <source>播放</source>
+        <translation>播放</translation>
+    </message>
+    <message>
+        <source>暂停</source>
+        <translation>暂停</translation>
+    </message>
+    <message>
+        <source>重新录制</source>
+        <translation>重新录制</translation>
+    </message>
+    <message>
+        <source>复制到剪贴板</source>
+        <translation>复制到剪贴板</translation>
+    </message>
+    <message>
+        <source>另存为</source>
+        <translation>另存为</translation>
+    </message>
+    <message>
+        <source>关闭</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <source>显示鼠标光标</source>
+        <translation>显示鼠标光标</translation>
+    </message>
 </context>
+
 
 <!-- ========== Selection Info Panel ========== -->
 <context>
     <name>SelectionInfoPanel</name>
-    <message><source>Border / Shadow</source><translation>描边 / 阴影</translation></message>
-    <message><source>Rounded Corners</source><translation>圆角截图</translation></message>
-    <message><source>Lock Aspect Ratio</source><translation>锁定纵横比</translation></message>
-    <message><source>Refresh Background</source><translation>刷新背景</translation></message>
+    <message>
+        <source>Border / Shadow</source>
+        <translation>描边 / 阴影</translation>
+    </message>
+    <message>
+        <source>Rounded Corners</source>
+        <translation>圆角截图</translation>
+    </message>
+    <message>
+        <source>Lock Aspect Ratio</source>
+        <translation>锁定纵横比</translation>
+    </message>
+    <message>
+        <source>Refresh Background</source>
+        <translation>刷新背景</translation>
+    </message>
 </context>
+
 
 <!-- ========== Border Shadow Popup ========== -->
 <context>
     <name>BorderShadowPopup</name>
-    <message><source>Select shadow color</source><translation>选择阴影颜色</translation></message>
-    <message><source>Shadow</source><translation>阴影</translation></message>
-    <message><source>Select border color</source><translation>选择描边颜色</translation></message>
-    <message><source>Border</source><translation>描边</translation></message>
-    <message><source>Size</source><translation>大小</translation></message>
-    <message><source>Keep enabled for every screenshot</source><translation>每次截图都保持开启</translation></message>
-</context>
-
-<!-- ========== Appearance Settings ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message><source>Appearance</source><translation>外观</translation></message>
-    <message><source>Appearance Settings</source><translation>外观设置</translation></message>
-    <message><source>Screenshot</source><translation>截图</translation></message>
-    <message><source>Clipboard</source><translation>剪贴板</translation></message>
-    <message><source>Theme Color</source><translation>主题颜色</translation></message>
-    <message><source>Affects selection border, toolbar border, magnifier crosshair, etc. Restart recommended after change.</source><translation>影响选区边框、工具栏描边、放大镜十字线等。修改后建议重启应用。</translation></message>
-    <message><source>Select Theme Color</source><translation>选择主题颜色</translation></message>
-    <message><source>Used for selection border, toolbar accent, magnifier crosshair.</source><translation>用于选区边框、工具栏强调色、放大镜十字线。</translation></message>
-    <message><source>Screenshot Overlay</source><translation>截图遮罩</translation></message>
-    <message><source>The semi-transparent overlay color outside the selection area during screenshot.</source><translation>截图时选区外部的半透明遮罩颜色。</translation></message>
-    <message><source>Select Mask Color</source><translation>选择遮罩颜色</translation></message>
-    <message><source>Mask Color</source><translation>遮罩颜色</translation></message>
-    <message><source>The overlay color for unselected area. Supports transparency.</source><translation>未选中区域的覆盖颜色，支持透明度。</translation></message>
-    <message><source>Reset to Defaults</source><translation>恢复默认</translation></message>
-    <message><source>💡 Hint: Color changes take effect on the next screenshot.</source><translation>💡 提示：颜色修改在下次截图时生效。</translation></message>
-    <!-- Clipboard Appearance -->
-    <!-- Clipboard Appearance -->
-    <message><source>Theme</source><translation>主题</translation></message>
-    <message><source>Font Size</source><translation>字体大小</translation></message>
-    <message><source>Opacity</source><translation>透明度</translation></message>
-    <message><source>Opaque</source><translation>不透明</translation></message>
-</context>
-
-<!-- ========== 补充缺失的 SettingsDialog 翻译 ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <!-- 剪贴板页分组标题 -->
-    <message><source>Basic Settings</source><translation>基本设置</translation></message>
-    <message><source>History</source><translation>历史记录</translation></message>
-    <message><source>Data</source><translation>数据管理</translation></message>
-    <message><source>Warning</source><translation>警告</translation></message>
-    <message><source>Folder does not exist</source><translation>文件夹不存在</translation></message>
-    <message><source>Error</source><translation>错误</translation></message>
-    <message><source>Success</source><translation>成功</translation></message>
-    <!-- 杂项页分组标题 -->
-    <message><source>Startup</source><translation>启动</translation></message>
-    <message><source>Pin Window</source><translation>钉图窗口</translation></message>
-    <message><source>Operation</source><translation>操作</translation></message>
-    <!-- 关于页 -->
-    <message><source>Features</source><translation>功能特色</translation></message>
-    <message><source>OCR text recognition · Long screenshot · Pin window · Clipboard manager · DeepL translation</source><translation>OCR文字识别 · 长截图 · 钉图窗口 · 剪贴板管理 · DeepL翻译</translation></message>
-    <message><source>Licenses</source><translation>许可证</translation></message>
-    <message><source>Details</source><translation>详情</translation></message>
-    <message><source>MIT License</source><translation>MIT License</translation></message>
-    <message><source>MIT License Text</source><translation>MIT License
-
-Copyright (c) 2025 RIJYAARU
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.</translation></message>
-    <message><source>Source Code</source><translation>源代码</translation></message>
-    <message><source>Open GitHub</source><translation>打开GitHub</translation></message>
-    <!-- 开发者页 -->
-    <message><source>Long Screenshot</source><translation>长截图</translation></message>
-    <message><source>Tools</source><translation>工具</translation></message>
-    <!-- 日志页 -->
-    <message><source>Storage</source><translation>存储位置</translation></message>
-    <!-- 翻译页 -->
-    <message><source>DeepL API</source><translation>DeepL API</translation></message>
-    <message><source>Translation Options</source><translation>翻译选项</translation></message>
-    <message><source>Ignore Line Breaks</source><translation>忽略换行</translation></message>
-    <message><source>Merge multi-line text for better translation</source><translation>合并多行文本以获得更好的翻译</translation></message>
-    <!-- 变更的字符串（新版）-->
-    <message><source>Save Format</source><translation>保存格式</translation></message>
-    <message><source>OCR</source><translation>OCR</translation></message>
-    <message><source>Keep original text formatting</source><translation>保留原文格式</translation></message>
-</context>
-
-<!-- ========== Translation Dialog ========== -->
-<context>
-    <name>TranslationDialog</name>
     <message>
-        <source>Switch target language</source>
-        <translation>切换目标语言</translation>
+        <source>Select shadow color</source>
+        <translation>选择阴影颜色</translation>
     </message>
     <message>
-        <source>Target</source>
-        <translation>目标语言</translation>
+        <source>Shadow</source>
+        <translation>阴影</translation>
+    </message>
+    <message>
+        <source>Select border color</source>
+        <translation>选择描边颜色</translation>
+    </message>
+    <message>
+        <source>Border</source>
+        <translation>描边</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>大小</translation>
+    </message>
+    <message>
+        <source>Keep enabled for every screenshot</source>
+        <translation>每次截图都保持开启</translation>
     </message>
 </context>
+
 
 <context>
     <name>GroupBar</name>
@@ -4342,6 +5220,7 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
+
 <context>
     <name>StandardDialog</name>
     <message>
@@ -4358,6 +5237,7 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
+
 <!-- ========== Clipboard Preview ========== -->
 <context>
     <name>ClipboardPreview</name>
@@ -4371,68 +5251,40 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
-<context>
-    <name>SettingsDialog</name>
-    <message><source>Change Location</source><translation>更改</translation></message>
-    <message><source>Current clipboard database path is unavailable.</source><translation>无法获取当前剪贴板数据库路径。</translation></message>
-    <message><source>Choose Clipboard Data Folder</source><translation>选择剪贴板数据文件夹</translation></message>
-    <message><source>Info</source><translation>提示</translation></message>
-    <message><source>The selected folder is already the current location.</source><translation>所选文件夹已经是当前位置。</translation></message>
-    <message><source>Please choose a folder outside the current clipboard images folder.</source><translation>请选择当前剪贴板图片文件夹之外的位置。</translation></message>
-    <message><source>Replace Existing Data</source><translation>替换现有数据</translation></message>
-    <message><source>The selected folder already contains clipboard data. Replace it with the current data?</source><translation>所选文件夹已包含剪贴板数据。要用当前数据替换吗？</translation></message>
-    <message><source>Failed to close the current clipboard database.</source><translation>关闭当前剪贴板数据库失败。</translation></message>
-    <message><source>Preparing migration...</source><translation>正在准备迁移...</translation></message>
-    <message><source>Moving Clipboard Data</source><translation>正在移动剪贴板数据</translation></message>
-    <message><source>Finalizing migration...</source><translation>正在完成迁移...</translation></message>
-    <message><source>Migration complete.</source><translation>迁移完成。</translation></message>
-    <message><source>Clipboard data location changed successfully.</source><translation>剪贴板数据位置已更改。</translation></message>
-    <message><source>Clipboard data location changed successfully, but the old files are still in use and could not be deleted. You can remove them after restarting the app.\n{error}</source><translation>剪贴板数据位置已更改，但旧文件仍被占用，暂时无法删除。重启应用后可以手动删除。\n{error}</translation></message>
-    <message><source>Clipboard data moved, but reopening the database failed. Please restart the app.</source><translation>剪贴板数据已移动，但重新打开数据库失败。请重启应用。</translation></message>
-    <message><source>No clipboard data files were found to move.</source><translation>没有找到可移动的剪贴板数据文件。</translation></message>
-    <message><source>Moving clipboard data... {done} / {total}</source><translation>正在移动剪贴板数据... {done} / {total}</translation></message>
-</context>
-
-<!-- ========== Application UI Theme ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Application</source>
-        <translation>应用程序</translation>
-    </message>
-    <message>
-        <source>Interface Theme</source>
-        <translation>界面主题</translation>
-    </message>
-    <message>
-        <source>Choose a display mode.</source>
-        <translation>选择显示模式。</translation>
-    </message>
-    <message>
-        <source>System</source>
-        <translation>系统</translation>
-    </message>
-    <message>
-        <source>Light</source>
-        <translation>浅色</translation>
-    </message>
-    <message>
-        <source>Dark</source>
-        <translation>深色</translation>
-    </message>
-</context>
 
 <!-- ========== Standard Text Editor Context Menu ========== -->
 <context>
     <name>TextEditContextMenu</name>
-    <message><source>Undo</source><translation>撤销</translation></message>
-    <message><source>Redo</source><translation>重做</translation></message>
-    <message><source>Cut</source><translation>剪切</translation></message>
-    <message><source>Copy</source><translation>复制</translation></message>
-    <message><source>Paste</source><translation>粘贴</translation></message>
-    <message><source>Delete</source><translation>删除</translation></message>
-    <message><source>Select All</source><translation>全选</translation></message>
+    <message>
+        <source>Undo</source>
+        <translation>撤销</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>重做</translation>
+    </message>
+    <message>
+        <source>Cut</source>
+        <translation>剪切</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>复制</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>粘贴</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>删除</translation>
+    </message>
+    <message>
+        <source>Select All</source>
+        <translation>全选</translation>
+    </message>
 </context>
+
 
 
 <context>
@@ -4454,6 +5306,7 @@ SOFTWARE.</translation></message>
         <translation>更改马赛克粒度</translation>
     </message>
 </context>
+
 <context>
     <name>HotkeyEdit</name>
     <message>
@@ -4461,6 +5314,7 @@ SOFTWARE.</translation></message>
         <translation>此快捷键被重复分配。</translation>
     </message>
 </context>
+
 <context>
     <name>ToolbarLayoutDialog</name>
     <message>
@@ -4579,7 +5433,32 @@ SOFTWARE.</translation></message>
         <source>Confirm</source>
         <translation>确定</translation>
     </message>
+    <message>
+        <source>Video recording</source>
+        <translation>视频录制</translation>
+    </message>
+    <message>
+        <source>Straight line</source>
+        <translation>直线</translation>
+    </message>
+    <message>
+        <source>Watermark</source>
+        <translation>水印</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation>滤镜</translation>
+    </message>
+    <message>
+        <source>Smart erase</source>
+        <translation>智能擦除</translation>
+    </message>
+    <message>
+        <source>Insert image</source>
+        <translation>插入图片</translation>
+    </message>
 </context>
+
 <context>
     <name>BarcodeResultWindow</name>
     <message>
@@ -4611,70 +5490,7 @@ SOFTWARE.</translation></message>
         <translation>打开链接</translation>
     </message>
 </context>
-<!-- ========== 权限页（SettingsDialog） ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Permissions</source>
-        <translation>权限</translation>
-    </message>
-    <message>
-        <source>System Permissions</source>
-        <translation>系统权限</translation>
-    </message>
-    <message>
-        <source>jietuba needs these system permissions. Grant them here; the status refreshes by itself once granted.</source>
-        <translation>jietuba 需要以下系统权限。在这里授权即可，授权后状态会自动更新。</translation>
-    </message>
-    <message>
-        <source>Accessibility Permission</source>
-        <translation>辅助功能权限</translation>
-    </message>
-    <message>
-        <source>Global hotkeys only work with this permission, and smart selection uses it to detect the element under the cursor.</source>
-        <translation>全局热键需要这项权限才能生效；智能选区也用它识别光标下的元素。</translation>
-    </message>
-    <message>
-        <source>Screen Recording Permission</source>
-        <translation>屏幕录制权限</translation>
-    </message>
-    <message>
-        <source>Screenshots contain window contents only with this permission; without it they show the desktop wallpaper only.</source>
-        <translation>截图只有获得这项权限后才包含窗口内容，否则只有桌面壁纸。</translation>
-    </message>
-    <message>
-        <source>Granted</source>
-        <translation>已授权</translation>
-    </message>
-    <message>
-        <source>Not Granted</source>
-        <translation>未授权</translation>
-    </message>
-    <message>
-        <source>Granted. Restart jietuba for it to take effect.</source>
-        <translation>已授权。重启 jietuba 后生效。</translation>
-    </message>
-    <message>
-        <source>Authorize</source>
-        <translation>去授权</translation>
-    </message>
-    <message>
-        <source>Open System Settings</source>
-        <translation>打开系统设置</translation>
-    </message>
-</context>
-<!-- ========== 权限页：重启本程序（SettingsDialog） ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Restart jietuba</source>
-        <translation>重启 jietuba</translation>
-    </message>
-    <message>
-        <source>jietuba will close and reopen so the newly granted permission takes effect.</source>
-        <translation>jietuba 会退出并重新打开，新授权的权限才会生效。</translation>
-    </message>
-</context>
+
 <!-- ========== 权限缺失提示（PermissionPrompt） ========== -->
 <context>
     <name>PermissionPrompt</name>
@@ -4711,22 +5527,7 @@ SOFTWARE.</translation></message>
         <translation>稍后</translation>
     </message>
 </context>
-<!-- ========== 向导权限步骤（WelcomeWizard） ========== -->
-<context>
-    <name>WelcomeWizard</name>
-    <message>
-        <source>权限</source>
-        <translation>权限</translation>
-    </message>
-    <message>
-        <source>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</source>
-        <translation>这两项是系统级的：没有它们，热键会没反应、截图里只有桌面壁纸。</translation>
-    </message>
-    <message>
-        <source>权限只对本机生效，随时可以在设置里复查。</source>
-        <translation>权限只对本机生效，随时可以在设置里复查。</translation>
-    </message>
-</context>
+
 <!-- ========== Formula Result ========== -->
 <context>
     <name>FormulaResult</name>
@@ -4744,6 +5545,7 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
+
 <!-- ========== OcrResultDialog ========== -->
 <context>
     <name>OcrResultDialog</name>
@@ -4753,224 +5555,6 @@ SOFTWARE.</translation></message>
     </message>
 </context>
 
-
-<!-- ========== 视频录制 ========== -->
-<context>
-    <name>SettingsDialog</name>
-    <message>
-        <source>Video Recording</source>
-        <translation>视频录制</translation>
-    </message>
-    <message>
-        <source>Video Container</source>
-        <translation>视频容器</translation>
-    </message>
-    <message>
-        <source>File format of the recorded video.</source>
-        <translation>录下来的视频存成哪种文件格式。</translation>
-    </message>
-    <message>
-        <source>Video Codec</source>
-        <translation>视频编码</translation>
-    </message>
-    <message>
-        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
-        <translation>H.264 兼容性最好；H.265 文件更小。</translation>
-    </message>
-    <message>
-        <source>Video Quality</source>
-        <translation>清晰度</translation>
-    </message>
-    <message>
-        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
-        <translation>跟随所选区域，或把输出限制在 1080p/720p/480p。</translation>
-    </message>
-    <message>
-        <source>Follow Selection</source>
-        <translation>跟随区域</translation>
-    </message>
-    <message>
-        <source>Video Frame Rate</source>
-        <translation>帧率</translation>
-    </message>
-    <message>
-        <source>Higher frame rates make smoother videos and larger files.</source>
-        <translation>帧率越高越流畅，文件也越大。</translation>
-    </message>
-    <message>
-        <source>Bitrate Limit</source>
-        <translation>码率上限</translation>
-    </message>
-    <message>
-        <source>0 lets the encoder decide from the quality preset.</source>
-        <translation>0 表示交给编码器按清晰度决定。</translation>
-    </message>
-    <message>
-        <source>Record Audio</source>
-        <translation>录制声音</translation>
-    </message>
-    <message>
-        <source>Record the microphone together with the screen.</source>
-        <translation>录屏时同时录麦克风。</translation>
-    </message>
-    <message>
-        <source>No Audio</source>
-        <translation>不录声音</translation>
-    </message>
-    <message>
-        <source>Microphone</source>
-        <translation>麦克风</translation>
-    </message>
-    <message>
-        <source>Microphone Device</source>
-        <translation>麦克风设备</translation>
-    </message>
-    <message>
-        <source>Device used when recording audio (empty = system default).</source>
-        <translation>录制声音时使用的设备（留空表示系统默认）。</translation>
-    </message>
-    <message>
-        <source>System Default</source>
-        <translation>系统默认</translation>
-    </message>
-    <message>
-        <source>Maximum Duration</source>
-        <translation>最长录制时长</translation>
-    </message>
-    <message>
-        <source>Automatically stop after this many seconds (0 = no limit).</source>
-        <translation>超过这个秒数自动停止（0 = 不限制）。</translation>
-    </message>
-    <message>
-        <source> seconds</source>
-        <translation> 秒</translation>
-    </message>
-    <message>
-        <source>Video Save Folder</source>
-        <translation>视频保存目录</translation>
-    </message>
-    <message>
-        <source>Empty = follow the screenshot save folder.</source>
-        <translation>留空则跟随截图保存目录。</translation>
-    </message>
-    <message>
-        <source>Video recording is unavailable: no encoding backend.</source>
-        <translation>视频录制不可用：没有可用的编码后端。</translation>
-    </message>
-    <message>
-        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
-        <translation>💡 填录屏文件的保存目录；清空则跟随截图保存目录。</translation>
-    </message>
-
-    <message>
-        <source>Video Recording</source>
-        <translation>视频录制</translation>
-    </message>
-    <message>
-        <source>Video Container</source>
-        <translation>视频容器</translation>
-    </message>
-    <message>
-        <source>File format of the recorded video.</source>
-        <translation>录下来的视频存成哪种文件格式。</translation>
-    </message>
-    <message>
-        <source>Video Codec</source>
-        <translation>视频编码</translation>
-    </message>
-    <message>
-        <source>H.264 is the safest choice; H.265 gives smaller files.</source>
-        <translation>H.264 兼容性最好；H.265 文件更小。</translation>
-    </message>
-    <message>
-        <source>Video Quality</source>
-        <translation>清晰度</translation>
-    </message>
-    <message>
-        <source>Follow the selected area, or cap the output at 1080p/720p/480p.</source>
-        <translation>跟随所选区域，或把输出限制在 1080p/720p/480p。</translation>
-    </message>
-    <message>
-        <source>Follow Selection</source>
-        <translation>跟随区域</translation>
-    </message>
-    <message>
-        <source>Video Frame Rate</source>
-        <translation>帧率</translation>
-    </message>
-    <message>
-        <source>Higher frame rates make smoother videos and larger files.</source>
-        <translation>帧率越高越流畅，文件也越大。</translation>
-    </message>
-    <message>
-        <source>Bitrate Limit</source>
-        <translation>码率上限</translation>
-    </message>
-    <message>
-        <source>0 lets the encoder decide from the quality preset.</source>
-        <translation>0 表示交给编码器按清晰度决定。</translation>
-    </message>
-    <message>
-        <source>Record Audio</source>
-        <translation>录制声音</translation>
-    </message>
-    <message>
-        <source>Record the microphone together with the screen.</source>
-        <translation>录屏时同时录麦克风。</translation>
-    </message>
-    <message>
-        <source>No Audio</source>
-        <translation>不录声音</translation>
-    </message>
-    <message>
-        <source>Microphone</source>
-        <translation>麦克风</translation>
-    </message>
-    <message>
-        <source>Microphone Device</source>
-        <translation>麦克风设备</translation>
-    </message>
-    <message>
-        <source>Device used when recording audio (empty = system default).</source>
-        <translation>录制声音时使用的设备（留空表示系统默认）。</translation>
-    </message>
-    <message>
-        <source>System Default</source>
-        <translation>系统默认</translation>
-    </message>
-    <message>
-        <source>Maximum Duration</source>
-        <translation>最长录制时长</translation>
-    </message>
-    <message>
-        <source>Automatically stop after this many seconds (0 = no limit).</source>
-        <translation>超过这个秒数自动停止（0 = 不限制）。</translation>
-    </message>
-    <message>
-        <source> seconds</source>
-        <translation> 秒</translation>
-    </message>
-    <message>
-        <source>Video Save Folder</source>
-        <translation>视频保存目录</translation>
-    </message>
-    <message>
-        <source>Empty = follow the screenshot save folder.</source>
-        <translation>留空则跟随截图保存目录。</translation>
-    </message>
-    <message>
-        <source>Video recording is unavailable: no encoding backend.</source>
-        <translation>视频录制不可用：没有可用的编码后端。</translation>
-    </message>
-    <message>
-        <source>💡 Enter the folder where recordings are saved. Clear it to follow the screenshot save folder.</source>
-        <translation>💡 填录屏文件的保存目录；清空则跟随截图保存目录。</translation>
-    </message>
-    <message>
-        <source>Browse</source>
-        <translation>浏览</translation>
-    </message>
-</context>
 <context>
     <name>VideoRecordToolbar</name>
     <message>
@@ -5002,6 +5586,7 @@ SOFTWARE.</translation></message>
         <translation>跟随区域</translation>
     </message>
 </context>
+
 <context>
     <name>VideoRecordWindow</name>
     <message>
@@ -5027,4 +5612,471 @@ SOFTWARE.</translation></message>
         <translation>确定</translation>
     </message>
 </context>
+
+
+<!-- ========== 截图历史 ========== -->
+<context>
+    <name>HistoryWindow</name>
+    <message>
+        <source>Screenshot History</source>
+        <translation>截图历史</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>来源</translation>
+    </message>
+    <message>
+        <source>Date</source>
+        <translation>时间</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>刷新</translation>
+    </message>
+    <message>
+        <source>All sources</source>
+        <translation>全部来源</translation>
+    </message>
+    <message>
+        <source>Any time</source>
+        <translation>不限时间</translation>
+    </message>
+    <message>
+        <source>Last 24 hours</source>
+        <translation>最近 24 小时</translation>
+    </message>
+    <message>
+        <source>Last 7 days</source>
+        <translation>最近 7 天</translation>
+    </message>
+    <message>
+        <source>Last 30 days</source>
+        <translation>最近 30 天</translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation>窗口</translation>
+    </message>
+    <message>
+        <source>Window element</source>
+        <translation>窗口元素</translation>
+    </message>
+    <message>
+        <source>Monitor</source>
+        <translation>显示器</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>选区</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>复制</translation>
+    </message>
+    <message>
+        <source>Pin to Screen</source>
+        <translation>钉到屏幕</translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation>另存为</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>删除</translation>
+    </message>
+    <message>
+        <source>Clear History</source>
+        <translation>清空历史</translation>
+    </message>
+    <message>
+        <source>Save Screenshot</source>
+        <translation>保存截图</translation>
+    </message>
+    <message>
+        <source>Delete every saved screenshot? This cannot be undone.</source>
+        <translation>删除全部已保存的截图？这一步不能撤销。</translation>
+    </message>
+    <message>
+        <source>No screenshots yet.</source>
+        <translation>还没有截图。</translation>
+    </message>
+    <message>
+        <source>{count} entries</source>
+        <translation>共 {count} 条</translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation>查看</translation>
+    </message>
+</context>
+
+
+<!-- ========== 第二批标注工具面板 ========== -->
+<context>
+    <name>AnnotationSettingsPanel</name>
+    <message>
+        <source>Line style</source>
+        <translation>线型</translation>
+    </message>
+    <message>
+        <source>Solid</source>
+        <translation>实线</translation>
+    </message>
+    <message>
+        <source>Dashed</source>
+        <translation>虚线</translation>
+    </message>
+    <message>
+        <source>Dense dashes</source>
+        <translation>密虚线</translation>
+    </message>
+    <message>
+        <source>Watermark text</source>
+        <translation>水印文字</translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation>字号</translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation>角度</translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation>间距</translation>
+    </message>
+    <message>
+        <source>Opacity %</source>
+        <translation>不透明度 %</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation>滤镜</translation>
+    </message>
+    <message>
+        <source>Grayscale</source>
+        <translation>灰度</translation>
+    </message>
+    <message>
+        <source>Invert</source>
+        <translation>反相</translation>
+    </message>
+    <message>
+        <source>Gaussian blur</source>
+        <translation>高斯模糊</translation>
+    </message>
+    <message>
+        <source>Emboss</source>
+        <translation>浮雕</translation>
+    </message>
+    <message>
+        <source>Blur radius</source>
+        <translation>模糊半径</translation>
+    </message>
+    <message>
+        <source>Emboss strength</source>
+        <translation>浮雕强度</translation>
+    </message>
+    <message>
+        <source>Brush size</source>
+        <translation>笔刷大小</translation>
+    </message>
+    <message>
+        <source>Style template</source>
+        <translation>样式模板</translation>
+    </message>
+    <message>
+        <source>Template name</source>
+        <translation>模板名</translation>
+    </message>
+    <message>
+        <source>Save template</source>
+        <translation>存为模板</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation>套用</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>删除</translation>
+    </message>
+</context>
+
+<context>
+    <name>InsertImageTool</name>
+    <message>
+        <source>Insert Image</source>
+        <translation>插入图片</translation>
+    </message>
+</context>
+
+
+<!-- ========== 表格编辑器 ========== -->
+<context>
+    <name>TableEditor</name>
+    <message>
+        <source>Table Editor</source>
+        <translation>表格编辑器</translation>
+    </message>
+    <message>
+        <source>Merge cells</source>
+        <translation>合并单元格</translation>
+    </message>
+    <message>
+        <source>Split cell</source>
+        <translation>拆分单元格</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>复制</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation>粘贴</translation>
+    </message>
+    <message>
+        <source>Clear cells</source>
+        <translation>清空单元格</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>撤销</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>重做</translation>
+    </message>
+    <message>
+        <source>Copy Markdown</source>
+        <translation>复制 Markdown</translation>
+    </message>
+    <message>
+        <source>Copy HTML</source>
+        <translation>复制 HTML</translation>
+    </message>
+    <message>
+        <source>Edit cell</source>
+        <translation>编辑单元格</translation>
+    </message>
+    <message>
+        <source>Paste cells</source>
+        <translation>粘贴单元格</translation>
+    </message>
+    <message>
+        <source>Pasted cells do not fit inside the table.</source>
+        <translation>粘贴的内容放不进这张表（越界或与合并单元格重叠）。</translation>
+    </message>
+    <message>
+        <source>Tip: select a block of cells and use Merge cells; split restores them.</source>
+        <translation>提示：框选一块单元格再点「合并单元格」；「拆分单元格」会还原它们。</translation>
+    </message>
+</context>
+
+<context>
+    <name>ImageViewer</name>
+    <message>
+        <source>Image Viewer</source>
+        <translation>图片查看器</translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation>上一张</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>下一张</translation>
+    </message>
+    <message>
+        <source>Zoom In</source>
+        <translation>放大</translation>
+    </message>
+    <message>
+        <source>Zoom Out</source>
+        <translation>缩小</translation>
+    </message>
+    <message>
+        <source>Fit Window</source>
+        <translation>适应窗口</translation>
+    </message>
+    <message>
+        <source>Actual Size</source>
+        <translation>原始大小</translation>
+    </message>
+    <message>
+        <source>Rotate Right</source>
+        <translation>右转 90°</translation>
+    </message>
+    <message>
+        <source>Rotate Left</source>
+        <translation>左转 90°</translation>
+    </message>
+    <message>
+        <source>Flip Horizontal</source>
+        <translation>水平翻转</translation>
+    </message>
+    <message>
+        <source>Flip Vertical</source>
+        <translation>垂直翻转</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>复制</translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation>另存为</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+    <message>
+        <source>flipped</source>
+        <translation>已翻转</translation>
+    </message>
+    <message>
+        <source>No image loaded.</source>
+        <translation>没有载入图片。</translation>
+    </message>
+</context>
+
+<context>
+    <name>SavePathsDialog</name>
+    <message>
+        <source>Save Paths</source>
+        <translation>保存路径</translation>
+    </message>
+    <message>
+        <source>Folder</source>
+        <translation>目录</translation>
+    </message>
+    <message>
+        <source>Format</source>
+        <translation>格式</translation>
+    </message>
+    <message>
+        <source>Quality</source>
+        <translation>质量</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation>添加</translation>
+    </message>
+    <message>
+        <source>Change Folder</source>
+        <translation>改目录</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>移除</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation>预览</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>Choose Folder</source>
+        <translation>选择目录</translation>
+    </message>
+    <message>
+        <source>Preview: pick a row and press Preview.</source>
+        <translation>预览：选一行再点「预览」。</translation>
+    </message>
+    <message>
+        <source>{count} save paths</source>
+        <translation>共 {count} 条保存路径</translation>
+    </message>
+    <message>
+        <source>Preview: {format} · quality {quality} · {size}</source>
+        <translation>预览：{format} · 质量 {quality} · {size}</translation>
+    </message>
+    <message>
+        <source>Preview: {path}</source>
+        <translation>预览：{path}</translation>
+    </message>
+    <message>
+        <source>Preview failed.</source>
+        <translation>预览失败。</translation>
+    </message>
+</context>
+
+<context>
+    <name>MainWindow</name>
+    <message>
+        <source>Jietuba</source>
+        <translation>截图吧</translation>
+    </message>
+    <message>
+        <source>Screenshot History</source>
+        <translation>截图历史</translation>
+    </message>
+    <message>
+        <source>Translation</source>
+        <translation>翻译</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>设置</translation>
+    </message>
+    <message>
+        <source>About</source>
+        <translation>关于</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>目标语言</translation>
+    </message>
+    <message>
+        <source>Translate</source>
+        <translation>翻译</translation>
+    </message>
+    <message>
+        <source>Copy Result</source>
+        <translation>复制译文</translation>
+    </message>
+    <message>
+        <source>Text to translate</source>
+        <translation>要翻译的文本</translation>
+    </message>
+    <message>
+        <source>Translation appears here</source>
+        <translation>译文会显示在这里</translation>
+    </message>
+    <message>
+        <source>Nothing to translate.</source>
+        <translation>没有可翻译的内容。</translation>
+    </message>
+    <message>
+        <source>Translation service is unavailable.</source>
+        <translation>翻译服务不可用。</translation>
+    </message>
+    <message>
+        <source>Translation service is not configured.</source>
+        <translation>翻译服务还没配置。</translation>
+    </message>
+    <message>
+        <source>Translating…</source>
+        <translation>翻译中…</translation>
+    </message>
+    <message>
+        <source>Done.</source>
+        <translation>完成。</translation>
+    </message>
+    <message>
+        <source>Translation failed.</source>
+        <translation>翻译失败。</translation>
+    </message>
+    <message>
+        <source>This page could not be created.</source>
+        <translation>这个页面没建起来。</translation>
+    </message>
+</context>
+
 </TS>

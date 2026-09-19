@@ -189,6 +189,9 @@ TRANSLATIONS: dict[str, str] = {
         "Restart this app after granting it; for a rebuilt app, remove the stale entry with "
         "\"−\" and add it again",
     "保持窗口可见（不随失焦隐藏）": "Keeping a window visible when the app is inactive",
+    "交给系统拖动窗口": "Handing the window drag over to the system",
+    "建立跟随窗口关系": "Attaching a follow window",
+    "解除跟随窗口关系": "Detaching a follow window",
     "「屏幕录制」权限已开启，需要重启本程序后截图才包含窗口":
         "Screen Recording permission is now granted; restart this app before screenshots include windows",
 

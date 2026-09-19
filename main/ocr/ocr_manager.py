@@ -99,7 +99,8 @@ class OCRManager:
 
     # ── 初始化与识别 ──────────────────────────────────
 
-    def initialize(self, language: str = "日本語", engine_type: Optional[str] = None) -> bool:
+    def initialize(self, language: str = "日本語", engine_type: Optional[str] = None,
+                   tier: Optional[str] = None) -> bool:
         """初始化当前引擎（未指定则以注册顺序取第一个可用的）。"""
         if not self.is_available:
             self._last_error = "没有可用的 OCR 引擎"
@@ -118,7 +119,11 @@ class OCRManager:
             ocr_log(T("自动选择引擎: {engine}", engine=self._current_engine))
 
         engine = self._engines[self._current_engine]
-        ok = engine.initialize(language)
+        # 档位只对支持它的引擎有意义（PP-OCR）；其它引擎收到也不会炸，initialize 签名多一个可选参数
+        try:
+            ok = engine.initialize(language, tier=tier) if tier else engine.initialize(language)
+        except TypeError:
+            ok = engine.initialize(language)
         if not ok:
             self._last_error = engine.last_error or f"{self._current_engine} 初始化失败"
         return ok
@@ -471,6 +476,32 @@ def _markdown_cell(text: str) -> str:
 
 def _pad_cells(cells: List[str], width: int) -> List[str]:
     return list(cells[:width]) + [""] * (width - len(cells))
+
+
+def table_grid_from_ocr_result(result: dict):
+    """把带坐标的 OCR 结果切成二维文本；没有表格特征时返回空表。
+
+    与 ``format_ocr_result_markdown`` 共用同一套几何启发式（按 y 聚类成行、行内按 x
+    间隙切列、表宽取众数），区别只在返回「行列文本」而不是拼好的 Markdown——编辑器
+    与剪贴板复制因此看到的是同一张表，不会出现一处改了另一处还按旧结构导出。
+    """
+    boxes = _ocr_boxes(result)
+    if len(boxes) < TABLE_MIN_ROWS:
+        return []
+    rows = _group_ocr_rows(boxes)
+    if len(rows) < TABLE_MIN_ROWS:
+        return []
+
+    avg_height = sum(b['height'] for b in boxes) / len(boxes)
+    cells_per_row = [_split_ocr_columns(row, avg_height) for row in rows]
+    widths = [len(cells) for cells in cells_per_row]
+    if sum(1 for width in widths if width >= TABLE_MIN_COLS) < TABLE_MIN_ROWS:
+        return []
+
+    table_width = max(set(widths), key=lambda width: (widths.count(width), width))
+    if table_width < TABLE_MIN_COLS:
+        return []
+    return [_pad_cells(row, table_width) for row in cells_per_row]
 
 
 def format_ocr_result_markdown(result: dict, layout: str = "auto",

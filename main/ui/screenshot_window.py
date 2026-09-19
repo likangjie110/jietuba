@@ -65,6 +65,30 @@ class ScreenshotShortcutHandler(ShortcutHandler):
                 and w.isVisible()
                 and QApplication.activeModalWidget() is None)
 
+    def _match_layer_shortcut(self, event, window):
+        """层级与对齐快捷键（``LAYER_KEYS`` 定义，默认大多数留空=不绑）。
+
+        返回 ``True`` 表示这次按键已被处理、``False`` 表示匹配上了但没做事、
+        ``None`` 表示不是这几组键（调用方继续往下判断）。
+        """
+        from canvas.arrange import ALIGN_MODES, Z_MODES
+
+        controller = getattr(getattr(window, "view", None), "smart_edit_controller", None)
+        if controller is None:
+            return None
+
+        z_actions = {"inapp_bring_to_front": "front", "inapp_send_to_back": "back",
+                     "inapp_bring_forward": "forward", "inapp_send_backward": "backward"}
+        for key, mode in z_actions.items():
+            if self._match(event, key) and mode in Z_MODES:
+                controller.change_z_order(mode)
+                return True
+        for mode in ALIGN_MODES:
+            if self._match(event, f"inapp_align_{mode}"):
+                controller.arrange_selected(mode)
+                return True
+        return None
+
     def _match(self, event, cfg_key: str) -> bool:
         """检查按键事件是否匹配某个绑定"""
         binding = self._bindings.get(cfg_key)
@@ -123,6 +147,11 @@ class ScreenshotShortcutHandler(ShortcutHandler):
             if not is_text_editing and hasattr(w.view, 'smart_edit_controller'):
                 w.view.smart_edit_controller.delete_selected()
             return True
+
+        # 标注元素的层级与对齐（画布内快捷键，见 page_hotkey.LAYER_KEYS）
+        layer_action = self._match_layer_shortcut(event, w)
+        if layer_action is not None:
+            return layer_action
 
         # 截图翻译
         if self._match(event, "inapp_translate"):
@@ -592,6 +621,9 @@ class ScreenshotWindow(QWidget):
         
         # 箭头/线条/序号样式为self方法，安全
         self.toolbar.arrow_style_changed.connect(self.on_arrow_style_changed)
+        self.toolbar.arrow_path_style_changed.connect(self.on_arrow_path_style_changed)
+        self.toolbar.arrow_head_start_changed.connect(self.on_arrow_head_start_changed)
+        self.toolbar.arrow_head_end_changed.connect(self.on_arrow_head_end_changed)
         self.toolbar.line_style_changed.connect(self.on_line_style_changed)
         if hasattr(self.toolbar, "number_next_changed"):
             self.toolbar.number_next_changed.connect(self.on_number_next_changed)
@@ -1028,6 +1060,40 @@ class ScreenshotWindow(QWidget):
             view._apply_line_style_change_to_selection(style)
             log_debug(T("线条样式已更新: {style}", style=style), "ScreenshotWindow")
 
+    def on_arrow_path_style_changed(self, style: str):
+        """路径样式变化（直线/曲线/折线）——应用到选中的箭头图元，可撤销。"""
+        self._apply_arrow_appearance(lambda item: item.set_path_style(style), "修改箭头路径")
+
+    def on_arrow_head_start_changed(self, style: str):
+        """起点端点样式变化。"""
+        self._apply_arrow_appearance(lambda item: item.set_head_start(style), "修改箭头起点")
+
+    def on_arrow_head_end_changed(self, style: str):
+        """终点端点样式变化。"""
+        self._apply_arrow_appearance(lambda item: item.set_head_end(style), "修改箭头终点")
+
+    def _apply_arrow_appearance(self, mutate, text: str) -> bool:
+        """把一项箭头外观改动应用到选中箭头，并经 EditItemCommand 记进撤销栈。"""
+        controller = getattr(getattr(self, "view", None), "smart_edit_controller", None)
+        item = getattr(controller, "selected_item", None)
+        from canvas.items import ArrowItem
+        if not isinstance(item, ArrowItem):
+            return False
+
+        old_state = self._capture_arrow_state(item)
+        if not mutate(item):
+            return False
+        new_state = self._capture_arrow_state(item)
+
+        undo_stack = getattr(self.scene, "undo_stack", None)
+        if undo_stack:
+            from canvas.undo import EditItemCommand
+
+            undo_stack.push(EditItemCommand(item, old_state, new_state, text))
+        item.update()
+        log_debug(T("箭头外观已更新: {text}", text=text), "ScreenshotWindow")
+        return True
+
     def _capture_arrow_state(self, item) -> dict:
         """捕获箭头图元的状态"""
         from PySide6.QtCore import QPointF
@@ -1042,6 +1108,9 @@ class ScreenshotWindow(QWidget):
             state['control_modified'] = item._control_modified
         if hasattr(item, '_arrow_style'):
             state['arrow_style'] = item._arrow_style
+        if hasattr(item, "arrow_state"):
+            # 路径样式与两端端点：一个字典交给 apply_arrow_state 还原
+            state["arrow_appearance"] = item.arrow_state()
         return state
 
     def on_undo(self):

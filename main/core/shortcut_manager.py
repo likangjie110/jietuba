@@ -204,7 +204,11 @@ class ShortcutManager(QObject):
         self._input_permission_watch = None                # 缺权限时轮询的 QTimer
 
         # ── 全局鼠标手势（修饰键 + 鼠标键/滚轮 → 动作）──
-        self._mouse_gestures: Dict[Tuple[str, str], str] = {}   # (修饰键, 手势) → 动作 id
+        #: (修饰键, 手势) → 动作 id
+        self._mouse_gestures: Dict[Tuple[str, str], str] = {}
+        #: 拖动类手势的判定器与开关（见 _on_gesture_click）
+        self._drag_tracker = platform_pointer.DragTracker()
+        self._drag_enabled = False
         self._mouse_gesture_listener = None
         self._keyboard_hotkey_triggered.connect(
             self._on_keyboard_hotkey, Qt.ConnectionType.QueuedConnection
@@ -705,6 +709,11 @@ class ShortcutManager(QObject):
         为一个没绑任何东西的配置常驻全局鼠标钩子不值得。
         """
         self._mouse_gestures = self._normalize_mouse_gestures(bindings)
+        # 只有绑了拖动类手势才开拖动跟踪：否则普通拖拽会被状态机吃掉一次（虽然不触发动作，
+        # 但没有理由为此常驻一份状态）
+        self._drag_enabled = any(
+            gesture in platform_pointer.DRAG_GESTURES
+            for _modifier, gesture in self._mouse_gestures)
         self._sync_mouse_gesture_listener()
 
     def has_mouse_gestures(self) -> bool:
@@ -760,11 +769,23 @@ class ShortcutManager(QObject):
         if gesture:
             self._dispatch_mouse_gesture(gesture)
 
-    def _on_gesture_click(self, _x, _y, button, pressed):
-        """pynput 监听线程上的按键回调（只处理按下）。"""
+    def _on_gesture_click(self, x, y, button, pressed):
+        """pynput 监听线程上的按键回调：点击类在按下时判定，拖动类在松手时判定。
+
+        拖动会占住左/右键的正常拖拽，所以**只在用户真的绑了拖动类手势时**才跟踪
+        （``_drag_enabled``）；没绑的时候连状态机都不启动，普通拖拽一点不受影响。
+        """
+        name = getattr(button, "name", "")
+        if self._drag_enabled:
+            if pressed:
+                self._drag_tracker.press(name, x, y)
+            else:
+                gesture = self._drag_tracker.release(name, x, y)
+                if gesture:
+                    self._dispatch_mouse_gesture(gesture)
         if not pressed:
             return
-        gesture = platform_pointer.gesture_of_button(getattr(button, "name", ""))
+        gesture = platform_pointer.gesture_of_button(name)
         if gesture:
             self._dispatch_mouse_gesture(gesture)
 

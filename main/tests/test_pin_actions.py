@@ -74,6 +74,22 @@ class _FakePin:
     def close_window(self):
         return self._record("close_window")
 
+    # 块 4 新增的贴图动作
+    def toggle_click_through(self):
+        return self._record("toggle_click_through")
+
+    def toggle_focus_mode(self):
+        return self._record("toggle_focus_mode")
+
+    def close_other_pins(self):
+        return self._record("close_other_pins")
+
+    def load_image_from_file(self):
+        return self._record("load_image_from_file")
+
+    def recognize_text_now(self):
+        return self._record("recognize_text_now")
+
 
 class TestRegistry:
     def test_gestures_and_actions_are_unique(self):
