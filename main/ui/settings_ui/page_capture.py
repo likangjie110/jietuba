@@ -211,6 +211,23 @@ def _save_vision_model(dialog) -> bool:
     return True
 
 
+def _beautify_width_presets(dialog):
+    """「额外导出尺寸」下拉的候选：显示文案 + 目标宽度列表。"""
+    return (
+        (dialog.tr("None"), [0]),
+        (dialog.tr("1280 / 1920"), [1280, 1920]),
+        (dialog.tr("640 / 1280 / 1920"), [640, 1280, 1920]),
+    )
+
+
+def _select_width_preset(dialog) -> None:
+    current = list(dialog.config_manager.get_beautify_export_widths())
+    for index in range(dialog.beautify_widths_combo.count()):
+        if list(dialog.beautify_widths_combo.itemData(index)) == current:
+            dialog.beautify_widths_combo.setCurrentIndex(index)
+            return
+
+
 def create_capture_page(dialog) -> QWidget:
     """截图設定 ─ 交互行为 + 智能选区 + 保存设置 + OCR"""
     scroll = QScrollArea()
@@ -458,6 +475,94 @@ def create_capture_page(dialog) -> QWidget:
     segment_card.hBoxLayout.addSpacing(16)
     grp_stitch.addSettingCard(segment_card)
     layout.addWidget(grp_stitch)
+
+    # 美化导出（见 core/beautify.py）
+    grp_beautify = SettingCardGroup(dialog.tr("Beautify Export"), view)
+    margin_card = FSettingCard(
+        FluentIcon.EDIT,
+        dialog.tr("Margin"),
+        dialog.tr("Blank space added around the captured image on export."),
+        parent=grp_beautify,
+    )
+    dialog.beautify_margin_spin = SpinBox(margin_card)
+    dialog.beautify_margin_spin.setRange(0, 200)
+    dialog.beautify_margin_spin.setFixedWidth(120)
+    dialog.beautify_margin_spin.setValue(dialog.config_manager.get_beautify_margin())
+    margin_card.hBoxLayout.addWidget(
+        dialog.beautify_margin_spin, 0, Qt.AlignmentFlag.AlignRight)
+    margin_card.hBoxLayout.addSpacing(16)
+    grp_beautify.addSettingCard(margin_card)
+
+    radius_card = FSettingCard(
+        FluentIcon.EDIT,
+        dialog.tr("Corner radius"),
+        dialog.tr("Rounds the corners of the exported image."),
+        parent=grp_beautify,
+    )
+    dialog.beautify_radius_spin = SpinBox(radius_card)
+    dialog.beautify_radius_spin.setRange(0, 60)
+    dialog.beautify_radius_spin.setFixedWidth(120)
+    dialog.beautify_radius_spin.setValue(dialog.config_manager.get_beautify_radius())
+    radius_card.hBoxLayout.addWidget(
+        dialog.beautify_radius_spin, 0, Qt.AlignmentFlag.AlignRight)
+    radius_card.hBoxLayout.addSpacing(16)
+    grp_beautify.addSettingCard(radius_card)
+
+    shadow_card = FSettingCard(
+        FluentIcon.EDIT,
+        dialog.tr("Shadow"),
+        dialog.tr("Drop shadow size of the exported image."),
+        parent=grp_beautify,
+    )
+    dialog.beautify_shadow_spin = SpinBox(shadow_card)
+    dialog.beautify_shadow_spin.setRange(0, 60)
+    dialog.beautify_shadow_spin.setFixedWidth(120)
+    dialog.beautify_shadow_spin.setValue(dialog.config_manager.get_beautify_shadow())
+    shadow_card.hBoxLayout.addWidget(
+        dialog.beautify_shadow_spin, 0, Qt.AlignmentFlag.AlignRight)
+    shadow_card.hBoxLayout.addSpacing(16)
+    grp_beautify.addSettingCard(shadow_card)
+
+    background_card = FSettingCard(
+        FluentIcon.EDIT,
+        dialog.tr("Background"),
+        dialog.tr("Colour of the margin and shadow area."),
+        parent=grp_beautify,
+    )
+    dialog._beautify_background = QColor(dialog.config_manager.get_beautify_background())
+    dialog.beautify_background_btn = _make_color_btn(background_card)
+    _update_color_btn(dialog.beautify_background_btn, dialog._beautify_background)
+
+    def _pick_beautify_background():
+        picked = QColorDialog(dialog._beautify_background, None)
+        picked.setWindowTitle(dialog.tr("Pick a color"))
+        if picked.exec():
+            chosen = picked.currentColor()
+            dialog._beautify_background.setRgb(chosen.red(), chosen.green(), chosen.blue())
+            _update_color_btn(dialog.beautify_background_btn, dialog._beautify_background)
+
+    dialog.beautify_background_btn.clicked.connect(_pick_beautify_background)
+    background_card.hBoxLayout.addWidget(
+        dialog.beautify_background_btn, 0, Qt.AlignmentFlag.AlignRight)
+    background_card.hBoxLayout.addSpacing(16)
+    grp_beautify.addSettingCard(background_card)
+
+    widths_card = FSettingCard(
+        FluentIcon.DOCUMENT,
+        dialog.tr("Extra export sizes"),
+        dialog.tr("Exports scaled copies of the beautified image."),
+        parent=grp_beautify,
+    )
+    dialog.beautify_widths_combo = ComboBox(widths_card)
+    dialog.beautify_widths_combo.setFixedWidth(220)
+    for label, widths in _beautify_width_presets(dialog):
+        dialog.beautify_widths_combo.addItem(label, userData=list(widths))
+    _select_width_preset(dialog)
+    widths_card.hBoxLayout.addWidget(
+        dialog.beautify_widths_combo, 0, Qt.AlignmentFlag.AlignRight)
+    widths_card.hBoxLayout.addSpacing(16)
+    grp_beautify.addSettingCard(widths_card)
+    layout.addWidget(grp_beautify)
 
     grp_look = SettingCardGroup(dialog.tr("Screenshot Appearance"), view)
 
@@ -868,3 +973,21 @@ def refresh_capture_appearance(dialog, defaults=None) -> None:
     if hasattr(dialog, "magnifier_zoom_spin"):
         dialog.magnifier_zoom_spin.setValue(
             float(value("magnifier_zoom", 4.0)))
+    if hasattr(dialog, "beautify_margin_spin"):
+        dialog.beautify_margin_spin.setValue(int(value("beautify_margin", 24)))
+    if hasattr(dialog, "beautify_radius_spin"):
+        dialog.beautify_radius_spin.setValue(int(value("beautify_radius", 12)))
+    if hasattr(dialog, "beautify_shadow_spin"):
+        dialog.beautify_shadow_spin.setValue(int(value("beautify_shadow", 18)))
+    if hasattr(dialog, "_beautify_background"):
+        dialog._beautify_background = QColor(
+            str(value("beautify_background", "#FFFFFF")))
+        _update_color_btn(dialog.beautify_background_btn, dialog._beautify_background)
+    if hasattr(dialog, "beautify_widths_combo"):
+        widths = (list(defaults.get("beautify_export_widths") or ())
+                  if defaults is not None
+                  else list(config.get_beautify_export_widths()))
+        for index in range(dialog.beautify_widths_combo.count()):
+            if list(dialog.beautify_widths_combo.itemData(index)) == widths:
+                dialog.beautify_widths_combo.setCurrentIndex(index)
+                break

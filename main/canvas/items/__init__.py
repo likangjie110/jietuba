@@ -12,7 +12,7 @@ from .text_item import TextItem
 from .spotlight_item import SpotlightCurtain, SpotlightItem
 from .annotation_items import (
     FILTER_KINDS, PATCH_ERASE, PATCH_FILTER,
-    InsertedImageItem, LineItem, PixelPatchItem, WatermarkItem, fit_rect,
+    InsertedImageItem, LineItem, LoupeItem, PixelPatchItem, WatermarkItem, fit_rect,
 )
 
 __all__ = [
@@ -20,6 +20,6 @@ __all__ = [
     'StrokeItem', 'RectItem', 'EllipseItem', 'ArrowItem',
     'TextItem', 'NumberItem', 'MosaicItem',
     'SpotlightCurtain', 'SpotlightItem',
-    'WatermarkItem', 'LineItem', 'PixelPatchItem', 'InsertedImageItem',
+    'WatermarkItem', 'LineItem', 'PixelPatchItem', 'InsertedImageItem', 'LoupeItem',
     'FILTER_KINDS', 'PATCH_FILTER', 'PATCH_ERASE', 'fit_rect',
 ]

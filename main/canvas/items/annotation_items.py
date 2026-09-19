@@ -308,3 +308,57 @@ def fit_rect(source_size, target: QRectF, *, keep_aspect: bool = True) -> QRectF
     return QRectF(target.x() + (target.width() - width) / 2,
                   target.y() + (target.height() - height) / 2,
                   width, height)
+
+
+class LoupeItem(QGraphicsItem):
+    """局部放大：把图上的一处细节按倍数放大后贴在旁边（带边框与引线）。
+
+    源框由工具拖出来，放大用的像素是**松手那一刻**从底图取的一份拷贝——所以它是一张
+    「二次取景」，不是活引用：之后在源区域上再画东西不会进放大图。这样导出结果稳定，
+    也避免每次重绘都去读场景。
+    """
+
+    def __init__(self, source_rect: QRectF, image: QImage, *, zoom: float = 2.0,
+                 offset: float = 18.0):
+        super().__init__()
+        self._source = QRectF(source_rect).normalized()
+        self._image = image
+        self._zoom = max(1.1, min(8.0, float(zoom)))
+        self._offset = max(0.0, float(offset))
+        self.setZValue(20)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
+
+    @property
+    def source_rect(self) -> QRectF:
+        return QRectF(self._source)
+
+    @property
+    def zoom(self) -> float:
+        return self._zoom
+
+    @property
+    def image(self) -> QImage:
+        return self._image
+
+    def target_rect(self) -> QRectF:
+        """放大图的落点：源框右下方 offset 处，尺寸 = 源框 × 倍数。"""
+        return QRectF(self._source.right() + self._offset,
+                      self._source.bottom() + self._offset,
+                      self._source.width() * self._zoom,
+                      self._source.height() * self._zoom)
+
+    def boundingRect(self) -> QRectF:
+        return self._source.united(self.target_rect()).adjusted(-2, -2, 2, 2)
+
+    def paint(self, painter: QPainter, _option, _widget=None):
+        if self._image is None or self._image.isNull() or self._source.isEmpty():
+            return
+        target = self.target_rect()
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, False)
+        pen = QPen(QColor(30, 136, 229), 1.5)
+        painter.setPen(pen)
+        painter.drawLine(self._source.center(), target.center())
+        painter.drawImage(target, self._image)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRect(target)
+        painter.drawRect(self._source)

@@ -1589,6 +1589,16 @@ class SettingsDialog(FrostedFramelessDialog):
             config.set_ocr_language(new_language)
         if hasattr(self, "ocr_tier_combo"):
             config.set_ocr_model_tier(self.ocr_tier_combo.currentData() or "")
+        if hasattr(self, "beautify_margin_spin"):
+            config.set_beautify_margin(self.beautify_margin_spin.value())
+        if hasattr(self, "beautify_radius_spin"):
+            config.set_beautify_radius(self.beautify_radius_spin.value())
+        if hasattr(self, "beautify_shadow_spin"):
+            config.set_beautify_shadow(self.beautify_shadow_spin.value())
+        if hasattr(self, "_beautify_background"):
+            config.set_beautify_background(self._beautify_background.name())
+        if hasattr(self, "beautify_widths_combo"):
+            config.set_beautify_export_widths(self.beautify_widths_combo.currentData())
         if hasattr(self, "stitch_fixed_bands_toggle"):
             config.set_stitch_remove_fixed_bands(self.stitch_fixed_bands_toggle.isChecked())
         if hasattr(self, "stitch_segment_combo"):

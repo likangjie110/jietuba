@@ -72,6 +72,11 @@ PIN_ACTIONS = (
     PinAction("close_others", "Close Other Pins"),
     PinAction("load_content", "Load New Content"),
     PinAction("recognize_text", "Recognize Text Again"),
+    PinAction("crop", "Crop"),
+    PinAction("filter_grayscale", "Grayscale"),
+    PinAction("filter_invert", "Invert Colours"),
+    PinAction("filter_blur", "Blur"),
+    PinAction("filter_emboss", "Emboss"),
     PinAction("context_menu", "Show Context Menu"),
     PinAction("close_selected", "Close Selected Pins"),
     PinAction("copy_and_close", "Copy and Close"),
@@ -197,6 +202,16 @@ def run_pin_action(action_id: str, window) -> bool:
         return window.close_other_pins() >= 0
     if action_id == "load_content":
         return bool(window.load_image_from_file())
+    if action_id == "crop":
+        return bool(window.start_crop_mode())
+    if action_id == "filter_grayscale":
+        return bool(window.apply_filter("grayscale"))
+    if action_id == "filter_invert":
+        return bool(window.apply_filter("invert"))
+    if action_id == "filter_blur":
+        return bool(window.apply_filter("blur"))
+    if action_id == "filter_emboss":
+        return bool(window.apply_filter("emboss"))
     if action_id == "recognize_text":
         return bool(window.recognize_text_now())
     if action_id == "context_menu":

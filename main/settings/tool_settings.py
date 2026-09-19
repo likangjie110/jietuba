@@ -202,6 +202,9 @@ class ToolSettingsManager(QObject):
             "brush_width": 40,    # 涂抹宽度
             "sample_margin": 6,   # 从笔画外侧取样估计背景色的圈宽
         },
+        "loupe": {
+            "zoom": 2.0,          # 局部放大的倍数（1.1~8.0）
+        },
     }
     
     # 应用级别的默认设置（按照设置界面的页面顺序排列）
@@ -357,6 +360,13 @@ class ToolSettingsManager(QObject):
         "ocr_vision_models": [],
         "ocr_vision_model": "",
         "ocr_vision_target": "markdown",
+        # 美化导出（见 core/beautify.py）
+        "beautify_margin": 24,
+        "beautify_radius": 12,
+        "beautify_shadow": 18,
+        "beautify_background": "#FFFFFF",
+        # 多尺寸导出的目标宽度（JSON 字符串，与 screenshot_save_paths 同一套做法）
+        "beautify_export_widths": "",
         # 长截图后期（见 stitch/postprocess.py）
         "stitch_remove_fixed_bands": False,   # 自动消除固定的标题栏/底栏
         "stitch_fixed_band_top": 0,           # >0 时用这个像素高度，0 = 自动检测
@@ -2107,6 +2117,98 @@ class ToolSettingsManager(QObject):
             "split_sentences": split_sentences,
             "preserve_formatting": preserve_formatting,
         }
+
+    #: 美化各参数的取值范围（设置页控件与这里共用）
+    BEAUTIFY_LIMITS = {"margin": (0, 200), "radius": (0, 60), "shadow": (0, 60)}
+
+    #: 美化导出可选的输出宽度（0 = 只用美化后的原尺寸）
+    BEAUTIFY_WIDTHS = (0, 640, 1280, 1920)
+
+    #: 没配过时用的两个输出宽度
+    DEFAULT_BEAUTIFY_WIDTHS = (1280, 1920)
+
+    def get_beautify_style(self) -> dict:
+        """美化样式一次读齐（动作侧只要这一份）。"""
+        return {
+            "margin": self.get_beautify_margin(),
+            "radius": self.get_beautify_radius(),
+            "shadow": self.get_beautify_shadow(),
+            "background": self.get_beautify_background(),
+            "widths": self.get_beautify_export_widths(),
+        }
+
+    def _beautify_int(self, key: str, default: int, limits) -> int:
+        try:
+            value = int(self.get_app_setting(key, default))
+        except (TypeError, ValueError):
+            return default
+        return max(limits[0], min(limits[1], value))
+
+    def get_beautify_margin(self) -> int:
+        return self._beautify_int("beautify_margin", 24, self.BEAUTIFY_LIMITS["margin"])
+
+    def set_beautify_margin(self, value) -> None:
+        low, high = self.BEAUTIFY_LIMITS["margin"]
+        self.set_app_setting("beautify_margin", max(low, min(high, int(value or 0))))
+
+    def get_beautify_radius(self) -> int:
+        return self._beautify_int("beautify_radius", 12, self.BEAUTIFY_LIMITS["radius"])
+
+    def set_beautify_radius(self, value) -> None:
+        low, high = self.BEAUTIFY_LIMITS["radius"]
+        self.set_app_setting("beautify_radius", max(low, min(high, int(value or 0))))
+
+    def get_beautify_shadow(self) -> int:
+        return self._beautify_int("beautify_shadow", 18, self.BEAUTIFY_LIMITS["shadow"])
+
+    def set_beautify_shadow(self, value) -> None:
+        low, high = self.BEAUTIFY_LIMITS["shadow"]
+        self.set_app_setting("beautify_shadow", max(low, min(high, int(value or 0))))
+
+    def get_beautify_background(self) -> str:
+        value = str(self.get_app_setting("beautify_background", "#FFFFFF") or "").strip()
+        return value or "#FFFFFF"
+
+    def set_beautify_background(self, value) -> None:
+        self.set_app_setting("beautify_background", str(value or "#FFFFFF").strip())
+
+    def get_beautify_export_widths(self) -> list:
+        """多尺寸导出的目标宽度；没配过（或配坏了）时用默认的两个宽度。"""
+        import json
+
+        raw = self.get_app_setting("beautify_export_widths", "")
+        if isinstance(raw, str) and raw.strip():
+            try:
+                raw = json.loads(raw)
+            except (TypeError, ValueError):
+                from core.logger import T, log_warning
+
+                log_warning(T("美化导出尺寸格式不对，按默认处理"), "Settings")
+                raw = []
+        if not isinstance(raw, (list, tuple)) or not raw:
+            return list(self.DEFAULT_BEAUTIFY_WIDTHS)
+        widths = []
+        for item in raw:
+            try:
+                value = int(item)
+            except (TypeError, ValueError):
+                continue
+            if value in self.BEAUTIFY_WIDTHS and value not in widths:
+                widths.append(value)
+        return widths or list(self.DEFAULT_BEAUTIFY_WIDTHS)
+
+    def set_beautify_export_widths(self, widths) -> None:
+        import json
+
+        values = []
+        for item in widths or []:
+            try:
+                value = int(item)
+            except (TypeError, ValueError):
+                continue
+            if value in self.BEAUTIFY_WIDTHS and value not in values:
+                values.append(value)
+        self.set_app_setting("beautify_export_widths", json.dumps(values))
 
     #: 长截图分段高度的可选值（0 = 不分段）
     STITCH_SEGMENT_HEIGHTS = (0, 2048, 4096, 8192)

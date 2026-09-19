@@ -2817,6 +2817,90 @@ SOFTWARE.</translation>
             <source>{height} px</source>
             <translation>{height} 像素</translation>
         </message>
+        <message>
+            <source>Beautify Export</source>
+            <translation>美化导出</translation>
+        </message>
+        <message>
+            <source>Margin</source>
+            <translation>留白</translation>
+        </message>
+        <message>
+            <source>Blank space added around the captured image on export.</source>
+            <translation>导出时在截图四周加上的空白。</translation>
+        </message>
+        <message>
+            <source>Corner radius</source>
+            <translation>圆角半径</translation>
+        </message>
+        <message>
+            <source>Rounds the corners of the exported image.</source>
+            <translation>把导出图片的四角修圆。</translation>
+        </message>
+        <message>
+            <source>Drop shadow size of the exported image.</source>
+            <translation>导出图片的投影大小。</translation>
+        </message>
+        <message>
+            <source>Background</source>
+            <translation>背景色</translation>
+        </message>
+        <message>
+            <source>Colour of the margin and shadow area.</source>
+            <translation>留白与投影区域的颜色。</translation>
+        </message>
+        <message>
+            <source>Extra export sizes</source>
+            <translation>额外导出尺寸</translation>
+        </message>
+        <message>
+            <source>Exports scaled copies of the beautified image.</source>
+            <translation>按这些宽度再导出几张缩小版。</translation>
+        </message>
+        <message>
+            <source>1280 / 1920</source>
+            <translation>1280 / 1920</translation>
+        </message>
+        <message>
+            <source>640 / 1280 / 1920</source>
+            <translation>640 / 1280 / 1920</translation>
+        </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>遮挡敏感信息</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>美化并导出</translation>
+        </message>
+        <message>
+            <source>Magnification x10</source>
+            <translation>放大倍数 ×10</translation>
+        </message>
+        <message>
+            <source>Crop</source>
+            <translation>裁剪</translation>
+        </message>
+        <message>
+            <source>Filter</source>
+            <translation>滤镜</translation>
+        </message>
+        <message>
+            <source>Grayscale</source>
+            <translation>灰度</translation>
+        </message>
+        <message>
+            <source>Invert Colours</source>
+            <translation>反相</translation>
+        </message>
+        <message>
+            <source>Emboss</source>
+            <translation>浮雕</translation>
+        </message>
+        <message>
+            <source>Magnify a detail</source>
+            <translation>局部放大</translation>
+        </message>
 </context>
 
 <context>
@@ -3441,6 +3525,14 @@ SOFTWARE.</translation>
             <source>Translate Image in Place</source>
             <translation>截图翻译并落图</translation>
         </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>遮挡敏感信息</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>美化并导出</translation>
+        </message>
 </context>
 
 <context>
@@ -3576,6 +3668,14 @@ SOFTWARE.</translation>
         <message>
             <source>Translate Image in Place</source>
             <translation>截图翻译并落图</translation>
+        </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>遮挡敏感信息</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>美化并导出</translation>
         </message>
 </context>
 
@@ -5649,6 +5749,10 @@ SOFTWARE.</translation>
             <source>Translate image in place</source>
             <translation>翻译并落图</translation>
         </message>
+        <message>
+            <source>Magnify a detail</source>
+            <translation>局部放大</translation>
+        </message>
 </context>
 
 <context>
@@ -5987,6 +6091,10 @@ SOFTWARE.</translation>
         <source>Delete</source>
         <translation>删除</translation>
     </message>
+        <message>
+            <source>Magnification x10</source>
+            <translation>放大倍数 ×10</translation>
+        </message>
 </context>
 
 <context>

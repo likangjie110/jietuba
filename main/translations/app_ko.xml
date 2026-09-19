@@ -2781,6 +2781,90 @@ SOFTWARE.</translation>
             <source>{height} px</source>
             <translation>{height} px</translation>
         </message>
+        <message>
+            <source>Beautify Export</source>
+            <translation>꾸미기 내보내기</translation>
+        </message>
+        <message>
+            <source>Margin</source>
+            <translation>여백</translation>
+        </message>
+        <message>
+            <source>Blank space added around the captured image on export.</source>
+            <translation>내보낼 때 캡처 이미지 주위에 추가하는 여백입니다.</translation>
+        </message>
+        <message>
+            <source>Corner radius</source>
+            <translation>모서리 반경</translation>
+        </message>
+        <message>
+            <source>Rounds the corners of the exported image.</source>
+            <translation>내보낼 이미지의 모서리를 둥글게 만듭니다.</translation>
+        </message>
+        <message>
+            <source>Drop shadow size of the exported image.</source>
+            <translation>내보낼 이미지의 그림자 크기입니다.</translation>
+        </message>
+        <message>
+            <source>Background</source>
+            <translation>배경색</translation>
+        </message>
+        <message>
+            <source>Colour of the margin and shadow area.</source>
+            <translation>여백과 그림자 영역의 색상입니다.</translation>
+        </message>
+        <message>
+            <source>Extra export sizes</source>
+            <translation>추가 내보내기 크기</translation>
+        </message>
+        <message>
+            <source>Exports scaled copies of the beautified image.</source>
+            <translation>꾸민 이미지의 축소본도 함께 내보냅니다.</translation>
+        </message>
+        <message>
+            <source>1280 / 1920</source>
+            <translation>1280 / 1920</translation>
+        </message>
+        <message>
+            <source>640 / 1280 / 1920</source>
+            <translation>640 / 1280 / 1920</translation>
+        </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>민감 정보 가리기</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>꾸미고 내보내기</translation>
+        </message>
+        <message>
+            <source>Magnification x10</source>
+            <translation>배율 ×10</translation>
+        </message>
+        <message>
+            <source>Crop</source>
+            <translation>자르기</translation>
+        </message>
+        <message>
+            <source>Filter</source>
+            <translation>필터</translation>
+        </message>
+        <message>
+            <source>Grayscale</source>
+            <translation>그레이스케일</translation>
+        </message>
+        <message>
+            <source>Invert Colours</source>
+            <translation>색 반전</translation>
+        </message>
+        <message>
+            <source>Emboss</source>
+            <translation>엠보스</translation>
+        </message>
+        <message>
+            <source>Magnify a detail</source>
+            <translation>부분 확대</translation>
+        </message>
 </context>
 
 <context>
@@ -3401,6 +3485,14 @@ SOFTWARE.</translation>
             <source>Translate Image in Place</source>
             <translation>번역 후 이미지에 반영</translation>
         </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>민감 정보 가리기</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>꾸미고 내보내기</translation>
+        </message>
 </context>
 
 <context>
@@ -3536,6 +3628,14 @@ SOFTWARE.</translation>
         <message>
             <source>Translate Image in Place</source>
             <translation>번역 후 이미지에 반영</translation>
+        </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>민감 정보 가리기</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>꾸미고 내보내기</translation>
         </message>
 </context>
 
@@ -5586,6 +5686,10 @@ SOFTWARE.</translation>
             <source>Translate image in place</source>
             <translation>번역 후 이미지에 반영</translation>
         </message>
+        <message>
+            <source>Magnify a detail</source>
+            <translation>부분 확대</translation>
+        </message>
 </context>
 
 <context>
@@ -5924,6 +6028,10 @@ SOFTWARE.</translation>
         <source>Delete</source>
         <translation>삭제</translation>
     </message>
+        <message>
+            <source>Magnification x10</source>
+            <translation>배율 ×10</translation>
+        </message>
 </context>
 
 <context>

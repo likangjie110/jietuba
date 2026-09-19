@@ -2781,6 +2781,90 @@ SOFTWARE.</translation>
             <source>{height} px</source>
             <translation>{height} px</translation>
         </message>
+        <message>
+            <source>Beautify Export</source>
+            <translation>美化エクスポート</translation>
+        </message>
+        <message>
+            <source>Margin</source>
+            <translation>余白</translation>
+        </message>
+        <message>
+            <source>Blank space added around the captured image on export.</source>
+            <translation>書き出し時に画像の周囲へ加える余白。</translation>
+        </message>
+        <message>
+            <source>Corner radius</source>
+            <translation>角の丸み</translation>
+        </message>
+        <message>
+            <source>Rounds the corners of the exported image.</source>
+            <translation>書き出す画像の角を丸くします。</translation>
+        </message>
+        <message>
+            <source>Drop shadow size of the exported image.</source>
+            <translation>書き出す画像のドロップシャドウの大きさ。</translation>
+        </message>
+        <message>
+            <source>Background</source>
+            <translation>背景色</translation>
+        </message>
+        <message>
+            <source>Colour of the margin and shadow area.</source>
+            <translation>余白と影の領域の色。</translation>
+        </message>
+        <message>
+            <source>Extra export sizes</source>
+            <translation>追加の書き出しサイズ</translation>
+        </message>
+        <message>
+            <source>Exports scaled copies of the beautified image.</source>
+            <translation>美化後の画像を縮小した複製も書き出します。</translation>
+        </message>
+        <message>
+            <source>1280 / 1920</source>
+            <translation>1280 / 1920</translation>
+        </message>
+        <message>
+            <source>640 / 1280 / 1920</source>
+            <translation>640 / 1280 / 1920</translation>
+        </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>機密情報を隠す</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>美化して書き出し</translation>
+        </message>
+        <message>
+            <source>Magnification x10</source>
+            <translation>倍率 ×10</translation>
+        </message>
+        <message>
+            <source>Crop</source>
+            <translation>切り抜き</translation>
+        </message>
+        <message>
+            <source>Filter</source>
+            <translation>フィルター</translation>
+        </message>
+        <message>
+            <source>Grayscale</source>
+            <translation>グレースケール</translation>
+        </message>
+        <message>
+            <source>Invert Colours</source>
+            <translation>色を反転</translation>
+        </message>
+        <message>
+            <source>Emboss</source>
+            <translation>エンボス</translation>
+        </message>
+        <message>
+            <source>Magnify a detail</source>
+            <translation>一部を拡大</translation>
+        </message>
 </context>
 
 <context>
@@ -3405,6 +3489,14 @@ SOFTWARE.</translation>
             <source>Translate Image in Place</source>
             <translation>翻訳して画像に反映</translation>
         </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>機密情報を隠す</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>美化して書き出し</translation>
+        </message>
 </context>
 
 <context>
@@ -3540,6 +3632,14 @@ SOFTWARE.</translation>
         <message>
             <source>Translate Image in Place</source>
             <translation>翻訳して画像に反映</translation>
+        </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>機密情報を隠す</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>美化して書き出し</translation>
         </message>
 </context>
 
@@ -5609,6 +5709,10 @@ SOFTWARE.</translation>
             <source>Translate image in place</source>
             <translation>翻訳して画像に反映</translation>
         </message>
+        <message>
+            <source>Magnify a detail</source>
+            <translation>一部を拡大</translation>
+        </message>
 </context>
 
 <context>
@@ -5947,6 +6051,10 @@ SOFTWARE.</translation>
         <source>Delete</source>
         <translation>削除</translation>
     </message>
+        <message>
+            <source>Magnification x10</source>
+            <translation>倍率 ×10</translation>
+        </message>
 </context>
 
 <context>

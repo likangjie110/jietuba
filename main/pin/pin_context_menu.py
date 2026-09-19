@@ -171,7 +171,29 @@ class PinContextMenu:
             transform_menu.addAction(act_reset)
 
             menu.addMenu(transform_menu)
-        
+
+            # 裁剪（进裁剪模式，在内容区拖一个矩形）
+            from .pin_actions import run_pin_action
+
+            crop_action = QAction(self.parent.tr("Crop"), self.parent)
+            crop_action.triggered.connect(
+                lambda: run_pin_action("crop", self.parent))
+            menu.addAction(crop_action)
+
+            # 滤镜子菜单
+            filter_menu = QMenu(self.parent.tr("Filter"), self.parent)
+            filter_menu.setStyleSheet(self._get_menu_style())
+            self._setup_font(filter_menu)
+            for action_id, label in (("filter_grayscale", "Grayscale"),
+                                     ("filter_invert", "Invert Colours"),
+                                     ("filter_blur", "Blur"),
+                                     ("filter_emboss", "Emboss")):
+                entry = QAction(self.parent.tr(label), self.parent)
+                entry.triggered.connect(
+                    lambda _checked=False, value=action_id: run_pin_action(value, self.parent))
+                filter_menu.addAction(entry)
+            menu.addMenu(filter_menu)
+
         menu.addSeparator()
         
         # --- 以下项目在缩略图模式下也隐藏（工具栏、阴影） ---

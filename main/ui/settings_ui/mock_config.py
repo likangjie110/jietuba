@@ -148,6 +148,16 @@ class MockConfig:
 
     def get_ocr_vision_task(self): return "table"
 
+    def get_beautify_margin(self): return 24
+
+    def get_beautify_radius(self): return 12
+
+    def get_beautify_shadow(self): return 18
+
+    def get_beautify_background(self): return "#FFFFFF"
+
+    def get_beautify_export_widths(self): return [1280, 1920]
+
     def get_stitch_remove_fixed_bands(self): return False
 
     def get_stitch_max_segment_height(self): return 0

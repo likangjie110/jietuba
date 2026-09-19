@@ -57,6 +57,8 @@ ACTIONS = (
            tray=True),
     Action("read_image_ai", "Read Image with AI", silent_capture=True, tray=True),
     Action("translate_image_in_place", "Translate Image in Place", tray=True),
+    Action("mask_sensitive_info", "Mask Sensitive Info", silent_capture=True, tray=True),
+    Action("beautify_export", "Beautify and Export", silent_capture=True, tray=True),
     Action("recognize_formula", "Recognize Formula as LaTeX", silent_capture=True),
     Action("screenshot_translate", "Screenshot and Translate",
            editor_mode=EDITOR_MODE_TRANSLATE),
@@ -631,6 +633,127 @@ def translate_image_in_place(image, config_manager=None) -> bool:
     return True
 
 
+class _PrivacyMaskThread(QThread):
+    """OCR → 找敏感片段 → 打码；全过程在工作线程（识别慢，主线程不能等）。"""
+
+    masked = Signal(object, int)
+
+    def __init__(self, image):
+        super().__init__()
+        self._image = image
+
+    def run(self):
+        from ocr import is_ocr_available, recognize_text
+
+        try:
+            if not is_ocr_available():
+                log_warning(T("OCR 不可用，无法自动遮挡"), "Action")
+                self.masked.emit(None, 0)
+                return
+            result = recognize_text(self._image, return_format="dict")
+            from core.privacy import mask_regions, mosaic_rectangles
+
+            regions = mask_regions(result)
+            if not regions:
+                log_debug(T("没有识别到需要遮挡的敏感信息"), "Action")
+                self.masked.emit(None, 0)
+                return
+            self.masked.emit(mosaic_rectangles(self._image, regions), len(regions))
+        except Exception as e:
+            log_exception(e, T("自动遮挡敏感信息"))
+            self.masked.emit(None, 0)
+        finally:
+            self._image = None
+
+
+class _PrivacyMaskSink(QObject):
+    """遮挡结果接收端：进剪贴板（主线程）。"""
+
+    def on_masked(self, image, count: int) -> None:
+        if image is None or image.isNull() or not count:
+            log_warning(T("没有可遮挡的内容"), "Action")
+            return
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setImage(image)
+        log_debug(T("已遮挡 {count} 处敏感信息并复制到剪贴板", count=count), "Action")
+
+    def on_finished(self) -> None:
+        _privacy_refs[:] = [ref for ref in _privacy_refs if ref[1] is not self]
+
+
+_privacy_refs: list = []
+
+
+def mask_sensitive_info(image) -> bool:
+    """截图 → OCR → 把手机号/邮箱/证件号/卡号打码 → 剪贴板。"""
+    from PySide6.QtGui import QImage
+
+    qimage = image if isinstance(image, QImage) else image.toImage()
+    qimage = qimage.copy()
+    if qimage.isNull():
+        log_warning(T("截图内容为空，无法遮挡"), "Action")
+        return False
+    thread = _PrivacyMaskThread(qimage)
+    sink = _PrivacyMaskSink()
+    thread.masked.connect(sink.on_masked)
+    thread.finished.connect(sink.on_finished)
+    _privacy_refs.append((thread, sink))
+    thread.start()
+    log_debug(T("开始自动遮挡敏感信息"), "Action")
+    return True
+
+
+def beautify_export(image, config_manager=None) -> bool:
+    """按设置加留白/背景/圆角/投影，并导出多个尺寸，同时把成品放进剪贴板。
+
+    尺寸导出写进「截图保存目录」；一个尺寸都没写出来（比如原图比所有目标都窄）时，
+    成品仍然会进剪贴板，并如实返回 False。
+    """
+    from PySide6.QtGui import QImage
+
+    from core.beautify import apply_layout, export_sizes
+
+    qimage = image if isinstance(image, QImage) else image.toImage()
+    if qimage.isNull():
+        log_warning(T("截图内容为空，无法美化"), "Action")
+        return False
+
+    style = {"margin": 24, "radius": 12, "shadow": 18, "background": "#FFFFFF",
+             "widths": ()}
+    if config_manager is not None:
+        try:
+            style = {
+                "margin": config_manager.get_beautify_margin(),
+                "radius": config_manager.get_beautify_radius(),
+                "shadow": config_manager.get_beautify_shadow(),
+                "background": config_manager.get_beautify_background(),
+                "widths": config_manager.get_beautify_export_widths(),
+            }
+        except Exception as e:
+            log_exception(e, T("读取美化设置"))
+
+    decorated = apply_layout(qimage, margin=style["margin"], background=style["background"],
+                             radius=style["radius"], shadow=style["shadow"])
+    clipboard = QApplication.clipboard()
+    if clipboard is not None:
+        clipboard.setImage(decorated)
+
+    saved = 0
+    try:
+        from core.save import SaveService
+
+        service = SaveService(config_manager=config_manager)
+        for width, scaled in export_sizes(decorated, style["widths"] or ()):
+            path = service.save_qimage_async(scaled, prefix="美化", suffix=f"_{width}w")
+            if path:
+                saved += 1
+        log_debug(T("美化导出完成: {count} 个尺寸", count=saved), "Action")
+    except Exception as e:
+        log_exception(e, T("美化导出"))
+    return saved > 0
+
+
 class _TextClipboardSink(QObject):
     """OCR 结果的接收端：把识别到的文字写进剪贴板（按设置决定是否再弹一次结果窗）。
 
@@ -981,6 +1104,10 @@ def run_action(action_id: str, app) -> bool:
         return _copy_table_markdown(image)
     if action_id == "recognize_table":
         return _recognize_table(image)
+    if action_id == "mask_sensitive_info":
+        return mask_sensitive_info(image)
+    if action_id == "beautify_export":
+        return beautify_export(image, getattr(app, "config_manager", None))
     if action_id == "translate_image_in_place":
         return translate_image_in_place(image, getattr(app, "config_manager", None))
     if action_id == "read_image_ai":

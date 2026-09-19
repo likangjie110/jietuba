@@ -404,6 +404,8 @@ class Toolbar(QWidget):
             "smart_erase", "svg/智能擦除.svg", "Smart erase (paint to fill with the background)", tool)
         self.insert_image_btn = self._add_tool_button(
             "insert_image", "svg/插入图片.svg", "Insert an image from a file", tool)
+        self.loupe_btn = self._add_tool_button(
+            "loupe", "svg/局部放大.svg", "Magnify a detail (drag the area to zoom)", tool)
 
         self.undo_btn = self._add_button("undo", "svg/撤回.svg", "Undo", tool, self.undo_clicked.emit)
         self.redo_btn = self._add_button("redo", "svg/复原.svg", "Redo", tool, self.redo_clicked.emit)
@@ -434,6 +436,7 @@ class Toolbar(QWidget):
             "watermark": self.watermark_btn,
             "filter": self.filter_btn,
             "smart_erase": self.smart_erase_btn,
+            "loupe": self.loupe_btn,
             "insert_image": self.insert_image_btn,
             "pen": self.pen_btn,
             "highlighter": self.highlighter_btn,
@@ -905,8 +908,9 @@ class Toolbar(QWidget):
             "watermark": getattr(self, "annotation_panel", None),
             "filter": getattr(self, "annotation_panel", None),
             "smart_erase": getattr(self, "annotation_panel", None),
+            "loupe": getattr(self, "annotation_panel", None),
         }
-        if tool_id in ("line", "watermark", "filter", "smart_erase") and hasattr(self, "annotation_panel"):
+        if tool_id in ("line", "watermark", "filter", "smart_erase", "loupe") and hasattr(self, "annotation_panel"):
             self.annotation_panel.set_tool(tool_id)
 
         panel = panel_map.get(tool_id)

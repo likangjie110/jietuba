@@ -16,7 +16,7 @@ from .cursor import CursorTool
 from .eraser import EraserTool
 from .mosaic import MosaicTool
 from .spotlight import SpotlightTool
-from .annotation import (FilterTool, InsertImageTool, LineTool, SmartEraseTool,
+from .annotation import (FilterTool, InsertImageTool, LineTool, LoupeTool, SmartEraseTool,
                          WatermarkTool)
 
 __all__ = [
@@ -38,5 +38,6 @@ __all__ = [
     'WatermarkTool',
     'FilterTool',
     'SmartEraseTool',
+    'LoupeTool',
     'InsertImageTool',
 ]

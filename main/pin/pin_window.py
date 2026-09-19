@@ -12,8 +12,8 @@
 - PinTranslationHelper：翻译功能助手
 """
 
-from PySide6.QtWidgets import QApplication, QLabel, QWidget
-from PySide6.QtCore import Qt, QPoint, QTimer, Signal, QRectF, QEvent
+from PySide6.QtWidgets import QRubberBand, QApplication, QLabel, QWidget
+from PySide6.QtCore import Qt, QPoint, QRect, QSize, QTimer, Signal, QRectF, QEvent
 from PySide6.QtGui import (
     QColor, QPixmap, QImage, QPainter, QMouseEvent, QWheelEvent, QKeyEvent,
     QTransform,
@@ -220,6 +220,11 @@ class PinWindow(QWidget):
 
         # ====== 缩略图模式 ======
         self._thumbnail = PinThumbnailMode(self)
+
+        # 裁剪模式（在内容区拖一个矩形）
+        self._crop_mode = False
+        self._crop_origin = None
+        self._crop_band = None
 
         # ====== 图像变换管理器 ======
         self._image_transform = PinImageTransform()
@@ -780,6 +785,11 @@ class PinWindow(QWidget):
 
     @safe_event
     def keyPressEvent(self, event: QKeyEvent):
+        # 裁剪模式下 Esc 先取消裁剪，不关闭贴图
+        if self._crop_mode and event.key() == Qt.Key.Key_Escape:
+            self.cancel_crop_mode()
+            log_debug(T("已取消贴图裁剪"), "PinWindow")
+            return
         # 钉图快捷键已由 ShortcutManager 统一分发给 PinEdit/PinNormal Handler
         # 这里只做兜底，防止焦点偶尔在 PinWindow 上时按键无反应
         super().keyPressEvent(event)
@@ -787,6 +797,8 @@ class PinWindow(QWidget):
     @safe_event
     def eventFilter(self, obj, event):
         if self.view and obj == self.view.viewport():
+            if self._crop_mode and self._handle_crop_event(event):
+                return True
             if event.type() in (QEvent.Type.Enter, QEvent.Type.HoverEnter, QEvent.Type.MouseMove):
                 self._set_hover_state(True)
             elif event.type() in (QEvent.Type.Leave, QEvent.Type.HoverLeave):
@@ -1021,6 +1033,108 @@ class PinWindow(QWidget):
         except Exception as e:
             log_exception(e, T("加载贴图新内容"))
             return False
+
+    # ==================================================================
+    # 裁剪与滤镜（都走 load_image：换底图要成套地换）
+    # ==================================================================
+
+    def current_image(self):
+        """当前底图（像素形态）。没有底图时返回空 QImage。"""
+        pixmap = getattr(self, "_base_pixmap", None)
+        if pixmap is None:
+            return QImage()
+        return pixmap.toImage()
+
+    def start_crop_mode(self) -> bool:
+        """进入裁剪模式：在内容区拖一个矩形，松手即裁。Esc 取消。"""
+        if self.view is None or self.current_image().isNull():
+            return False
+        self._crop_mode = True
+        self._crop_origin = None
+        self._crop_band = QRubberBand(QRubberBand.Shape.Rectangle, self.view.viewport())
+        self.view.viewport().setCursor(Qt.CursorShape.CrossCursor)
+        self._show_hint_label(self.tr("Drag to crop, Esc to cancel"))
+        log_debug(T("贴图进入裁剪模式"), "PinWindow")
+        return True
+
+    def cancel_crop_mode(self) -> None:
+        self._crop_mode = False
+        self._crop_origin = None
+        if getattr(self, "_crop_band", None) is not None:
+            self._crop_band.hide()
+        if self.view is not None:
+            self.view.viewport().unsetCursor()
+
+    def _handle_crop_event(self, event) -> bool:
+        """裁剪模式下的鼠标事件；返回 True 表示已消化掉这个事件。"""
+        if event.type() == QEvent.Type.MouseButtonPress:
+            self._crop_origin = event.position().toPoint()
+            self._crop_band.setGeometry(QRect(self._crop_origin, QSize()))
+            self._crop_band.show()
+            return True
+        if event.type() == QEvent.Type.MouseMove and self._crop_origin is not None:
+            self._crop_band.setGeometry(
+                QRect(self._crop_origin, event.position().toPoint()).normalized())
+            return True
+        if event.type() == QEvent.Type.MouseButtonRelease and self._crop_origin is not None:
+            self._crop_band.setGeometry(
+                QRect(self._crop_origin, event.position().toPoint()).normalized())
+            rect = self._crop_rect_in_image(self._crop_band.geometry())
+            self.cancel_crop_mode()
+            if rect is not None:
+                self.crop_to(rect)
+            return True
+        return False
+
+    def _crop_rect_in_image(self, viewport_rect):
+        """视口矩形 → 图像坐标（视图有缩放，必须走 mapToScene）。"""
+        if self.view is None or viewport_rect.isEmpty():
+            return None
+        top_left = self.view.mapToScene(viewport_rect.topLeft())
+        bottom_right = self.view.mapToScene(viewport_rect.bottomRight())
+        rect = QRectF(top_left, bottom_right).normalized()
+        image = self.current_image()
+        if image.isNull():
+            return None
+        bounds = QRectF(0, 0, image.width(), image.height())
+        rect = rect.intersected(bounds)
+        if rect.width() < 2 or rect.height() < 2:
+            return None
+        return rect
+
+    def crop_to(self, rect) -> bool:
+        """按图像坐标裁剪当前贴图。"""
+        image = self.current_image()
+        if image.isNull():
+            return False
+        target = QRectF(rect).normalized().intersected(
+            QRectF(0, 0, image.width(), image.height()))
+        if target.width() < 1 or target.height() < 1:
+            log_warning(T("裁剪范围无效，未执行"), "PinWindow")
+            return False
+        cropped = image.copy(target.toRect())
+        if cropped.isNull():
+            return False
+        log_info(T("贴图已裁剪: {w}x{h}", w=cropped.width(), h=cropped.height()), "PinWindow")
+        return self.load_image(cropped)
+
+    def apply_filter(self, kind: str) -> bool:
+        """把整张贴图按给定滤镜处理（灰度 / 反相 / 模糊 / 浮雕）。"""
+        from tools.annotation import FILTER_DEFAULTS, apply_filter
+
+        image = self.current_image()
+        if image.isNull():
+            return False
+        name = str(kind or "").strip() or FILTER_DEFAULTS["kind"]
+        if name not in ("grayscale", "invert", "blur", "emboss"):
+            log_warning(T("不认识的滤镜: {kind}", kind=name), "PinWindow")
+            return False
+        processed = apply_filter(image, name, radius=int(FILTER_DEFAULTS["radius"]),
+                                 strength=float(FILTER_DEFAULTS["strength"]))
+        if processed is None or processed.isNull():
+            return False
+        log_info(T("贴图已应用滤镜: {kind}", kind=name), "PinWindow")
+        return self.load_image(processed)
 
     def load_image_from_file(self) -> bool:
         """选一张本地图片替换当前贴图（右键菜单入口）。"""

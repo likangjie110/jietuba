@@ -34,6 +34,7 @@ BUTTON_NAMES = {
     "save": "Save",
     "screenshot_translate": "Screenshot translate",
     "translate_in_place": "Translate image in place",
+    "loupe": "Magnify a detail",
     "text_recognize": "Recognize text",
     "scan_code": "Scan code",
     "gif": "GIF recording",

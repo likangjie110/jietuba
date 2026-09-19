@@ -90,6 +90,12 @@ class _FakePin:
     def recognize_text_now(self):
         return self._record("recognize_text_now")
 
+    def start_crop_mode(self):
+        return self._record("start_crop_mode")
+
+    def apply_filter(self, kind):
+        return self._record("apply_filter", kind)
+
 
 class TestRegistry:
     def test_gestures_and_actions_are_unique(self):

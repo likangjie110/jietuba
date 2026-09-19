@@ -18,7 +18,7 @@ from ui.fluent_lite import ComboBox, LineEdit, PushButton, SpinBox
 _tr = make_tr("AnnotationSettingsPanel")
 
 #: 面板支持的四个工具（顺序即界面顺序）
-PANEL_TOOLS = ("line", "watermark", "filter", "smart_erase")
+PANEL_TOOLS = ("line", "watermark", "filter", "smart_erase", "loupe")
 
 LINE_STYLES = (("solid", "Solid"), ("dashed", "Dashed"), ("dashed_dense", "Dense dashes"))
 FILTER_KINDS = (("grayscale", "Grayscale"), ("invert", "Invert"),
@@ -210,6 +210,11 @@ class AnnotationSettingsPanel(QWidget):
             _tr("Brush size"), 4, 200, self._on_erase_width_changed)
         outer.addWidget(self._erase_width_row)
 
+        # 局部放大：倍数
+        self._loupe_zoom_row, self.loupe_zoom_spin = self._make_spin_row(
+            _tr("Magnification x10"), 11, 80, self._on_loupe_zoom_changed)
+        outer.addWidget(self._loupe_zoom_row)
+
         # 样式模板：四个工具共用一行（内容按当前工具取/存）
         self._template_row = self._make_row(_tr("Style template"))
         self.template_controls = StyleTemplateControls(self._template_row)
@@ -261,13 +266,14 @@ class AnnotationSettingsPanel(QWidget):
             "filter": (self._filter_kind_row, self._filter_radius_row,
                        self._filter_strength_row),
             "smart_erase": (self._erase_width_row,),
+            "loupe": (self._loupe_zoom_row,),
         }
         visible = set(rows.get(self._tool_id, ()))
         for row in (self._line_row, self._watermark_text_row, self._watermark_size_row,
                     self._watermark_angle_row, self._watermark_gap_row,
                     self._watermark_opacity_row, self._filter_kind_row,
                     self._filter_radius_row, self._filter_strength_row,
-                    self._erase_width_row):
+                    self._erase_width_row, self._loupe_zoom_row):
             row.setVisible(row in visible)
         self.adjustSize()
 
@@ -275,7 +281,7 @@ class AnnotationSettingsPanel(QWidget):
         """按当前工具的持久化设置回填控件。"""
         from types import SimpleNamespace
 
-        from tools.annotation import (ERASE_DEFAULTS, FILTER_DEFAULTS,
+        from tools.annotation import (ERASE_DEFAULTS, FILTER_DEFAULTS, LOUPE_DEFAULTS,
                                       WATERMARK_DEFAULTS, read_tool_settings)
 
         settings = read_tool_settings(SimpleNamespace(settings_manager=self._manager()),
@@ -302,6 +308,9 @@ class AnnotationSettingsPanel(QWidget):
             elif self._tool_id == "smart_erase":
                 values = {**ERASE_DEFAULTS, **settings}
                 self.erase_width_spin.setValue(int(values["brush_width"]))
+            elif self._tool_id == "loupe":
+                values = {**LOUPE_DEFAULTS, **settings}
+                self.loupe_zoom_spin.setValue(int(round(float(values["zoom"]) * 10)))
         except Exception as e:
             log_exception(e, T("回填标注设置面板"))
         finally:
@@ -358,6 +367,10 @@ class AnnotationSettingsPanel(QWidget):
 
     def _on_erase_width_changed(self, value: int):
         self._store(brush_width=int(value))
+
+    def _on_loupe_zoom_changed(self, value: int):
+        """控件以「×10」为单位显示（11~80 = 1.1x~8.0x），存储用真实倍数。"""
+        self._store(zoom=max(1.1, min(8.0, float(value) / 10.0)))
 
 
 __all__ = ["AnnotationSettingsPanel", "PANEL_TOOLS", "StyleTemplateControls"]

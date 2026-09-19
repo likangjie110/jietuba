@@ -91,6 +91,7 @@ class CanvasScene(QGraphicsScene):
             PenTool, RectTool, EllipseTool, ArrowTool,
             TextTool, NumberTool, HighlighterTool, CursorTool, EraserTool, MosaicTool, SpotlightTool,
             LineTool, WatermarkTool, FilterTool, SmartEraseTool, InsertImageTool,
+            LoupeTool,
         )
 
         ctx = ToolContext(
@@ -124,6 +125,7 @@ class CanvasScene(QGraphicsScene):
         self.tool_controller.register(FilterTool())
         self.tool_controller.register(SmartEraseTool())
         self.tool_controller.register(InsertImageTool())
+        self.tool_controller.register(LoupeTool())
         
         # 默认激活光标工具（表示无绘制工具激活，SmartEditController负责选择/编辑交互）
         self.tool_controller.activate("cursor")

@@ -2817,6 +2817,90 @@ SOFTWARE.</translation>
             <source>{height} px</source>
             <translation>{height} px</translation>
         </message>
+        <message>
+            <source>Beautify Export</source>
+            <translation>Beautify Export</translation>
+        </message>
+        <message>
+            <source>Margin</source>
+            <translation>Margin</translation>
+        </message>
+        <message>
+            <source>Blank space added around the captured image on export.</source>
+            <translation>Blank space added around the captured image on export.</translation>
+        </message>
+        <message>
+            <source>Corner radius</source>
+            <translation>Corner radius</translation>
+        </message>
+        <message>
+            <source>Rounds the corners of the exported image.</source>
+            <translation>Rounds the corners of the exported image.</translation>
+        </message>
+        <message>
+            <source>Drop shadow size of the exported image.</source>
+            <translation>Drop shadow size of the exported image.</translation>
+        </message>
+        <message>
+            <source>Background</source>
+            <translation>Background</translation>
+        </message>
+        <message>
+            <source>Colour of the margin and shadow area.</source>
+            <translation>Colour of the margin and shadow area.</translation>
+        </message>
+        <message>
+            <source>Extra export sizes</source>
+            <translation>Extra export sizes</translation>
+        </message>
+        <message>
+            <source>Exports scaled copies of the beautified image.</source>
+            <translation>Exports scaled copies of the beautified image.</translation>
+        </message>
+        <message>
+            <source>1280 / 1920</source>
+            <translation>1280 / 1920</translation>
+        </message>
+        <message>
+            <source>640 / 1280 / 1920</source>
+            <translation>640 / 1280 / 1920</translation>
+        </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>Mask Sensitive Info</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>Beautify and Export</translation>
+        </message>
+        <message>
+            <source>Magnification x10</source>
+            <translation>Magnification x10</translation>
+        </message>
+        <message>
+            <source>Crop</source>
+            <translation>Crop</translation>
+        </message>
+        <message>
+            <source>Filter</source>
+            <translation>Filter</translation>
+        </message>
+        <message>
+            <source>Grayscale</source>
+            <translation>Grayscale</translation>
+        </message>
+        <message>
+            <source>Invert Colours</source>
+            <translation>Invert Colours</translation>
+        </message>
+        <message>
+            <source>Emboss</source>
+            <translation>Emboss</translation>
+        </message>
+        <message>
+            <source>Magnify a detail</source>
+            <translation>Magnify a detail</translation>
+        </message>
 </context>
 
 <context>
@@ -3437,6 +3521,14 @@ SOFTWARE.</translation>
             <source>Translate Image in Place</source>
             <translation>Translate Image in Place</translation>
         </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>Mask Sensitive Info</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>Beautify and Export</translation>
+        </message>
 </context>
 
 <context>
@@ -3612,6 +3704,14 @@ SOFTWARE.</translation>
         <message>
             <source>Translate Image in Place</source>
             <translation>Translate Image in Place</translation>
+        </message>
+        <message>
+            <source>Mask Sensitive Info</source>
+            <translation>Mask Sensitive Info</translation>
+        </message>
+        <message>
+            <source>Beautify and Export</source>
+            <translation>Beautify and Export</translation>
         </message>
 </context>
 
@@ -5662,6 +5762,10 @@ You can tweak more options in Settings anytime.</translation>
             <source>Translate image in place</source>
             <translation>Translate image in place</translation>
         </message>
+        <message>
+            <source>Magnify a detail</source>
+            <translation>Magnify a detail</translation>
+        </message>
 </context>
 
 <context>
@@ -6000,6 +6104,10 @@ You can tweak more options in Settings anytime.</translation>
         <source>Delete</source>
         <translation>Delete</translation>
     </message>
+        <message>
+            <source>Magnification x10</source>
+            <translation>Magnification x10</translation>
+        </message>
 </context>
 
 <context>

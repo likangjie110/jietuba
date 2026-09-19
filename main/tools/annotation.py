@@ -15,6 +15,7 @@ from PySide6.QtGui import (QColor, QImage, QPainter, QPainterPath, QPainterPathS
 from PySide6.QtWidgets import QGraphicsRectItem
 
 from canvas.items import (
+    LoupeItem,
     PATCH_ERASE, PATCH_FILTER, InsertedImageItem, LineItem, PixelPatchItem, WatermarkItem,
 )
 from canvas.undo import AddItemCommand
@@ -40,6 +41,11 @@ FILTER_DEFAULTS = {
     "kind": "grayscale",
     "radius": 6,          # 高斯模糊半径
     "strength": 1.0,      # 浮雕强度
+}
+
+#: 局部放大默认参数
+LOUPE_DEFAULTS = {
+    "zoom": 2.0,
 }
 
 #: 智能擦除默认参数
@@ -447,6 +453,64 @@ class FilterTool(Tool):
         ctx.undo_stack.push_command(AddItemCommand(ctx.scene, item, text="Add Filter"))
         log_debug(T("滤镜已应用: {kind} ({w}x{h})", kind=parameters["kind"],
                     w=int(rect.width()), h=int(rect.height())), "FilterTool")
+
+
+class LoupeTool(Tool):
+    """局部放大：拖出要放大的区域，松手后在旁边贴一份放大的副本。"""
+
+    id = "loupe"
+    MIN_SIZE = 16
+
+    def __init__(self):
+        self.drawing = False
+        self.start_pos = None
+        self.preview_item = None
+
+    def _zoom(self, ctx: ToolContext) -> float:
+        settings = read_tool_settings(ctx, self.id)
+        try:
+            return float(settings.get("zoom", LOUPE_DEFAULTS["zoom"]))
+        except (TypeError, ValueError):
+            return float(LOUPE_DEFAULTS["zoom"])
+
+    def on_press(self, pos: QPointF, button, ctx: ToolContext):
+        if button != Qt.MouseButton.LeftButton:
+            return
+        self.drawing = True
+        self.start_pos = QPointF(pos)
+
+    def on_move(self, pos: QPointF, ctx: ToolContext):
+        if not self.drawing:
+            return
+        rect = QRectF(self.start_pos, pos).normalized()
+        if self.preview_item is None:
+            preview = RangePreview(rect)
+            ctx.scene.addItem(preview)
+            self.preview_item = preview
+        else:
+            self.preview_item.set_range(rect)
+
+    def on_release(self, pos: QPointF, ctx: ToolContext):
+        if not self.drawing:
+            return
+        self.drawing = False
+        rect = QRectF(self.start_pos, pos).normalized()
+        if self.preview_item is not None:
+            ctx.scene.removeItem(self.preview_item)
+            self.preview_item = None
+        if rect.width() < self.MIN_SIZE or rect.height() < self.MIN_SIZE:
+            return
+
+        source = grab_background(ctx, rect)
+        if source is None or source.isNull():
+            log_exception(RuntimeError("no background"), T("创建局部放大"))
+            return
+        zoom = self._zoom(ctx)
+        item = LoupeItem(rect, source, zoom=zoom)
+        ctx.undo_stack.push_command(AddItemCommand(ctx.scene, item, text="Add Loupe"))
+        ctx.scene.item_auto_select_requested.emit(item)
+        log_debug(T("局部放大已创建: {zoom}x ({w}x{h})", zoom=zoom,
+                    w=int(rect.width()), h=int(rect.height())), "LoupeTool")
 
 
 class SmartEraseTool(Tool):
