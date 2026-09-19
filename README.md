@@ -135,6 +135,10 @@ To build a Windows release, run `python build_with_ocr_onefile.py`. It produces 
 │   ├── compile_translations.py  # Translation compiler (.xml → .qm)
 │   ├── scripts/             # Helper scripts — translation provider comparison
 │   │
+│   ├── agent/             # Agent module — --json CLI and the local bridge for external agents
+│   ├── history/           # History module — persistent screenshot history with retention rules
+│   ├── text_recognition/  # Text recognition module — OCR for the current selection
+│   ├── video/             # Video module — screen recording (frames + QtMultimedia encoding)
 │   ├── barcode/             # Barcode module — QR code/barcode scanning (zxing-cpp)
 │   ├── canvas/              # Canvas module — graphics editing core
 │   ├── capture/             # Capture module — screen capture & window detection
@@ -211,6 +215,8 @@ canvas/
 ├── handle_editor.py         # LayerEditor / EditHandle — control point drag editing
 ├── gestures.py              # Mouse gesture state machines — text edge drag, rubber-band select, pending click-to-edit
 ├── handle_overlay.py        # HandleOverlay — separate compositing layer for edit handles, avoids full-scene repaint
+├── annotation_templates.py  # Annotation style templates — save and reuse tool settings
+├── arrange.py               # Arrangement helpers — z-order and alignment geometry
 └── items/
     ├── drawing_items.py     # StrokeItem / RectItem / EllipseItem / NumberItem — items sharing DrawingItemMixin
     ├── background_item.py   # BackgroundItem — selection area background
@@ -218,7 +224,8 @@ canvas/
     ├── spotlight_item.py    # SpotlightItem / SpotlightCurtain — spotlight holes and their shared curtain
     ├── selection_item.py    # SelectionItem — selection boundary display
     ├── arrow_item.py        # ArrowItem — arrow item, geometry for nine shaft and head styles
-    └── text_item.py         # TextItem — text item, outline/shadow/background and tri-state interaction frame
+    ├── text_item.py         # TextItem — text item, outline/shadow/background and tri-state interaction frame
+    └── annotation_items.py  # Annotation items — watermark, line, pixel patch, inserted image, loupe
 ```
 
 </details>
@@ -235,7 +242,6 @@ Screen capture and smart window detection.
 ```text
 capture/
 ├── capture_service.py       # CaptureService — core screenshot logic
-└── window_finder.py         # WindowFinder — smart window selection, cursor-based detection
 ```
 
 </details>
@@ -335,11 +341,18 @@ core/
 ├── save.py                  # SaveService — file save service (auto naming, high-quality PDF output)
 ├── export.py                # ExportService — image export
 ├── clipboard_utils.py       # copy_image_to_clipboard() — copy images to system clipboard
-├── platform_utils.py        # DPI awareness, AppUserModelID, Windows API utilities
 ├── qt_utils.py              # safe_disconnect() — Qt signal safe disconnect
 ├── log_translations/        # per-module log text translation helpers
 ├── constants.py             # Global constants (fonts, paths, etc.)
-└── ui_theme.py              # UIThemeManager — light/dark appearance for app windows and native Qt widgets
+├── ui_theme.py              # UIThemeManager — light/dark appearance for app windows and native Qt widgets
+├── actions.py               # Action registry — the single source of global actions
+├── beautify.py              # Beautify for export — margins, background, rounded shadow, extra sizes
+├── image_formats.py         # Image formats derived from runtime capability (Qt writers + QtPdf)
+├── net.py                   # Network helpers — apply the configured proxy for the whole application
+├── privacy.py               # Privacy masking — find sensitive spans and mosaic their areas
+├── settings_archive.py      # Settings archive — export/import as a zip with rollback on failure
+├── size_format.py           # Size formatting — one implementation for human-readable byte sizes
+└── updates.py               # Update check — compares GitHub Releases and opens the releases page
 ```
 
 </details>
@@ -384,7 +397,18 @@ Text recognition management powered by PP-OCR.
 
 ```text
 ocr/
-└── ocr_manager.py           # OCRManager — text recognition via ppocr_rust (PP-OCR)
+├── ocr_manager.py           # OCRManager — text recognition via ppocr_rust (PP-OCR)
+├── engine.py                # OCR engine contract — result assembly for the three return formats
+├── engines.py               # Built-in OCR engines — PaddleOCR (Rust) and the Windows variants
+├── formula.py               # Formula recognition entry — registers the engines into the OCR registry
+├── formula_engines.py       # Formula engines — local PP-FormulaNet and the external HTTP service
+├── model_tiers.py           # OCR model tiers — derived from which model files are present
+├── plugins.py               # OCR plugin discovery — drop a module into plugins/ to add an engine
+├── quality.py               # Recognition quality — weighted confidence and the low-confidence hint
+├── result_dialog.py         # Recognition result dialog — shown for the configured triggers
+├── table_document.py        # Editable table model — sparse cells, merges, Markdown/HTML export
+├── table_editor.py          # Table editor — real QTableWidget with preview and undo
+└── vision_models.py         # Vision models — OpenAI-compatible, Azure, Anthropic and Gemini protocols
 ```
 
 </details>
@@ -419,7 +443,10 @@ pin/
 ├── pin_thumbnail.py         # PinThumbnailMode — thumbnail mode
 ├── pin_translation.py       # PinTranslationHelper — translation helper
 ├── pin_image_transform.py   # PinImageTransform — rotate, flip, etc.
-└── ocr_text_layer.py        # OCRTextLayer / OCRTextItem — OCR text layer display
+├── ocr_text_layer.py        # OCRTextLayer / OCRTextItem — OCR text layer display
+├── pin_actions.py           # Pin action registry — gestures, actions and their dispatch
+├── pin_session.py           # Pin session — save open pins on exit and restore them on start
+└── pin_text_pin.py          # Text pin — render text into an image and pin it
 ```
 
 </details>
@@ -450,7 +477,8 @@ settings/
 stitch/
 ├── jietuba_long_stitch_unified.py   # Stitching interface (calls the Rust longstitch)
 ├── scroll_window.py                 # ScrollCaptureWindow — scroll capture window
-└── scroll_toolbar.py                # Scroll capture toolbar
+├── scroll_toolbar.py                # Scroll capture toolbar
+└── postprocess.py                   # Long screenshot post-processing — seam nudge, fixed bands, splitting
 ```
 
 </details>
@@ -478,7 +506,8 @@ tools/
 ├── spotlight.py             # SpotlightTool — spotlight (dims outside the box)
 ├── cursor.py                # CursorTool — cursor/selection
 ├── eraser.py                # EraserTool — eraser
-└── cursor_manager.py        # CursorManager — cursor style manager
+├── cursor_manager.py        # CursorManager — cursor style manager
+└── annotation.py            # Annotation tools — line, watermark, filter, smart erase, insert image, loupe
 ```
 
 </details>
@@ -503,13 +532,17 @@ translation/
 │   ├── deepl.py             # DeepL
 │   ├── google.py            # Google
 │   ├── azure.py             # Azure
-│   └── amazon.py            # Amazon
+│   ├── amazon.py            # Amazon
+│   └── local.py             # Local translation provider — thin adapter over the offline engine
 ├── smart_translation_controller.py # SmartTranslationController — one-hotkey text probe and popup routing
 ├── translation_popup.py     # TranslationPopup — compact popup (selected text / typed input)
 ├── deepl_service.py         # DeepLService / TranslationThread — legacy async DeepL API calls
 ├── languages.py             # SupportedLanguages — supported language list & codes
 ├── translation_manager.py   # TranslationManager — translation window manager (singleton)
 ├── translation_dialog.py    # TranslationDialog — translation result window
+├── image_translation.py     # Translation rendering — redraw on the image or a bilingual panel
+├── local_engine.py          # Local offline translation engine (CTranslate2 backend)
+├── local_models.py          # Local model store — download, verify and place the offline models
 └── ui/
     ├── dialog.py            # Translation dialog UI
     └── widgets.py           # Translation widgets
@@ -572,6 +605,14 @@ ui/
 ├── arrow_settings_panel.py  # ArrowSettingsPanel — arrow settings panel
 ├── number_settings_panel.py # number tool settings panel
 ├── mosaic_settings_panel.py # mosaic tool settings panel
+├── annotation_settings_panel.py  # Annotation settings panel — per-tool style controls
+├── capture_mask.py               # Capture mask — the brief flash shown after a silent capture
+├── floating_ball.py              # Desktop floating ball — click to capture, double-click for clipboard
+├── image_viewer.py               # Standalone image viewer — zoom, rotate, step through a folder
+├── main_window.py                # Main window — sidebar with history, translation, settings and about
+├── permission_actions.py         # Permission actions — open the settings and jump to the panel
+├── permission_prompt.py          # Permission prompt — show the missing permission once per process
+├── save_paths_dialog.py          # Save paths dialog — edit the multi-path list with a real preview
 │
 ├── fluent_lite/             # Fluent-style lightweight component library
 │   ├── buttons.py / cards.py / icons.py / inputs.py  # buttons, cards, icons, inputs
@@ -592,7 +633,12 @@ ui/
 │   ├── page_developer.py    # Developer settings
 │   ├── page_misc.py         # Miscellaneous settings
 │   ├── page_about.py        # About page
-│   └── mock_config.py       # MockConfig — mock config for testing
+│   ├── mock_config.py       # MockConfig — mock config for testing
+│   ├── local_models_card.py  # Local model card — download and pick the offline translation model
+│   ├── page_annotation.py    # Annotation settings page
+│   ├── page_mouse.py         # Global mouse actions settings page
+│   ├── page_pin.py           # Pin settings page — interaction, position, mouse gestures
+│   └── search.py             # Settings search — index built from the real cards, click to jump
 │
 ├── welcome/                 # First-run welcome wizard (6-page guided setup)
 │   ├── wizard.py            # WelcomeWizard — wizard main window
@@ -602,7 +648,8 @@ ui/
 │   ├── page3_clipboard.py   # Clipboard hotkey setup page
 │   ├── page5_translation.py # Translation feature intro page
 │   ├── page6_finish.py      # Finish page
-│   └── page_hotkeys.py      # Global hotkey page — six hotkeys share one conflict domain, set and validated together
+│   ├── page_hotkeys.py      # Global hotkey page — six hotkeys share one conflict domain, set and validated together
+│   └── page_permission.py   # Permissions settings page — live status, request and deep links
 │
 └── selection_info/          # Selection info UI
     ├── controller.py        # Selection info controller

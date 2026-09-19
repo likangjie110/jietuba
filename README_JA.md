@@ -135,6 +135,10 @@ Windows 版のビルドは `python build_with_ocr_onefile.py` で実行できま
 │   ├── compile_translations.py  # 翻訳コンパイラ（.xml → .qm）
 │   ├── scripts/             # 補助スクリプト — 翻訳プロバイダー比較
 │   │
+│   ├── agent/             # Agent モジュール — 外部 Agent 向けの --json CLI とローカル bridge
+│   ├── history/           # 履歴モジュール — 保持規則付きのスクリーンショット履歴
+│   ├── text_recognition/  # 文字認識モジュール — 選択範囲の文字を認識
+│   ├── video/             # 動画モジュール — 画面録画（フレーム取得 + QtMultimedia エンコード）
 │   ├── barcode/             # バーコードモジュール — QRコード/バーコード読み取り（zxing-cpp）
 │   ├── canvas/              # キャンバスモジュール — グラフィックス編集コア
 │   ├── capture/             # キャプチャモジュール — スクリーンキャプチャ＆ウィンドウ検出
@@ -210,6 +214,8 @@ canvas/
 ├── handle_editor.py         # LayerEditor / EditHandle — コントロールポイントドラッグ編集
 ├── gestures.py              # マウスジェスチャの状態機械 — 文字の端ドラッグ、ラバーバンド選択、保留中のクリック編集
 ├── handle_overlay.py        # HandleOverlay — 編集ハンドル専用の合成レイヤー、シーン全体の再描画を回避
+├── annotation_templates.py  # 注釈スタイルテンプレート — ツール設定の保存と再利用
+├── arrange.py               # 整列ヘルパー — 重ね順と整列の幾何計算
 └── items/
     ├── drawing_items.py     # StrokeItem / RectItem / EllipseItem / NumberItem — DrawingItemMixin を共有する描画アイテム
     ├── background_item.py   # BackgroundItem — 選択領域の背景
@@ -217,7 +223,8 @@ canvas/
     ├── spotlight_item.py    # SpotlightItem / SpotlightCurtain — スポットライトの穴と共有の幕
     ├── selection_item.py    # SelectionItem — 選択境界表示
     ├── arrow_item.py        # ArrowItem — 矢印アイテム、9 種類の軸・先端・輪郭のジオメトリ
-    └── text_item.py         # TextItem — テキストアイテム、縁取り/影/背景と三状態の操作枠
+    ├── text_item.py         # TextItem — テキストアイテム、縁取り/影/背景と三状態の操作枠
+    └── annotation_items.py  # 注釈アイテム — 透かし・直線・ピクセルパッチ・画像挿入・部分拡大
 ```
 
 </details>
@@ -234,7 +241,6 @@ canvas/
 ```text
 capture/
 ├── capture_service.py       # CaptureService — スクリーンショットコアロジック
-└── window_finder.py         # WindowFinder — スマートウィンドウ選択、カーソル位置検出
 ```
 
 </details>
@@ -334,11 +340,18 @@ core/
 ├── save.py                  # SaveService — ファイル保存サービス（高品質 PDF 出力対応）
 ├── export.py                # ExportService — 画像エクスポート
 ├── clipboard_utils.py       # copy_image_to_clipboard() — 画像をクリップボードにコピー
-├── platform_utils.py        # DPI設定、AppUserModelID、Windows APIユーティリティ
 ├── qt_utils.py              # safe_disconnect() — Qtシグナル安全切断
 ├── log_translations/        # 各モジュールのログ翻訳ヘルパー
 ├── constants.py             # グローバル定数（フォント、パス等）
-└── ui_theme.py              # UIThemeManager — アプリ窓と Qt ネイティブ部品のライト/ダーク外観
+├── ui_theme.py              # UIThemeManager — アプリ窓と Qt ネイティブ部品のライト/ダーク外観
+├── actions.py               # アクション登録表 — グローバル操作の唯一の定義
+├── beautify.py              # 書き出し用の美化 — 余白・背景・角丸と影・追加サイズ
+├── image_formats.py         # 実行時能力から導出する画像形式（Qt ライター + QtPdf）
+├── net.py                   # ネットワークヘルパー — 設定されたプロキシをアプリ全体に適用
+├── privacy.py               # プライバシー保護 — 機密箇所の検出とモザイク
+├── settings_archive.py      # 設定アーカイブ — zip での入出力、失敗時はロールバック
+├── size_format.py           # サイズ表記 — 読みやすいバイト数の単一実装
+└── updates.py               # 更新確認 — GitHub Releases の比較とページを開く
 ```
 
 </details>
@@ -383,7 +396,18 @@ PP-OCR による文字認識管理。
 
 ```text
 ocr/
-└── ocr_manager.py           # OCRManager — ppocr_rust (PP-OCR) による文字認識
+├── ocr_manager.py           # OCRManager — ppocr_rust (PP-OCR) による文字認識
+├── engine.py                # OCR エンジンの契約 — 3 つの戻り値形式の組み立て
+├── engines.py               # 組み込み OCR エンジン — PaddleOCR（Rust）と Windows 版
+├── formula.py               # 数式認識の入口 — エンジンを OCR レジストリに登録
+├── formula_engines.py       # 数式エンジン — ローカル PP-FormulaNet と外部 HTTP サービス
+├── model_tiers.py           # OCR モデル段階 — 存在するモデルファイルから導出
+├── plugins.py               # OCR プラグイン検出 — plugins/ にモジュールを置くとエンジンを追加
+├── quality.py               # 認識品質 — 重み付き信頼度と低信頼度のヒント
+├── result_dialog.py         # 認識結果ダイアログ — 設定したタイミングで表示
+├── table_document.py        # 編集可能な表モデル — 疎なセル・結合・Markdown/HTML 出力
+├── table_editor.py          # 表エディタ — 実 QTableWidget とプレビュー・元に戻す
+└── vision_models.py         # 視覚モデル — OpenAI 互換・Azure・Anthropic・Gemini の 4 プロトコル
 ```
 
 </details>
@@ -418,7 +442,10 @@ pin/
 ├── pin_thumbnail.py         # PinThumbnailMode — サムネイルモード
 ├── pin_translation.py       # PinTranslationHelper — 翻訳ヘルパー
 ├── pin_image_transform.py   # PinImageTransform — 回転、反転等
-└── ocr_text_layer.py        # OCRTextLayer / OCRTextItem — OCRテキストレイヤー表示
+├── ocr_text_layer.py        # OCRTextLayer / OCRTextItem — OCRテキストレイヤー表示
+├── pin_actions.py           # ピンのアクション登録表 — ジェスチャ・操作・ディスパッチ
+├── pin_session.py           # ピンセッション — 終了時に保存し起動時に復元
+└── pin_text_pin.py          # テキストピン — 文字を画像化してピン留め
 ```
 
 </details>
@@ -449,7 +476,8 @@ settings/
 stitch/
 ├── jietuba_long_stitch_unified.py   # 結合インターフェース（Rust の longstitch を呼び出す）
 ├── scroll_window.py                 # ScrollCaptureWindow — スクロールキャプチャウィンドウ
-└── scroll_toolbar.py                # スクロールキャプチャツールバー
+├── scroll_toolbar.py                # スクロールキャプチャツールバー
+└── postprocess.py                   # 長いスクリーンショットの後処理 — 継ぎ目補正・固定帯の除去・分割
 ```
 
 </details>
@@ -477,7 +505,8 @@ tools/
 ├── spotlight.py             # SpotlightTool — スポットライト（枠の外を暗くする）
 ├── cursor.py                # CursorTool — カーソル/選択
 ├── eraser.py                # EraserTool — 消しゴム
-└── cursor_manager.py        # CursorManager — カーソルスタイル管理
+├── cursor_manager.py        # CursorManager — カーソルスタイル管理
+└── annotation.py            # 注釈ツール — 直線・透かし・フィルター・スマート消去・画像挿入・部分拡大
 ```
 
 </details>
@@ -502,13 +531,17 @@ translation/
 │   ├── deepl.py             # DeepL
 │   ├── google.py            # Google
 │   ├── azure.py             # Azure
-│   └── amazon.py            # Amazon
+│   ├── amazon.py            # Amazon
+│   └── local.py             # ローカル翻訳プロバイダ — オフラインエンジンの薄いアダプタ
 ├── smart_translation_controller.py # SmartTranslationController — ワンキー選択テキスト検出＆ポップアップルーティング
 ├── translation_popup.py     # TranslationPopup — コンパクト翻訳ポップアップ（選択テキスト/手入力）
 ├── deepl_service.py         # DeepLService / TranslationThread — 旧版 DeepL API 非同期翻訳
 ├── languages.py             # SupportedLanguages — 対応言語リスト・言語コード
 ├── translation_manager.py   # TranslationManager — 翻訳ウィンドウマネージャー（シングルトン）
 ├── translation_dialog.py    # TranslationDialog — 翻訳結果ウィンドウ
+├── image_translation.py     # 翻訳の描き戻し — 画像への上書きとバイリンガル欄
+├── local_engine.py          # ローカル翻訳エンジン（CTranslate2 バックエンド）
+├── local_models.py          # ローカルモデル管理 — オフラインモデルの取得・検証・配置
 └── ui/
     ├── dialog.py            # 翻訳ダイアログUI
     └── widgets.py           # 翻訳ウィジェット
@@ -571,6 +604,14 @@ ui/
 ├── arrow_settings_panel.py  # ArrowSettingsPanel — 矢印設定パネル
 ├── number_settings_panel.py # 番号ツール設定パネル
 ├── mosaic_settings_panel.py # モザイクツール設定パネル
+├── annotation_settings_panel.py  # 注釈設定パネル — ツールごとのスタイル調整
+├── capture_mask.py               # キャプチャマスク — サイレント撮影後に一瞬表示する枠
+├── floating_ball.py              # デスクトップ常駐ボール — クリックで撮影、ダブルクリックでクリップボード
+├── image_viewer.py               # 単体の画像ビューア — 拡大・回転・同フォルダの移動
+├── main_window.py                # メインウィンドウ — 履歴・翻訳・設定・情報のサイドバー
+├── permission_actions.py         # 権限操作 — 設定を開いて該当パネルへ移動
+├── permission_prompt.py          # 権限プロンプト — 権限ごとにプロセス内 1 回だけ表示
+├── save_paths_dialog.py          # 保存先ダイアログ — 実際のエンコード結果を見ながら複数パスを編集
 │
 ├── fluent_lite/             # Fluent スタイル軽量コンポーネントライブラリ
 │   ├── buttons.py / cards.py / icons.py / inputs.py  # ボタン、カード、アイコン、入力欄
@@ -591,7 +632,12 @@ ui/
 │   ├── page_developer.py    # 開発者設定
 │   ├── page_misc.py         # その他設定
 │   ├── page_about.py        # アバウトページ
-│   └── mock_config.py       # MockConfig — テスト用モック設定
+│   ├── mock_config.py       # MockConfig — テスト用モック設定
+│   ├── local_models_card.py  # ローカルモデルのカード — オフライン翻訳モデルの取得と選択
+│   ├── page_annotation.py    # 注釈設定ページ
+│   ├── page_mouse.py         # グローバルマウス操作の設定ページ
+│   ├── page_pin.py           # ピン設定ページ — 操作・位置・マウスジェスチャ
+│   └── search.py             # 設定検索 — 実カードから索引を作り、結果をクリックで移動
 │
 ├── welcome/                 # 初回起動ウェルカムウィザード（6ページガイド）
 │   ├── wizard.py            # WelcomeWizard — ウィザードメインウィンドウ
@@ -601,7 +647,8 @@ ui/
 │   ├── page3_clipboard.py   # クリップボードホットキー設定ページ
 │   ├── page5_translation.py # 翻訳機能説明ページ
 │   ├── page6_finish.py      # 完了ページ
-│   └── page_hotkeys.py      # グローバルホットキーページ — 6 つのキーは同一の衝突領域、まとめて設定・重複判定
+│   ├── page_hotkeys.py      # グローバルホットキーページ — 6 つのキーは同一の衝突領域、まとめて設定・重複判定
+│   └── page_permission.py   # 権限設定ページ — 状態の確認・要求・設定パネルへのリンク
 │
 └── selection_info/          # 選択情報UI
     ├── controller.py        # 選択情報コントローラー

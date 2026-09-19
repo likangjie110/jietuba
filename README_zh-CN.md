@@ -136,6 +136,10 @@ python -m pytest main/tests -c main/tests/pytest.ini
 │   ├── compile_translations.py  # 翻译文件编译工具（.xml → .qm）
 │   ├── scripts/             # 辅助脚本 — 翻译提供商对比
 │   │
+│   ├── agent/             # Agent 模块 —— 给外部 Agent 的 --json 命令行与本机 bridge
+│   ├── history/           # 历史模块 —— 带保留策略的截图历史
+│   ├── text_recognition/  # 文字识别模块 —— 识别当前选区里的文字
+│   ├── video/             # 视频模块 —— 屏幕录制（抓帧 + QtMultimedia 编码）
 │   ├── barcode/             # 扫码模块 — 二维码/条形码识别（zxing-cpp）
 │   ├── canvas/              # 画布模块 — 图形编辑核心
 │   ├── capture/             # 截图捕获模块 — 屏幕截图与窗口识别
@@ -212,6 +216,8 @@ canvas/
 ├── handle_editor.py         # LayerEditor / EditHandle — 图层编辑器，提供控制点拖拽编辑
 ├── gestures.py              # 鼠标手势状态机 — 文字边缘拖动、拉选区、挂起的单击编辑
 ├── handle_overlay.py        # HandleOverlay — 编辑控制点的独立合成层，避免整场景重绘
+├── annotation_templates.py  # 标注样式模板 —— 保存并复用工具设置
+├── arrange.py               # 排布工具 —— 层级与对齐的几何计算
 └── items/                   # 绘制图形项
     ├── __init__.py
     ├── drawing_items.py     # StrokeItem / RectItem / EllipseItem / NumberItem — 共用 DrawingItemMixin 的绘制项
@@ -220,7 +226,8 @@ canvas/
     ├── spotlight_item.py    # SpotlightItem / SpotlightCurtain — 聚光灯的孔与共用幕布
     ├── selection_item.py    # SelectionItem — 选中项的边界显示框
     ├── arrow_item.py        # ArrowItem — 箭头图元，九种样式的箭杆/端头/描边几何
-    └── text_item.py         # TextItem — 文字图元，描边/阴影/背景色块与三态交互框
+    ├── text_item.py         # TextItem — 文字图元，描边/阴影/背景色块与三态交互框
+    └── annotation_items.py  # 标注元素 —— 水印、直线、像素补丁、插入图片、局部放大
 ```
 
 </details>
@@ -246,7 +253,6 @@ canvas/
 capture/
 ├── __init__.py
 ├── capture_service.py       # CaptureService — 截图服务，屏幕截图核心逻辑
-└── window_finder.py         # WindowFinder — 窗口查找器，智能选择窗口，识别光标下的窗口
 ```
 
 </details>
@@ -354,11 +360,18 @@ core/
 ├── save.py                  # SaveService — 文件保存服务（自动命名、路径管理、高质量 PDF 输出）
 ├── export.py                # ExportService — 图像导出服务
 ├── clipboard_utils.py       # copy_image_to_clipboard() — 图像复制到系统剪贴板
-├── platform_utils.py        # DPI感知设置、AppUserModelID、进程管理等 Windows API 工具
 ├── qt_utils.py              # safe_disconnect() — Qt 信号安全断开工具
 ├── log_translations/        # 各模块日志文本翻译辅助
 ├── constants.py             # 全局常量定义（字体、路径等）
-└── ui_theme.py              # UIThemeManager — 应用窗口与原生 Qt 控件的明暗外观（截图配色仍在 theme.py）
+├── ui_theme.py              # UIThemeManager — 应用窗口与原生 Qt 控件的明暗外观（截图配色仍在 theme.py）
+├── actions.py               # 动作注册表 —— 全局动作的唯一出处
+├── beautify.py              # 美化导出 —— 留白、背景、圆角投影与多尺寸
+├── image_formats.py         # 按运行时能力派生的图片格式（Qt 写入器 + QtPdf）
+├── net.py                   # 网络助手 —— 按设置给整个应用应用代理
+├── privacy.py               # 隐私遮挡 —— 找出敏感片段并对其区域打码
+├── settings_archive.py      # 设置归档 —— zip 导入导出，失败整体回滚
+├── size_format.py           # 体积文案 —— 人类可读字节数的单一实现
+└── updates.py               # 更新检查 —— 比对 GitHub Releases 并打开发布页
 ```
 
 </details>
@@ -421,7 +434,18 @@ gif/
 ```text
 ocr/
 ├── __init__.py
-└── ocr_manager.py           # OCRManager — 基于 ppocr_rust (PP-OCR) 的文字识别
+├── ocr_manager.py           # OCRManager — 基于 ppocr_rust (PP-OCR) 的文字识别
+├── engine.py                # OCR 引擎契约 —— 三种返回格式的结果组装
+├── engines.py               # 内置 OCR 引擎 —— PaddleOCR（Rust）与 Windows 变体
+├── formula.py               # 公式识别入口 —— 把引擎注册进 OCR 注册表
+├── formula_engines.py       # 公式识别引擎 —— 本地 PP-FormulaNet 与外部 HTTP 服务
+├── model_tiers.py           # 识别模型档位 —— 按模型文件是否存在派生
+├── plugins.py               # OCR 插件发现 —— 把模块放进 plugins/ 就能加一个引擎
+├── quality.py               # 识别质量 —— 加权置信度与低置信度提示
+├── result_dialog.py         # 识别结果对话框 —— 按设置的时机弹出
+├── table_document.py        # 可编辑表格模型 —— 稀疏格子、合并、Markdown/HTML 导出
+├── table_editor.py          # 表格编辑器 —— 真 QTableWidget，带预览与撤销
+└── vision_models.py         # 视觉模型 —— OpenAI 兼容、Azure、Anthropic、Gemini 四种协议
 ```
 
 </details>
@@ -458,7 +482,10 @@ pin/
 ├── pin_thumbnail.py         # PinThumbnailMode — 缩略图模式
 ├── pin_translation.py       # PinTranslationHelper — 翻译助手
 ├── pin_image_transform.py   # PinImageTransform — 图像变换（旋转、翻转等）
-└── ocr_text_layer.py        # OCRTextLayer / OCRTextItem — OCR文字层显示
+├── ocr_text_layer.py        # OCRTextLayer / OCRTextItem — OCR文字层显示
+├── pin_actions.py           # 贴图动作注册表 —— 手势、动作与分发
+├── pin_session.py           # 贴图会话 —— 退出时保存、启动时恢复未关闭的贴图
+└── pin_text_pin.py          # 文字贴图 —— 把文字渲染成图片再钉在屏幕上
 ```
 
 </details>
@@ -507,7 +534,8 @@ stitch/
 ├── __init__.py
 ├── jietuba_long_stitch_unified.py   # 长截图拼接接口（调用 Rust longstitch）
 ├── scroll_window.py                 # ScrollCaptureWindow — 滚动截图窗口
-└── scroll_toolbar.py                # 滚动截图工具栏
+├── scroll_toolbar.py                # 滚动截图工具栏
+└── postprocess.py                   # 长截图后期 —— 接缝修正、固定条消除、分段
 ```
 
 </details>
@@ -543,7 +571,8 @@ tools/
 ├── spotlight.py             # SpotlightTool — 聚光灯工具（压暗框外区域）
 ├── cursor.py                # CursorTool — 光标/选择工具
 ├── eraser.py                # EraserTool — 橡皮擦工具
-└── cursor_manager.py        # CursorManager — 光标样式管理器
+├── cursor_manager.py        # CursorManager — 光标样式管理器
+└── annotation.py            # 标注工具 —— 直线、水印、滤镜、智能擦除、插入图片、局部放大
 ```
 
 </details>
@@ -575,13 +604,17 @@ translation/
 │   ├── deepl.py             # DeepL
 │   ├── google.py            # Google
 │   ├── azure.py             # Azure
-│   └── amazon.py            # Amazon
+│   ├── amazon.py            # Amazon
+│   └── local.py             # 本地翻译 provider —— 离线引擎的薄适配层
 ├── smart_translation_controller.py # SmartTranslationController — 一键选中文字探测与翻译弹窗路由
 ├── translation_popup.py     # TranslationPopup — 紧凑翻译弹窗（选中文字/手动输入两种模式）
 ├── deepl_service.py         # DeepLService / TranslationThread — 旧版 DeepL API 异步翻译
 ├── languages.py             # SupportedLanguages — 支持的语言列表与语言代码
 ├── translation_manager.py   # TranslationManager — 翻译窗口管理器（单例）
 ├── translation_dialog.py    # TranslationDialog / TranslationLoadingDialog — 翻译结果显示窗口
+├── image_translation.py     # 翻译落图 —— 原图替换或双语对照
+├── local_engine.py          # 本地离线翻译引擎（CTranslate2 后端）
+├── local_models.py          # 本地模型仓库 —— 下载、校验与落盘离线模型
 └── ui/
     ├── __init__.py
     ├── dialog.py            # 翻译对话框UI组件
@@ -648,6 +681,14 @@ ui/
 ├── arrow_settings_panel.py  # ArrowSettingsPanel — 箭头设置面板
 ├── number_settings_panel.py # 数字工具设置面板
 ├── mosaic_settings_panel.py # 马赛克工具设置面板
+├── annotation_settings_panel.py  # 标注设置面板 —— 各工具的样式控件
+├── capture_mask.py               # 截图遮罩 —— 静默截图后闪一下的提示
+├── floating_ball.py              # 桌面悬浮球 —— 单击截图、双击剪贴板
+├── image_viewer.py               # 独立图片查看器 —— 缩放、旋转、同目录翻页
+├── main_window.py                # 主窗口 —— 侧边栏含历史、翻译、设置与关于
+├── permission_actions.py         # 权限动作 —— 打开设置并跳到对应面板
+├── permission_prompt.py          # 权限提示 —— 每条权限每进程只提示一次
+├── save_paths_dialog.py          # 保存路径对话框 —— 用真实编码预览来编辑多路径
 │
 ├── fluent_lite/             # Fluent 风格轻量组件库
 │   ├── buttons.py / cards.py / icons.py / inputs.py  # 按钮、卡片、图标、输入框
@@ -669,7 +710,12 @@ ui/
 │   ├── page_developer.py    # 开发者设置页
 │   ├── page_misc.py         # 杂项设置页
 │   ├── page_about.py        # 关于页面
-│   └── mock_config.py       # MockConfig — 测试用模拟配置
+│   ├── mock_config.py       # MockConfig — 测试用模拟配置
+│   ├── local_models_card.py  # 本地模型卡片 —— 下载与选择离线翻译模型
+│   ├── page_annotation.py    # 标注设置页
+│   ├── page_mouse.py         # 全局鼠标动作设置页
+│   ├── page_pin.py           # 贴图设置页 —— 交互、位置、鼠标动作
+│   └── search.py             # 设置搜索 —— 索引取自真实卡片，点结果跳页
 │
 ├── welcome/                 # 首次启动欢迎向导
 │   ├── __init__.py
@@ -680,7 +726,8 @@ ui/
 │   ├── page3_clipboard.py   # 剪贴板快捷键设置页
 │   ├── page5_translation.py # 翻译功能说明页
 │   ├── page6_finish.py      # 完成页
-│   └── page_hotkeys.py      # 全局快捷键页 — 六个键同属一个冲突域，集中设置并统一判重
+│   ├── page_hotkeys.py      # 全局快捷键页 — 六个键同属一个冲突域，集中设置并统一判重
+│   └── page_permission.py   # 权限设置页 —— 实时状态、去授权与深链
 │
 └── selection_info/          # 选区信息UI
     ├── __init__.py
